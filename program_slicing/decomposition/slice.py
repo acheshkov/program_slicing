@@ -54,7 +54,7 @@ def decompose_code(source_code: str, file_ext: str) -> Generator[str, None, None
     :param file_ext: source code format like '.java' or '.xml'.
     :return: generator of decomposed versions.
     """
-    cg = parse.control_graph(source_code, file_ext)
+    parse.control_graph(source_code, file_ext)
     return (str(i) for i in range(1))
 
 
