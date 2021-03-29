@@ -5,7 +5,7 @@ __date__ = '2021/03/23'
 
 import javalang
 from typing import Dict, Set
-from computation_slice.parser.node import \
+from program_slicing.parser.node import \
     Node, \
     NODE_TYPE_FUNCTION, \
     NODE_TYPE_VARIABLE, \
@@ -19,7 +19,7 @@ from computation_slice.parser.node import \
     NODE_TYPE_GOTO, \
     NODE_TYPE_OBJECT, \
     NODE_TYPE_EXIT
-from computation_slice.parser.block import Block
+from program_slicing.parser.block import Block
 
 
 class ControlGraph:

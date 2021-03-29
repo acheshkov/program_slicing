@@ -6,9 +6,9 @@ __date__ = '2021/03/17'
 from typing import List, Generator
 
 import os
-from computation_slice.parser import parse
-from computation_slice.file_manager import reader
-from computation_slice.file_manager import writer
+from program_slicing.parser import parse
+from program_slicing.file_manager import reader
+from program_slicing.file_manager import writer
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:

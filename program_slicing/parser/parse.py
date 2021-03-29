@@ -3,7 +3,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from computation_slice.parser import cg
+from program_slicing.parser import cg
 
 FILE_EXT_JAVA = ".java"
 
