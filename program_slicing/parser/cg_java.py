@@ -22,6 +22,34 @@ from program_slicing.parser.block import Block
 from program_slicing.parser.cg import ControlGraph
 
 
+node_type_map = {
+    javalang.parser.tree.VariableDeclaration:
+        NODE_TYPE_VARIABLE,
+    javalang.parser.tree.MethodDeclaration:
+        NODE_TYPE_FUNCTION,
+    javalang.parser.tree.IfStatement:
+        NODE_TYPE_BRANCH,
+    javalang.parser.tree.TryStatement:
+        NODE_TYPE_BRANCH,
+    javalang.parser.tree.WhileStatement:
+        NODE_TYPE_LOOP,
+    javalang.parser.tree.ForStatement:
+        NODE_TYPE_LOOP,
+    javalang.parser.tree.Assignment:
+        NODE_TYPE_ASSIGNMENT,
+    javalang.parser.tree.MethodInvocation:
+        NODE_TYPE_CALL,
+    javalang.parser.tree.BlockStatement:
+        NODE_TYPE_STATEMENTS,
+    javalang.parser.tree.ContinueStatement:
+        NODE_TYPE_GOTO,
+    javalang.parser.tree.BreakStatement:
+        NODE_TYPE_BREAK,
+    javalang.parser.tree.ReturnStatement:
+        NODE_TYPE_EXIT
+}
+
+
 def parse(source_code: str) -> ControlGraph:
     """
     Parse the source code string into a Control Graph that contains Control Dependence and Control Flow.
@@ -69,32 +97,7 @@ def __parse(ast: javalang.parser.tree.Node, cg: ControlGraph) -> Node:
 
 
 def __parse_node_type(ast: javalang.parser.tree.Node) -> str:
-    return {
-        javalang.parser.tree.VariableDeclaration:
-            NODE_TYPE_VARIABLE,
-        javalang.parser.tree.MethodDeclaration:
-            NODE_TYPE_FUNCTION,
-        javalang.parser.tree.IfStatement:
-            NODE_TYPE_BRANCH,
-        javalang.parser.tree.TryStatement:
-            NODE_TYPE_BRANCH,
-        javalang.parser.tree.WhileStatement:
-            NODE_TYPE_LOOP,
-        javalang.parser.tree.ForStatement:
-            NODE_TYPE_LOOP,
-        javalang.parser.tree.Assignment:
-            NODE_TYPE_ASSIGNMENT,
-        javalang.parser.tree.MethodInvocation:
-            NODE_TYPE_CALL,
-        javalang.parser.tree.BlockStatement:
-            NODE_TYPE_STATEMENTS,
-        javalang.parser.tree.ContinueStatement:
-            NODE_TYPE_GOTO,
-        javalang.parser.tree.BreakStatement:
-            NODE_TYPE_BREAK,
-        javalang.parser.tree.ReturnStatement:
-            NODE_TYPE_EXIT
-    }.get(type(ast), NODE_TYPE_OBJECT)
+    return node_type_map.get(type(ast), NODE_TYPE_OBJECT)
 
 
 def __parse_block_branch(children: List[Node], cg: ControlGraph):
