@@ -28,7 +28,7 @@ complete computation slice</a>
 
 ```bash
 $ python main.py slice [-h]
-                       [-o OUTPUT] [-d]
+                       [-o OUTPUT]
                        source
 ```
 

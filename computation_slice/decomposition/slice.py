@@ -6,8 +6,9 @@ __date__ = '2021/03/17'
 from typing import List, Generator
 
 import os
-from file_manager import reader
-from file_manager import writer
+from computation_slice.parser import parse
+from computation_slice.file_manager import reader
+from computation_slice.file_manager import writer
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -34,21 +35,26 @@ def decompose_file(file_path: str, work_dir: str = None, prefix: str = None) -> 
     Remove nothing if prefix is None.
     """
     for i, result in enumerate(decompose_code(reader.read_file(file_path), os.path.splitext(file_path)[1])):
+        if work_dir is None:
+            print(result)
+            continue
         if prefix is not None and file_path.startswith(prefix):
             result_path = os.path.join(work_dir, file_path[len(prefix):])
-            result_path, result_ext = os.path.splitext(result_path)
-            result_path = result_path + "." + str(i) + result_ext
-            writer.save_file(result_path, result)
+        else:
+            result_path = os.path.join(work_dir, os.path.basename(file_path))
+        result_path, result_ext = os.path.splitext(result_path)
+        result_path = result_path + "." + str(i) + result_ext
+        writer.save_file(result_path, result)
 
 
-def decompose_code(source_code: str, file_ext: str) -> Generator[str]:
+def decompose_code(source_code: str, file_ext: str) -> Generator[str, None, None]:
     """
     Decompose the specified source code and return all the decomposition variants.
     :param source_code: source code that should be decomposed.
     :param file_ext: source code format like '.java' or '.xml'.
     :return: generator of decomposed versions.
     """
-    # TODO: not implemented yet
+    cg = parse.control_graph(source_code, file_ext)
     return (str(i) for i in range(1))
 
 

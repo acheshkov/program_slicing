@@ -5,6 +5,7 @@ __date__ = '2021/03/17'
 
 import argparse
 import os
+from computation_slice.decomposition import slice
 
 SLICE = "slice"
 
@@ -41,7 +42,7 @@ def get_uri_message(uri: str) -> str:
     return "current work directory" if (uri == "" or uri == ".") else ("'" + uri + "'")
 
 
-def main() -> None:
+def cli() -> None:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(dest="command", help="", required=True)
 
@@ -55,8 +56,8 @@ def main() -> None:
         OUTPUT_OPT_SHORT,
         OUTPUT_OPT,
         help="output file or directory: depending on what you set as output, "
-             "you will get folder full of slice decompositions or a single file with it."
-             "Uses stdout if not specified")
+             "you will get folder full of slice decompositions or a single file with it. "
+             "It uses stdout if not specified")
 
     args = parser.parse_args()
     source = os.path.normpath(args.source)
@@ -70,23 +71,23 @@ def main() -> None:
 
 
 def __check_slice(source: str, source_type: str, output_option: str, args: argparse.Namespace) -> None:
-    source_message = get_uri_message(source)
     if source_type == URI_TYPE_DIRECTORY:
-        __check_slice_from_directory(source_message, output_option, args)
+        __check_slice_from_directory(source, output_option, args)
 
     elif source_type == URI_TYPE_FILE:
-        __check_slice_from_file(source_message, output_option, args)
+        __check_slice_from_file(source, output_option, args)
 
     else:
         print("Unsupported source '" + source + "'")
 
 
-def __check_slice_from_file(source_message: str, output_option: str, args: argparse.Namespace) -> None:
+def __check_slice_from_file(source: str, output_option: str, args: argparse.Namespace) -> None:
+    source_message = get_uri_message(source)
     output_message = get_uri_message(output_option)
     output_option_type = get_uri_type(output_option)
     if output_option_type == URI_TYPE_STDIO:
         print("Print all possible slice decompositions of " + source_message)
-        print("Arguments combination is not yet supported: " + str(args))
+        slice.decompose_file(source)
 
     elif output_option_type == URI_TYPE_DIRECTORY:
         print("Save to the " + output_message + " all the slice decompositions of " + source_message)
@@ -102,7 +103,8 @@ def __check_slice_from_file(source_message: str, output_option: str, args: argpa
         print("Unsupported output: " + output_message)
 
 
-def __check_slice_from_directory(source_message: str, output_option: str, args: argparse.Namespace) -> None:
+def __check_slice_from_directory(source: str, output_option: str, args: argparse.Namespace) -> None:
+    source_message = get_uri_message(source)
     output_message = get_uri_message(output_option)
     output_option_type = get_uri_type(output_option)
     if output_option_type == URI_TYPE_STDIO:
@@ -126,4 +128,4 @@ def __check_slice_from_directory(source_message: str, output_option: str, args: 
 
 
 if __name__ == "__main__":
-    main()
+    cli()
