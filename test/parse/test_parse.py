@@ -20,4 +20,3 @@ class ParseTestCase(TestCase):
         ext = FILE_EXT_JAVA
         code = "class A {}"
         self.check_cg(control_graph(code, ext))
-
