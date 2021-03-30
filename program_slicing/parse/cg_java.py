@@ -5,7 +5,7 @@ __date__ = '2021/03/29'
 
 import javalang
 from typing import List
-from program_slicing.parser.node import \
+from program_slicing.parse.node import \
     Node, \
     NODE_TYPE_FUNCTION, \
     NODE_TYPE_VARIABLE, \
@@ -18,12 +18,14 @@ from program_slicing.parser.node import \
     NODE_TYPE_GOTO, \
     NODE_TYPE_OBJECT, \
     NODE_TYPE_EXIT
-from program_slicing.parser.block import Block
-from program_slicing.parser.cg import ControlGraph
+from program_slicing.parse.block import Block
+from program_slicing.parse.cg import ControlGraph
 
 
 node_type_map = {
     javalang.parser.tree.VariableDeclaration:
+        NODE_TYPE_VARIABLE,
+    javalang.parser.tree.LocalVariableDeclaration:
         NODE_TYPE_VARIABLE,
     javalang.parser.tree.MethodDeclaration:
         NODE_TYPE_FUNCTION,
@@ -107,7 +109,7 @@ def __parse_block_branch(children: List[Node], cg: ControlGraph):
     cg.block[children[-1]] = Block(
         nodes=[children[-1]],
         parents={condition_block})
-    if len(children) == 2:
+    if len(children) == 3:
         cg.block[children[-2]] = Block(
             nodes=[children[-2]],
             parents={condition_block})

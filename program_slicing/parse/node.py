@@ -24,12 +24,11 @@ class Node:
             label: str,
             node_type: str,
             ids: Tuple[int, int],
-            parent: 'Node' = None,
             children: List['Node'] = None):
         self.children: List['Node'] = [] if children is None else children
         for child in self.children:
             child.parent = self
-        self.parent: 'Node' = parent
+        self.parent: 'Node' = None
         self.label: str = label
         self.node_type: int = node_type
         self.ids: List[int] = ids

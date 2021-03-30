@@ -3,8 +3,8 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from program_slicing.parser import cg_java
-from program_slicing.parser.cg import ControlGraph
+from program_slicing.parse import cg_java
+from program_slicing.parse.cg import ControlGraph
 
 FILE_EXT_JAVA = ".java"
 

@@ -4,8 +4,8 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
 from typing import Dict, Set
-from program_slicing.parser.node import Node
-from program_slicing.parser.block import Block
+from program_slicing.parse.node import Node
+from program_slicing.parse.block import Block
 
 
 class ControlGraph:

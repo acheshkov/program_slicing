@@ -4,7 +4,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
 from typing import Set, List
-from program_slicing.parser.node import Node
+from program_slicing.parse.node import Node
 
 
 class Block:
