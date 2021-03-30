@@ -8,4 +8,5 @@ from unittest import TestCase
 
 class CGTestCase(TestCase):
 
-    pass
+    def test_get_reach(self):
+        pass
