@@ -7,6 +7,8 @@ from typing import List, Generator
 
 import os
 from program_slicing.parse import parse
+from program_slicing.parse.cdg import ControlDependencyGraph
+from program_slicing.parse.cfg import ControlFlowGraph
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 
@@ -54,7 +56,9 @@ def decompose_code(source_code: str, file_ext: str) -> Generator[str, None, None
     :param file_ext: source code format like '.java' or '.xml'.
     :return: generator of decomposed versions.
     """
-    parse.control_graph(source_code, file_ext)
+    control_graph = parse.control_graph(source_code, file_ext)
+    ControlFlowGraph(control_graph)
+    ControlDependencyGraph(control_graph)
     return (str(i) for i in range(1))
 
 

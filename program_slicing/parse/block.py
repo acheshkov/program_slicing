@@ -3,7 +3,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from typing import Set, List
+from typing import Set, List, Optional
 from program_slicing.parse.node import Node
 
 
@@ -25,10 +25,10 @@ class Block:
             self.children.add(child)
             child.parents.add(self)
 
-    def get_root(self) -> Node:
+    def get_root(self) -> Optional[Node]:
         return self.nodes[0] if len(self.nodes) > 0 else None
 
-    def get_cdg_parent(self) -> Node:
+    def get_cdg_parent(self) -> Optional[Node]:
         root = self.get_root()
         return None if root is None else root.parent
 
