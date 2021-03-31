@@ -134,6 +134,8 @@ from program_slicing.parse.parse import control_dependency_graph, FILE_EXT_JAVA
 cdg: ControlDependencyGraph = control_dependency_graph(source_code, FILE_EXT_JAVA)
 ```
 
+___
+
 ***cast*** - there is also an option to cast one type of graph to another:
 
 ```python
