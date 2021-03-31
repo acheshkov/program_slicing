@@ -12,3 +12,9 @@ class ControlGraph:
     def __init__(self, control_graph: 'ControlGraph' = None):
         self.root: Node = None if control_graph is None else control_graph.root
         self.block: Dict[Node: Block] = {} if control_graph is None else control_graph.block
+
+    def get_root_node(self):
+        return self.root
+
+    def get_root_blocks(self):
+        pass
