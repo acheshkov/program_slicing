@@ -132,11 +132,11 @@ from program_slicing.graph.parse import control_dependence_graph
 from program_slicing.graph.parse import control_flow_graph
 from program_slicing.graph.manager import ProgramGraphsManager
 
-manager_by_source = ProgramGraphsManager((source_code, LANG_JAVA))
+manager_by_source = ProgramGraphsManager(source_code, LANG_JAVA)
 
-manager_by_cdg = ProgramGraphsManager(control_dependence_graph(source_code, LANG_JAVA))
+manager_by_cdg = ProgramGraphsManager.from_control_dependence_graph(control_dependence_graph(source_code, LANG_JAVA))
 
-manager_by_cfg = ProgramGraphsManager(control_flow_graph(source_code, LANG_JAVA))
+manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph(source_code, LANG_JAVA))
 ```
 
 - **get_control_dependence_graph** - return the _Control Dependence Graph_.
