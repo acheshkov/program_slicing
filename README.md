@@ -112,7 +112,7 @@ ___
 ***Control Flow Graph Content*** - structure that represents _Control Flow Graph_ nodes.
 
 ```python
-from program_slicing.graph.cfg import ControlFlowGraph
+from program_slicing.graph.cfg_content import CFGContent
 ```
 
 - **get_content** - get the content of the _Control Flow Graph_ node, i.e a list of  _Control Dependence Graph_ nodes.
