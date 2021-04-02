@@ -48,14 +48,14 @@ def decompose_file(file_path: str, work_dir: str = None, prefix: str = None) -> 
         writer.save_file(result_path, result)
 
 
-def decompose_code(source_code: str, file_ext: str) -> Generator[str, None, None]:
+def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     """
     Decompose the specified source code and return all the decomposition variants.
     :param source_code: source code that should be decomposed.
-    :param file_ext: source code format like '.java' or '.xml'.
+    :param lang: source code format like '.java' or '.xml'.
     :return: generator of decomposed versions.
     """
-    control_dependence_graph = parse.control_dependence_graph(source_code, file_ext)
+    control_dependence_graph = parse.control_dependence_graph(source_code, lang)
     to_cfg(control_dependence_graph)
     return (str(i) for i in range(1))
 

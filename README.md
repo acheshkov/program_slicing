@@ -146,18 +146,18 @@ and programming language specification.
 
 ```python
 from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.parse.parse import control_dependence_graph, FILE_EXT_JAVA
+from program_slicing.graph.parse.parse import control_dependence_graph, LANG_JAVA
 
-cdg: ControlDependenceGraph = control_dependence_graph(source_code, FILE_EXT_JAVA)
+cdg: ControlDependenceGraph = control_dependence_graph(source_code, LANG_JAVA)
 ```
 
 - **control_flow_graph** - parse a _Control Flow Graph_:
 
 ```python
 from program_slicing.graph.cfg import ControlFlowGraph
-from program_slicing.graph.parse.parse import control_flow_graph, FILE_EXT_JAVA
+from program_slicing.graph.parse.parse import control_flow_graph, LANG_JAVA
 
-cfg: ControlFlowGraph = control_flow_graph(source_code, FILE_EXT_JAVA)
+cfg: ControlFlowGraph = control_flow_graph(source_code, LANG_JAVA)
 ```
 
 ___

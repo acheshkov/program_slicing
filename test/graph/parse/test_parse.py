@@ -7,7 +7,7 @@ from unittest import TestCase
 from program_slicing.graph.parse.parse import \
     control_flow_graph, \
     control_dependence_graph, \
-    FILE_EXT_JAVA
+    LANG_JAVA
 
 
 class ParseTestCase(TestCase):
@@ -17,11 +17,11 @@ class ParseTestCase(TestCase):
         # TODO: add more checks
 
     def test_control_flow_graph(self):
-        ext = FILE_EXT_JAVA
+        lang = LANG_JAVA
         code = "class A {}"
-        self.check_graph(control_flow_graph(code, ext))
+        self.check_graph(control_flow_graph(code, lang))
 
     def test_control_dependence_graph(self):
-        ext = FILE_EXT_JAVA
+        lang = LANG_JAVA
         code = "class A {}"
-        self.check_graph(control_dependence_graph(code, ext))
+        self.check_graph(control_dependence_graph(code, lang))
