@@ -6,7 +6,7 @@ __date__ = '2021/03/30'
 from unittest import TestCase
 
 
-class CGTestCase(TestCase):
+class CDGContentTestCase(TestCase):
 
-    def test_get_reach(self):
+    def test_relations(self):
         pass

@@ -1,3 +1,8 @@
+"""
+Program Slicing provides a set of code decomposition methods availabel via command line interface.
+"""
+
+__licence__ = 'MIT'
 __author__ = 'kuyaki'
 __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
