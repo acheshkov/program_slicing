@@ -5,7 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
 import networkx
-from typing import Dict, Optional, Union, Tuple
+from typing import Dict, Optional
 from program_slicing.graph.parse import parse
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
@@ -15,19 +15,25 @@ from program_slicing.graph import convert
 
 
 class ProgramGraphsManager:
-    def __init__(self, source: Union[Tuple[str, str], ControlDependenceGraph, ControlFlowGraph, None] = None):
-        self.cdg: ControlDependenceGraph = None
-        self.cfg: ControlFlowGraph = None
+
+    def __init__(self, source_code: str = None, lang: str = None):
+        self.cdg: ControlDependenceGraph = ControlDependenceGraph()
+        self.cfg: ControlFlowGraph = ControlFlowGraph()
         self.simple_block: Dict[CDGContent, CFGContent] = {}
-        if type(source) is tuple:
-            self.init_by_source_code(source_code=source[0], lang=source[1])
-        elif type(source) is ControlDependenceGraph:
-            self.init_by_control_dependence_graph(source)
-        elif type(source) is ControlFlowGraph:
-            self.init_by_control_flow_graph(source)
-        else:
-            self.cdg: ControlDependenceGraph = ControlDependenceGraph()
-            self.cfg: ControlFlowGraph = ControlFlowGraph()
+        if source_code is not None and lang is not None:
+            self.init_by_source_code(source_code=source_code, lang=lang)
+
+    @classmethod
+    def from_control_dependence_graph(cls, graph: ControlDependenceGraph):
+        result = cls()
+        result.init_by_control_dependence_graph(graph)
+        return result
+
+    @classmethod
+    def from_control_flow_graph(cls, graph: ControlFlowGraph):
+        result = cls()
+        result.init_by_control_flow_graph(graph)
+        return result
 
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.cdg

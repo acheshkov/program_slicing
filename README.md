@@ -79,8 +79,8 @@ ___
 from program_slicing.graph.cdg import ControlDependenceGraph
 ```
 
-- **add_root** - mark specified node as root.
-- **get_roots** - return a set of nodes that where marked as a root.
+- **add_entry_point** - mark specified node as entry point.
+- **get_entry_points** - return a set of nodes that where marked as a entry point.
 
 ___
 
@@ -92,7 +92,7 @@ from program_slicing.graph.cdg_content import CDGContent
 
 - **label** - string with the node's label.
 - **content_type** - string with a description af the node's type.
-- **ids** - a tuple with two numbers:
+- **line_range** - a tuple with two numbers:
 indexes of rhe first and the last strings of the source code where the node is presented.
 
 ___
@@ -104,8 +104,8 @@ ___
 from program_slicing.graph.cfg import ControlFlowGraph
 ```
 
-- **add_root** - mark specified node as root.
-- **get_roots** - return a set of nodes that where marked as a root.
+- **add_entry_point** - mark specified node as entry point.
+- **get_entry_points** - return a set of nodes that where marked as a entry point.
 
 ___
 
@@ -132,11 +132,11 @@ from program_slicing.graph.parse import control_dependence_graph
 from program_slicing.graph.parse import control_flow_graph
 from program_slicing.graph.manager import ProgramGraphsManager
 
-manager_by_source = ProgramGraphsManager((source_code, LANG_JAVA))
+manager_by_source = ProgramGraphsManager(source_code, LANG_JAVA)
 
-manager_by_cdg = ProgramGraphsManager(control_dependence_graph(source_code, LANG_JAVA))
+manager_by_cdg = ProgramGraphsManager.from_control_dependence_graph(control_dependence_graph(source_code, LANG_JAVA))
 
-manager_by_cfg = ProgramGraphsManager(control_flow_graph(source_code, LANG_JAVA))
+manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph(source_code, LANG_JAVA))
 ```
 
 - **get_control_dependence_graph** - return the _Control Dependence Graph_.

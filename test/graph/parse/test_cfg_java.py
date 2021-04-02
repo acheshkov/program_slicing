@@ -30,6 +30,6 @@ class CFGJavaTestCase(TestCase):
                "    }" \
                "}"
         cfg = parse(code)
-        roots = cfg.get_roots()
+        roots = cfg.get_entry_points()
         self.assertIsNotNone(roots)
         self.assertEqual(0, len(roots))

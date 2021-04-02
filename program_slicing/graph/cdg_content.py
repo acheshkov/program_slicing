@@ -24,9 +24,9 @@ class CDGContent:
             self,
             ast_class: str,
             content_type: str,
-            ids: Tuple[int, int],
+            line_range: Tuple[int, int],
             name: Optional[str] = None):
         self.ast_class: str = ast_class
         self.content_type: int = content_type
-        self.ids: Tuple[int, int] = ids
-        self.name = name
+        self.line_range: Tuple[int, int] = line_range
+        self.name: Optional[str] = name
