@@ -4,7 +4,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from typing import Tuple
+from typing import Tuple, Optional
 
 CDG_CONTENT_TYPE_FUNCTION = "FUNCTION"
 CDG_CONTENT_TYPE_VARIABLE = "VARIABLE"
@@ -20,7 +20,13 @@ CDG_CONTENT_TYPE_EXIT = "EXIT"
 
 
 class CDGContent:
-    def __init__(self, label: str, content_type: str, ids: Tuple[int, int]):
-        self.label: str = label
+    def __init__(
+            self,
+            ast_class: str,
+            content_type: str,
+            ids: Tuple[int, int],
+            name: Optional[str] = None):
+        self.ast_class: str = ast_class
         self.content_type: int = content_type
         self.ids: Tuple[int, int] = ids
+        self.name = name

@@ -9,5 +9,5 @@ from unittest import TestCase
 
 class CDGTestCase(TestCase):
 
-    def to_cfg(self):
+    def test_to_cfg(self):
         pass

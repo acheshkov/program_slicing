@@ -84,7 +84,8 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGC
     content = CDGContent(
         str(ast.__class__),
         content_type,
-        ids)
+        ids,
+        name=str(getattr(ast, 'name', None)))
     cdg.add_node(content)
     for child in children:
         cdg.add_edge(content, child)

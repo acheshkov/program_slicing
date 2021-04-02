@@ -7,10 +7,15 @@ __date__ = '2021/03/17'
 from typing import List, Generator
 
 import os
-from program_slicing.graph.parse import parse
-from program_slicing.graph import convert
+import networkx
+from typing import Set, Dict
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
+from program_slicing.graph.manager import ProgramGraphsManager
+from program_slicing.graph.cdg import ControlDependenceGraph
+from program_slicing.graph.cdg_content import CDGContent, \
+    CDG_CONTENT_TYPE_VARIABLE, \
+    CDG_CONTENT_TYPE_ASSIGNMENT
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -56,9 +61,45 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     :param lang: source code format like '.java' or '.xml'.
     :return: generator of decomposed versions.
     """
-    control_dependence_graph = parse.control_dependence_graph(source_code, lang)
-    convert.cdg.to_cfg(control_dependence_graph)
+    manager = ProgramGraphsManager((source_code, lang))
+    cdg = manager.cdg
+    cfg = manager.cfg
+    function_nodes = cdg.get_roots()
+    for function_node in function_nodes:
+        slicing_criteria = __obtain_slicing_criteria(cdg, function_node)
+        print(slicing_criteria)
+    print(cfg)
     return (str(i) for i in range(1))
+
+
+def __obtain_variable_nodes(cdg: ControlDependenceGraph, root: CDGContent) -> Set[CDGContent]:
+    return {
+        node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
+        if node.content_type == CDG_CONTENT_TYPE_VARIABLE
+    }
+
+
+def __obtain_seed_statement_nodes(
+        cdg: ControlDependenceGraph,
+        root: CDGContent,
+        variable_node: CDGContent) -> Set[CDGContent]:
+    return {
+        node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
+        if __is_slicing_criteria(node, variable_node)
+    }
+
+
+def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGContent) -> Dict[CDGContent: Set[CDGContent]]:
+    variable_nodes = __obtain_variable_nodes(cdg, root)
+    return {
+        variable_node: __obtain_seed_statement_nodes(cdg, root, variable_node) for variable_node in variable_nodes}
+
+
+def __is_slicing_criteria(assignment_node: CDGContent, variable_node: CDGContent) -> bool:
+    return \
+        assignment_node.content_type == CDG_CONTENT_TYPE_ASSIGNMENT and \
+        variable_node.content_type == CDG_CONTENT_TYPE_VARIABLE and \
+        variable_node.name == assignment_node.name
 
 
 def __get_applicable_formats() -> List[str]:
