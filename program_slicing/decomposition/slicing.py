@@ -63,13 +63,11 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     """
     manager = ProgramGraphsManager((source_code, lang))
     cdg = manager.cdg
-    cfg = manager.cfg
     function_nodes = cdg.get_roots()
     for function_node in function_nodes:
         slicing_criteria = __obtain_slicing_criteria(cdg, function_node)
-        print(slicing_criteria)
-    print(cfg)
-    return (str(i) for i in range(1))
+        for variable_node, seed_statement_node in slicing_criteria.items():
+            yield str((variable_node, seed_statement_node))
 
 
 def __obtain_variable_nodes(cdg: ControlDependenceGraph, root: CDGContent) -> Set[CDGContent]:

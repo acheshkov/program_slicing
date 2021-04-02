@@ -16,16 +16,18 @@ from program_slicing.graph import convert
 
 class ProgramGraphsManager:
     def __init__(self, source: Union[Tuple[str, str], ControlDependenceGraph, ControlFlowGraph, None] = None):
+        self.cdg: ControlDependenceGraph = None
+        self.cfg: ControlFlowGraph = None
+        self.simple_block: Dict[CDGContent, CFGContent] = {}
         if type(source) is tuple:
             self.init_by_source_code(source_code=source[0], lang=source[1])
-        if type(source) is ControlDependenceGraph:
+        elif type(source) is ControlDependenceGraph:
             self.init_by_control_dependence_graph(source)
         elif type(source) is ControlFlowGraph:
             self.init_by_control_flow_graph(source)
         else:
             self.cdg: ControlDependenceGraph = ControlDependenceGraph()
             self.cfg: ControlFlowGraph = ControlFlowGraph()
-            self.simple_block: Dict[CDGContent, CFGContent] = {}
 
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.cdg
@@ -51,6 +53,6 @@ class ProgramGraphsManager:
 
     def __build_dependencies(self) -> None:
         self.simple_block.clear()
-        for block in networkx.algorithms.traversal.dfs_tree(self.cdg):
+        for block in networkx.algorithms.traversal.dfs_tree(self.cfg):
             for node in block.get_content():
                 self.simple_block[node] = block
