@@ -1,3 +1,4 @@
+__licence__ = 'MIT'
 __author__ = 'kuyaki'
 __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
@@ -7,7 +8,7 @@ from typing import List, Generator
 
 import os
 from program_slicing.graph.parse import parse
-from program_slicing.graph.convert.cdg import to_cfg
+from program_slicing.graph import convert
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 
@@ -56,7 +57,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     :return: generator of decomposed versions.
     """
     control_dependence_graph = parse.control_dependence_graph(source_code, lang)
-    to_cfg(control_dependence_graph)
+    convert.cdg.to_cfg(control_dependence_graph)
     return (str(i) for i in range(1))
 
 

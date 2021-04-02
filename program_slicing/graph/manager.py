@@ -1,3 +1,4 @@
+__licence__ = 'MIT'
 __author__ = 'kuyaki'
 __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
@@ -10,8 +11,7 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.cdg_content import CDGContent
 from program_slicing.graph.cfg_content import CFGContent
-from program_slicing.graph.convert.cdg import to_cfg
-from program_slicing.graph.convert.cfg import to_cdg
+from program_slicing.graph import convert
 
 
 class ProgramGraphsManager:
@@ -41,11 +41,11 @@ class ProgramGraphsManager:
 
     def init_by_control_dependence_graph(self, cdg: ControlDependenceGraph) -> None:
         self.cdg = cdg
-        self.cfg = to_cfg(cdg)
+        self.cfg = convert.cdg.to_cfg(cdg)
         self.__build_dependencies()
 
     def init_by_control_flow_graph(self, cfg: ControlFlowGraph) -> None:
-        self.cdg = to_cdg(cfg)
+        self.cdg = convert.cfg.to_cdg(cfg)
         self.cfg = cfg
         self.__build_dependencies()
 

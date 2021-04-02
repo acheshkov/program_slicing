@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 import program_slicing
 
 setup(
-    name='veniq',
+    name='program_slicing',
     version=program_slicing.__version__,
     description=program_slicing.__doc__.strip(),
     long_description='Set of methods for source code decomposition.',

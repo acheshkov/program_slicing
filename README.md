@@ -127,9 +127,9 @@ ___
 and provides a set of methods for their analysis.
 
 ```python
-from program_slicing.graph.parse.parse import LANG_JAVA
-from program_slicing.graph.parse.parse import control_dependence_graph
-from program_slicing.graph.parse.parse import control_flow_graph
+from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import control_dependence_graph
+from program_slicing.graph.parse import control_flow_graph
 from program_slicing.graph.manager import ProgramGraphsManager
 
 manager_by_source = ProgramGraphsManager((source_code, LANG_JAVA))
@@ -156,7 +156,7 @@ and programming language specification.
 
 ```python
 from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.parse.parse import control_dependence_graph, LANG_JAVA
+from program_slicing.graph.parse import control_dependence_graph, LANG_JAVA
 
 cdg: ControlDependenceGraph = control_dependence_graph(source_code, LANG_JAVA)
 ```
@@ -165,7 +165,7 @@ cdg: ControlDependenceGraph = control_dependence_graph(source_code, LANG_JAVA)
 
 ```python
 from program_slicing.graph.cfg import ControlFlowGraph
-from program_slicing.graph.parse.parse import control_flow_graph, LANG_JAVA
+from program_slicing.graph.parse import control_flow_graph, LANG_JAVA
 
 cfg: ControlFlowGraph = control_flow_graph(source_code, LANG_JAVA)
 ```
@@ -175,12 +175,11 @@ ___
 ***convert*** - there is also an option to convert one type of graph to another:
 
 ```python
-from program_slicing.graph.convert.cdg import to_cfg
-from program_slicing.graph.convert.cfg import to_cdg
+from program_slicing.graph import convert
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 
 cdg: ControlDependenceGraph = ControlDependenceGraph()
-cfg: ControlFlowGraph = to_cfg(cdg)
-new_cdg: ControlDependenceGraph = to_cdg(cfg)
+cfg: ControlFlowGraph = convert.cdg.to_cfg(cdg)
+new_cdg: ControlDependenceGraph = convert.cfg.to_cdg(cfg)
 ```

@@ -3,7 +3,8 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from program_slicing.graph.parse import cdg_java, cfg_java
+from program_slicing.graph.parse import cdg_java
+from program_slicing.graph.parse import cfg_java
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.cdg import ControlDependenceGraph
 
