@@ -92,7 +92,7 @@ from program_slicing.graph.cdg_content import CDGContent
 
 - **label** - string with the node's label.
 - **content_type** - string with a description af the node's type.
-- **ids** - a tuple with two numbers:
+- **line_range** - a tuple with two numbers:
 indexes of rhe first and the last strings of the source code where the node is presented.
 
 ___

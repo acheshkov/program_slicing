@@ -20,7 +20,7 @@ CDG_CONTENT_TYPE_EXIT = "EXIT"
 
 
 class CDGContent:
-    def __init__(self, label: str, content_type: str, ids: Tuple[int, int]):
+    def __init__(self, label: str, content_type: str, line_range: Tuple[int, int]):
         self.label: str = label
         self.content_type: int = content_type
-        self.ids: Tuple[int, int] = ids
+        self.line_range: Tuple[int, int] = line_range

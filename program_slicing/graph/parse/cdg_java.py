@@ -78,13 +78,13 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGC
                 if issubclass(type(sub_child), javalang.parser.tree.Node):
                     children.append(__parse(sub_child, cdg))
     content_type = __parse_content_type(ast)
-    ids = (
-        (children[0].ids[0] if children else -1) if ast.position is None else ast.position[0],
-        children[-1].ids[1] if children else (-1 if ast.position is None else ast.position[0]))
+    line_range = (
+        (children[0].line_range[0] if children else -1) if ast.position is None else ast.position[0],
+        children[-1].line_range[1] if children else (-1 if ast.position is None else ast.position[0]))
     content = CDGContent(
         str(ast.__class__),
         content_type,
-        ids)
+        line_range)
     cdg.add_node(content)
     for child in children:
         cdg.add_edge(content, child)
