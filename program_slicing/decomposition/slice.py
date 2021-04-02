@@ -89,7 +89,7 @@ def __obtain_seed_statement_nodes(
     }
 
 
-def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGContent) -> Dict[CDGContent: Set[CDGContent]]:
+def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGContent) -> Dict[CDGContent, Set[CDGContent]]:
     variable_nodes = __obtain_variable_nodes(cdg, root)
     return {
         variable_node: __obtain_seed_statement_nodes(cdg, root, variable_node) for variable_node in variable_nodes}

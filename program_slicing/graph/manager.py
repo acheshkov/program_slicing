@@ -25,7 +25,7 @@ class ProgramGraphsManager:
         else:
             self.cdg: ControlDependenceGraph = ControlDependenceGraph()
             self.cfg: ControlFlowGraph = ControlFlowGraph()
-            self.simple_block: Dict[CDGContent: CFGContent] = {}
+            self.simple_block: Dict[CDGContent, CFGContent] = {}
 
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.cdg
