@@ -3,9 +3,9 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
-from program_slicing.graph.cdg import ControlDependenceGraph
-
 import javalang
+from typing import List, Tuple
+from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cdg_content import CDGContent, \
     CDG_CONTENT_TYPE_FUNCTION, \
     CDG_CONTENT_TYPE_VARIABLE, \
@@ -78,9 +78,7 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGC
                 if issubclass(type(sub_child), javalang.parser.tree.Node):
                     children.append(__parse(sub_child, cdg))
     content_type = __parse_content_type(ast)
-    line_range = (
-        (children[0].line_range[0] if children else -1) if ast.position is None else ast.position[0],
-        children[-1].line_range[1] if children else (-1 if ast.position is None else ast.position[0]))
+    line_range = __parse_line_range(ast, children)
     content = CDGContent(
         str(ast.__class__),
         content_type,
@@ -95,3 +93,9 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGC
 
 def __parse_content_type(ast: javalang.parser.tree.Node) -> str:
     return content_type_map.get(type(ast), CDG_CONTENT_TYPE_OBJECT)
+
+
+def __parse_line_range(ast: javalang.parser.tree.Node, children: List[CDGContent]) -> Tuple[int, int]:
+    return (
+        (children[0].line_range[0] if children else -1) if ast.position is None else ast.position[0],
+        children[-1].line_range[1] if children else (-1 if ast.position is None else ast.position[0]))
