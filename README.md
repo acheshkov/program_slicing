@@ -79,8 +79,8 @@ ___
 from program_slicing.graph.cdg import ControlDependenceGraph
 ```
 
-- **add_root** - mark specified node as root.
-- **get_roots** - return a set of nodes that where marked as a root.
+- **add_entry_point** - mark specified node as entry point.
+- **get_entry_points** - return a set of nodes that where marked as a entry point.
 
 ___
 
@@ -104,8 +104,8 @@ ___
 from program_slicing.graph.cfg import ControlFlowGraph
 ```
 
-- **add_root** - mark specified node as root.
-- **get_roots** - return a set of nodes that where marked as a root.
+- **add_entry_point** - mark specified node as entry point.
+- **get_entry_points** - return a set of nodes that where marked as a entry point.
 
 ___
 

@@ -22,7 +22,7 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     :return: Control Flow Graph
     """
     cfg = ControlFlowGraph()
-    for root in cdg.get_roots():
+    for root in cdg.get_entry_points():
         __to_cfg(root, cdg=cdg, cfg=cfg)
     return cfg
 

@@ -42,7 +42,7 @@ class CDGJavaTestCase(TestCase):
                "    }" \
                "}"
         cdg = parse(code)
-        roots = cdg.get_roots()
+        roots = cdg.get_entry_points()
         self.assertIsNotNone(roots)
         self.assertEqual(1, len(roots))
         root = roots.pop()

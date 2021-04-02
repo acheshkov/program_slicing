@@ -13,10 +13,10 @@ class ControlDependenceGraph(networkx.DiGraph):
 
     def __init__(self):
         super().__init__()
-        self.roots: Set[CDGContent] = set()
+        self.entry_points: Set[CDGContent] = set()
 
-    def get_roots(self) -> Set[CDGContent]:
-        return self.roots
+    def get_entry_points(self) -> Set[CDGContent]:
+        return self.entry_points
 
-    def add_root(self, root: CDGContent) -> None:
-        self.roots.add(root)
+    def add_entry_point(self, root: CDGContent) -> None:
+        self.entry_points.add(root)

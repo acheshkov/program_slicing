@@ -89,7 +89,7 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGC
     for child in children:
         cdg.add_edge(content, child)
     if content_type == CDG_CONTENT_TYPE_FUNCTION:
-        cdg.add_root(content)
+        cdg.add_entry_point(content)
     return content
 
 

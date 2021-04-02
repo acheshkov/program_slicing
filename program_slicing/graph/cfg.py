@@ -13,10 +13,10 @@ class ControlFlowGraph(networkx.DiGraph):
 
     def __init__(self):
         super().__init__()
-        self.roots: Set[CFGContent] = set()
+        self.entry_points: Set[CFGContent] = set()
 
-    def get_roots(self) -> Set[CFGContent]:
-        return self.roots
+    def get_entry_points(self) -> Set[CFGContent]:
+        return self.entry_points
 
-    def add_root(self, root: CFGContent) -> None:
-        self.roots.add(root)
+    def add_entry_point(self, root: CFGContent) -> None:
+        self.entry_points.add(root)
