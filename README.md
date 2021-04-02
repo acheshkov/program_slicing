@@ -127,19 +127,29 @@ ___
 and provides a set of methods for their analysis.
 
 ```python
+from program_slicing.graph.parse.parse import LANG_JAVA
+from program_slicing.graph.parse.parse import control_dependence_graph
+from program_slicing.graph.parse.parse import control_flow_graph
 from program_slicing.graph.manager import ProgramGraphsManager
+
+manager_by_source = ProgramGraphsManager((source_code, LANG_JAVA))
+
+manager_by_cdg = ProgramGraphsManager(control_dependence_graph(source_code, LANG_JAVA))
+
+manager_by_cfg = ProgramGraphsManager(control_flow_graph(source_code, LANG_JAVA))
 ```
 
 - **get_control_dependence_graph** - return the _Control Dependence Graph_.
 - **get_control_flow_graph** - return the _Control Flow Graph_.
 - **get_simple_block** - return a simple block (that is a node of the _Control Flow Graph_) 
 that contains a node from the _Control Dependence Graph_.
+- **init_by_source_code** - build all the graphs by a given source code string and a language description.
 - **init_by_control_dependence_graph** - build all the graphs by a given _Control Dependence Graph_.
 - **init_by_control_flow_graph** - build all the graphs by a given _Control Flow Graph_.
 
 ___
 
-***parse*** - set of functions that allow to parse different graphs from the specified source code string
+***parse*** - set of functions that allow to build different graphs from the specified source code string
 and programming language specification.
 
 - **control_dependence_graph** - parse a _Control Dependence Graph_:
