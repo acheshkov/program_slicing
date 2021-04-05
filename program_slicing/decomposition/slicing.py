@@ -4,11 +4,11 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/17'
 
-from typing import List, Generator
-
 import os
+from typing import Set, Dict, List, Generator
+
 import networkx
-from typing import Set, Dict
+
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 from program_slicing.graph.manager import ProgramGraphsManager
@@ -59,7 +59,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     Decompose the specified source code and return all the decomposition variants.
     :param source_code: source code that should be decomposed.
     :param lang: source code format like '.java' or '.xml'.
-    :return: generator of decomposed versions.
+    :return: generator of decomposed source code versions in a string format.
     """
     manager = ProgramGraphsManager(source_code, lang)
     cdg = manager.cdg
@@ -67,6 +67,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     for function_node in function_nodes:
         slicing_criteria = __obtain_slicing_criteria(cdg, function_node)
         for variable_node, seed_statement_node in slicing_criteria.items():
+            # TODO: finish logic.
             yield str((variable_node, seed_statement_node))
 
 
@@ -83,7 +84,7 @@ def __obtain_seed_statement_nodes(
         variable_node: CDGNode) -> Set[CDGNode]:
     return {
         node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if __is_slicing_criteria(node, variable_node)
+        if __is_slicing_criterion(node, variable_node)
     }
 
 
@@ -93,7 +94,7 @@ def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGNode) -> Dic
         variable_node: __obtain_seed_statement_nodes(cdg, root, variable_node) for variable_node in variable_nodes}
 
 
-def __is_slicing_criteria(assignment_node: CDGNode, variable_node: CDGNode) -> bool:
+def __is_slicing_criterion(assignment_node: CDGNode, variable_node: CDGNode) -> bool:
     return \
         assignment_node.node_type == CDG_NODE_TYPE_ASSIGNMENT and \
         variable_node.node_type == CDG_NODE_TYPE_VARIABLE and \

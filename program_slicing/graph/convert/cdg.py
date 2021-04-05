@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/04/01'
 
 from typing import List
+
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.cdg_node import CDGNode

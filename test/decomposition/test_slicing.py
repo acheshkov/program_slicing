@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/22'
 
 from unittest import TestCase
+
 from program_slicing.decomposition import slicing
 from program_slicing.graph.parse import LANG_JAVA
 

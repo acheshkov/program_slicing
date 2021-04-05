@@ -4,10 +4,9 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2020/05/19'
 
-from typing import Any, AnyStr
-
 import os
 import json
+from typing import Any, AnyStr
 
 
 def save_file(data: AnyStr, path: str) -> None:
