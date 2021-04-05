@@ -1,9 +1,10 @@
+__licence__ = 'MIT'
 __author__ = 'kuyaki'
 __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2020/05/19'
 
-from typing import Any, List, Generator
+from typing import Any, AnyStr, List, Generator, Tuple
 
 import json
 import os
@@ -56,7 +57,10 @@ def read_file(path: str) -> str:
         return ""
 
 
-def read_files(path: str, suffix_list: List[str] = None, skip_hidden_dirs: bool = True) -> Generator[str]:
+def read_files(
+        path: str,
+        suffix_list: List[str] = None,
+        skip_hidden_dirs: bool = True) -> Generator[Tuple[str, AnyStr], None, None]:
     """
     Read all the files with the given suffixes from the given directory and its sub-directories.
     :param path: string with the path to the directory to search in.
@@ -68,7 +72,10 @@ def read_files(path: str, suffix_list: List[str] = None, skip_hidden_dirs: bool 
         yield filename, read_file(filename)
 
 
-def browse_file_sub_paths(path: str, suffix_list: List[str] = None, skip_hidden_dirs: bool = True) -> Generator[str]:
+def browse_file_sub_paths(
+        path: str,
+        suffix_list: List[str] = None,
+        skip_hidden_dirs: bool = True) -> Generator[str, None, None]:
     """
     Browse for files with the given suffixes in the given directory and its sub-directories.
     :param path: string with the path to the directory to search in.

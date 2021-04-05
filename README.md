@@ -12,6 +12,12 @@ You should have access to global network to use pip. Python 3 is required.
 
 ___
 ## Usage
+
+This project can be used via _Command Line Interface_ or 
+it can be included into any other Python project as a submodule.
+
+### Command Line Interface
+
 ***slice***
 
 Use this command if you want to decompose source files by
@@ -28,7 +34,7 @@ complete computation slice</a>
 
 ```bash
 $ python main.py slice [-h]
-                       [-o OUTPUT] [-d]
+                       [-o OUTPUT]
                        source
 ```
 
@@ -63,3 +69,117 @@ $ python main.py slice MyFile.java --output MyResultPath
 ```
 
 ___
+
+### Submodule Interface
+
+***Control Dependence Graph*** - structure that represents _Control Dependence Graph_ 
+(inherited from _networkx.DiGraph_) with corresponding methods.
+
+```python
+from program_slicing.graph.cdg import ControlDependenceGraph
+```
+
+- **add_entry_point** - mark specified node as entry point.
+- **get_entry_points** - return a set of nodes that where marked as a entry point.
+
+___
+
+***Control Dependence Graph Content*** - structure that represents _Control Dependence Graph_ nodes.
+
+```python
+from program_slicing.graph.cdg_content import CDGContent
+```
+
+- **label** - string with the node's label.
+- **content_type** - string with a description af the node's type.
+- **line_range** - a tuple with two numbers:
+indexes of rhe first and the last strings of the source code where the node is presented.
+
+___
+
+***Control Flow Graph*** - structure that represents _Control Flow Graph_ 
+(inherited from _networkx.DiGraph_) with corresponding methods.
+
+```python
+from program_slicing.graph.cfg import ControlFlowGraph
+```
+
+- **add_entry_point** - mark specified node as entry point.
+- **get_entry_points** - return a set of nodes that where marked as a entry point.
+
+___
+
+***Control Flow Graph Content*** - structure that represents _Control Flow Graph_ nodes.
+
+```python
+from program_slicing.graph.cfg_content import CFGContent
+```
+
+- **get_content** - get the content of the _Control Flow Graph_ node, i.e a list of  _Control Dependence Graph_ nodes.
+- **get_root** - get the first _Control Dependence Graph_ node from the content. None if content is empty.
+- **append** - add a specified _Control Dependence Graph_ node to the content.
+- **is_empty** - return True if content is empty, otherwise - False.
+
+___
+
+***Program Graphs Manager*** - structure that contains different types of program graphs
+(such as _Control Flow Graph_ or _Control Dependence Graph_) based on same source code
+and provides a set of methods for their analysis.
+
+```python
+from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import control_dependence_graph
+from program_slicing.graph.parse import control_flow_graph
+from program_slicing.graph.manager import ProgramGraphsManager
+
+manager_by_source = ProgramGraphsManager(source_code, LANG_JAVA)
+
+manager_by_cdg = ProgramGraphsManager.from_control_dependence_graph(control_dependence_graph(source_code, LANG_JAVA))
+
+manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph(source_code, LANG_JAVA))
+```
+
+- **get_control_dependence_graph** - return the _Control Dependence Graph_.
+- **get_control_flow_graph** - return the _Control Flow Graph_.
+- **get_simple_block** - return a simple block (that is a node of the _Control Flow Graph_) 
+that contains a node from the _Control Dependence Graph_.
+- **init_by_source_code** - build all the graphs by a given source code string and a language description.
+- **init_by_control_dependence_graph** - build all the graphs by a given _Control Dependence Graph_.
+- **init_by_control_flow_graph** - build all the graphs by a given _Control Flow Graph_.
+
+___
+
+***parse*** - set of functions that allow to build different graphs from the specified source code string
+and programming language specification.
+
+- **control_dependence_graph** - parse a _Control Dependence Graph_:
+
+```python
+from program_slicing.graph.cdg import ControlDependenceGraph
+from program_slicing.graph.parse import control_dependence_graph, LANG_JAVA
+
+cdg: ControlDependenceGraph = control_dependence_graph(source_code, LANG_JAVA)
+```
+
+- **control_flow_graph** - parse a _Control Flow Graph_:
+
+```python
+from program_slicing.graph.cfg import ControlFlowGraph
+from program_slicing.graph.parse import control_flow_graph, LANG_JAVA
+
+cfg: ControlFlowGraph = control_flow_graph(source_code, LANG_JAVA)
+```
+
+___
+
+***convert*** - there is also an option to convert one type of graph to another:
+
+```python
+from program_slicing.graph import convert
+from program_slicing.graph.cdg import ControlDependenceGraph
+from program_slicing.graph.cfg import ControlFlowGraph
+
+cdg: ControlDependenceGraph = ControlDependenceGraph()
+cfg: ControlFlowGraph = convert.cdg.to_cfg(cdg)
+new_cdg: ControlDependenceGraph = convert.cfg.to_cdg(cfg)
+```
