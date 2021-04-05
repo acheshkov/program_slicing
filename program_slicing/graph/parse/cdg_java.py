@@ -23,9 +23,7 @@ from program_slicing.graph.cdg_node import CDGNode, \
 
 
 node_type_map = {
-    javalang.parser.tree.VariableDeclaration:
-        CDG_NODE_TYPE_VARIABLE,
-    javalang.parser.tree.LocalVariableDeclaration:
+    javalang.parser.tree.VariableDeclarator:
         CDG_NODE_TYPE_VARIABLE,
     javalang.parser.tree.MethodDeclaration:
         CDG_NODE_TYPE_FUNCTION,
