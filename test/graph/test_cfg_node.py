@@ -16,10 +16,10 @@ class CGFNodeTestCase(TestCase):
     def test_constructor(self):
         a = CFGNode()
         self.assertEqual([], a.content)
-        cdg_content_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
-        cdg_content_b = CDGNode("b", CDG_NODE_TYPE_OBJECT, (1, 1))
-        a = CFGNode(content=[cdg_content_a, cdg_content_b])
-        self.assertEqual([cdg_content_a, cdg_content_b], a.content)
+        cdg_node_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        cdg_node_b = CDGNode("b", CDG_NODE_TYPE_OBJECT, (1, 1))
+        a = CFGNode(content=[cdg_node_a, cdg_node_b])
+        self.assertEqual([cdg_node_a, cdg_node_b], a.content)
 
     def test_is_empty(self):
         b = CFGNode()
@@ -30,17 +30,17 @@ class CGFNodeTestCase(TestCase):
     def test_append(self):
         a = CFGNode()
         self.assertEqual([], a.content)
-        cdg_content_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
-        a.append(cdg_content_a)
-        self.assertEqual([cdg_content_a], a.content)
-        cdg_content_b = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
-        a.append(cdg_content_b)
-        self.assertEqual([cdg_content_a, cdg_content_b], a.content)
+        cdg_node_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        a.append(cdg_node_a)
+        self.assertEqual([cdg_node_a], a.content)
+        cdg_node_b = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        a.append(cdg_node_b)
+        self.assertEqual([cdg_node_a, cdg_node_b], a.content)
 
     def test_get_root(self):
         a = CFGNode()
         self.assertIsNone(a.get_root())
-        cdg_content_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
-        cdg_content_b = CDGNode("b", CDG_NODE_TYPE_OBJECT, (1, 1))
-        a = CFGNode(content=[cdg_content_a, cdg_content_b])
-        self.assertEqual(cdg_content_a, a.get_root())
+        cdg_node_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        cdg_node_b = CDGNode("b", CDG_NODE_TYPE_OBJECT, (1, 1))
+        a = CFGNode(content=[cdg_node_a, cdg_node_b])
+        self.assertEqual(cdg_node_a, a.get_root())
