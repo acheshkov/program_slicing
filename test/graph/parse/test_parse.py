@@ -13,16 +13,16 @@ from program_slicing.graph.parse import \
 
 class ParseTestCase(TestCase):
 
-    def check_graph(self, graph):
+    def __check_graph(self, graph):
         self.assertIsNotNone(graph)
         # TODO: add more checks
 
     def test_control_flow_graph(self):
         lang = LANG_JAVA
         code = "class A {}"
-        self.check_graph(control_flow_graph(code, lang))
+        self.__check_graph(control_flow_graph(code, lang))
 
     def test_control_dependence_graph(self):
         lang = LANG_JAVA
         code = "class A {}"
-        self.check_graph(control_dependence_graph(code, lang))
+        self.__check_graph(control_dependence_graph(code, lang))
