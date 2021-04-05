@@ -13,9 +13,9 @@ from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.cdg_content import CDGContent, \
-    CDG_CONTENT_TYPE_VARIABLE, \
-    CDG_CONTENT_TYPE_ASSIGNMENT
+from program_slicing.graph.cdg_node import CDGNode, \
+    CDG_NODE_TYPE_VARIABLE, \
+    CDG_NODE_TYPE_ASSIGNMENT
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -70,33 +70,33 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
             yield str((variable_node, seed_statement_node))
 
 
-def __obtain_variable_nodes(cdg: ControlDependenceGraph, root: CDGContent) -> Set[CDGContent]:
+def __obtain_variable_nodes(cdg: ControlDependenceGraph, root: CDGNode) -> Set[CDGNode]:
     return {
         node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if node.content_type == CDG_CONTENT_TYPE_VARIABLE
+        if node.node_type == CDG_NODE_TYPE_VARIABLE
     }
 
 
 def __obtain_seed_statement_nodes(
         cdg: ControlDependenceGraph,
-        root: CDGContent,
-        variable_node: CDGContent) -> Set[CDGContent]:
+        root: CDGNode,
+        variable_node: CDGNode) -> Set[CDGNode]:
     return {
         node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
         if __is_slicing_criteria(node, variable_node)
     }
 
 
-def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGContent) -> Dict[CDGContent, Set[CDGContent]]:
+def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGNode) -> Dict[CDGNode, Set[CDGNode]]:
     variable_nodes = __obtain_variable_nodes(cdg, root)
     return {
         variable_node: __obtain_seed_statement_nodes(cdg, root, variable_node) for variable_node in variable_nodes}
 
 
-def __is_slicing_criteria(assignment_node: CDGContent, variable_node: CDGContent) -> bool:
+def __is_slicing_criteria(assignment_node: CDGNode, variable_node: CDGNode) -> bool:
     return \
-        assignment_node.content_type == CDG_CONTENT_TYPE_ASSIGNMENT and \
-        variable_node.content_type == CDG_CONTENT_TYPE_VARIABLE and \
+        assignment_node.node_type == CDG_NODE_TYPE_ASSIGNMENT and \
+        variable_node.node_type == CDG_NODE_TYPE_VARIABLE and \
         variable_node.name == assignment_node.name
 
 

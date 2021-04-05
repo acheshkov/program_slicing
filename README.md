@@ -84,14 +84,14 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 
 ___
 
-***Control Dependence Graph Content*** - structure that represents _Control Dependence Graph_ nodes.
+***Control Dependence Graph Node*** - structure that represents _Control Dependence Graph_ nodes.
 
 ```python
-from program_slicing.graph.cdg_content import CDGContent
+from program_slicing.graph.cdg_node import CDGNode
 ```
 
 - **label** - string with the node's label.
-- **content_type** - string with a description af the node's type.
+- **node_type** - string with a description af the node's type.
 - **line_range** - a tuple with two numbers:
 indexes of rhe first and the last strings of the source code where the node is presented.
 
@@ -109,10 +109,10 @@ from program_slicing.graph.cfg import ControlFlowGraph
 
 ___
 
-***Control Flow Graph Content*** - structure that represents _Control Flow Graph_ nodes.
+***Control Flow Graph Node*** - structure that represents _Control Flow Graph_ nodes.
 
 ```python
-from program_slicing.graph.cfg_content import CFGContent
+from program_slicing.graph.cfg_node import CFGNode
 ```
 
 - **get_content** - get the content of the _Control Flow Graph_ node, i.e a list of  _Control Dependence Graph_ nodes.

@@ -7,7 +7,7 @@ __date__ = '2021/03/30'
 from unittest import TestCase
 
 
-class CDGContentTestCase(TestCase):
+class CDGNodeTestCase(TestCase):
 
     def test_relations(self):
         pass
