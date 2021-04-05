@@ -76,3 +76,13 @@ class SlicingTestCase(TestCase):
             self.assertEqual(1, len(seed_statement_nodes))
             for seed_statement_node in seed_statement_nodes:
                 self.assertEqual(variable_node.name, seed_statement_node.name)
+
+    def test_obtain_slicing_criteria(self):
+        cdg, variable_nodes = self.__get_cdg_and_variables_0()
+        function_nodes = [node for node in cdg.get_entry_points()]
+        slicing_criteria = obtain_slicing_criteria(cdg, function_nodes[0])
+        self.assertEqual({"a", "b"}, {key.name for key in slicing_criteria.keys()})
+        for variable_node, seed_statement_nodes in slicing_criteria.items():
+            self.assertEqual(1, len(seed_statement_nodes))
+            for seed_statement_node in seed_statement_nodes:
+                self.assertEqual(variable_node.name, seed_statement_node.name)
