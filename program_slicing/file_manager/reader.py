@@ -7,7 +7,6 @@ __date__ = '2020/05/19'
 import json
 import os
 import stat
-
 from typing import Any, AnyStr, List, Generator, Tuple
 
 
