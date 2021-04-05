@@ -12,7 +12,16 @@ from program_slicing.graph.cdg_content import CDG_CONTENT_TYPE_OBJECT
 
 class CGFContentTestCase(TestCase):
 
-    def test_relations(self):
+    def test_constructor(self):
+        pass
+     
+    def test_is_empty(self):
+        pass
+        
+    def test_append(self):
+        pass
+    
+    def test_content(self):
         cdg_content_a = CDGContent("a", CDG_CONTENT_TYPE_OBJECT, (0, 0))
         cdg_content_b = CDGContent("b", CDG_CONTENT_TYPE_OBJECT, (1, 1))
         cdg_content_c = CDGContent("c", CDG_CONTENT_TYPE_OBJECT, (2, 2))
