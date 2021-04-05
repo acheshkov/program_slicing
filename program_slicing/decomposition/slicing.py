@@ -67,6 +67,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     for function_node in function_nodes:
         slicing_criteria = __obtain_slicing_criteria(cdg, function_node)
         for variable_node, seed_statement_node in slicing_criteria.items():
+            # TODO: finish logic.
             yield str((variable_node, seed_statement_node))
 
 
