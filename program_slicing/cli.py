@@ -6,7 +6,8 @@ __date__ = '2021/03/17'
 
 import argparse
 import os
-from program_slicing.decomposition import slice
+
+from program_slicing.decomposition import slicing
 
 SLICE = "slice"
 
@@ -88,7 +89,7 @@ def __check_slice_from_file(source: str, output_option: str, args: argparse.Name
     output_option_type = get_uri_type(output_option)
     if output_option_type == URI_TYPE_STDIO:
         print("Print all possible slice decompositions of " + source_message)
-        slice.decompose_file(source)
+        slicing.decompose_file(source)
 
     elif output_option_type == URI_TYPE_DIRECTORY:
         print("Save to the " + output_message + " all the slice decompositions of " + source_message)

@@ -4,21 +4,24 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-import networkx
 from typing import Dict, Optional
+
+import networkx
+
 from program_slicing.graph.parse import parse
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
-from program_slicing.graph.cdg_content import CDGContent
-from program_slicing.graph.cfg_content import CFGContent
+from program_slicing.graph.cdg_node import CDGNode
+from program_slicing.graph.cfg_node import CFGNode
 from program_slicing.graph import convert
 
 
 class ProgramGraphsManager:
+
     def __init__(self, source_code: str = None, lang: str = None):
         self.cdg: ControlDependenceGraph = ControlDependenceGraph()
         self.cfg: ControlFlowGraph = ControlFlowGraph()
-        self.simple_block: Dict[CDGContent, CFGContent] = {}
+        self.simple_block: Dict[CDGNode, CFGNode] = {}
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
 
@@ -40,7 +43,7 @@ class ProgramGraphsManager:
     def get_control_flow_graph(self) -> ControlFlowGraph:
         return self.cfg
 
-    def get_simple_block(self, node: CDGContent) -> Optional[CFGContent]:
+    def get_simple_block(self, node: CDGNode) -> Optional[CFGNode]:
         return self.simple_block.get(node, None)
 
     def init_by_source_code(self, source_code: str, lang: str) -> None:
@@ -58,6 +61,6 @@ class ProgramGraphsManager:
 
     def __build_dependencies(self) -> None:
         self.simple_block.clear()
-        for block in networkx.algorithms.traversal.dfs_tree(self.cdg):
+        for block in networkx.algorithms.traversal.dfs_tree(self.cfg):
             for node in block.get_content():
                 self.simple_block[node] = block

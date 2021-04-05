@@ -4,13 +4,18 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/17'
 
-from typing import List, Generator
-
 import os
-from program_slicing.graph.parse import parse
-from program_slicing.graph import convert
+from typing import Set, Dict, List, Generator
+
+import networkx
+
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
+from program_slicing.graph.manager import ProgramGraphsManager
+from program_slicing.graph.cdg import ControlDependenceGraph
+from program_slicing.graph.cdg_node import CDGNode, \
+    CDG_NODE_TYPE_VARIABLE, \
+    CDG_NODE_TYPE_ASSIGNMENT
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -54,11 +59,46 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     Decompose the specified source code and return all the decomposition variants.
     :param source_code: source code that should be decomposed.
     :param lang: source code format like '.java' or '.xml'.
-    :return: generator of decomposed versions.
+    :return: generator of decomposed source code versions in a string format.
     """
-    control_dependence_graph = parse.control_dependence_graph(source_code, lang)
-    convert.cdg.to_cfg(control_dependence_graph)
-    return (str(i) for i in range(1))
+    manager = ProgramGraphsManager(source_code, lang)
+    cdg = manager.cdg
+    function_nodes = cdg.get_entry_points()
+    for function_node in function_nodes:
+        slicing_criteria = __obtain_slicing_criteria(cdg, function_node)
+        for variable_node, seed_statement_node in slicing_criteria.items():
+            # TODO: finish logic.
+            yield str((variable_node, seed_statement_node))
+
+
+def __obtain_variable_nodes(cdg: ControlDependenceGraph, root: CDGNode) -> Set[CDGNode]:
+    return {
+        node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
+        if node.node_type == CDG_NODE_TYPE_VARIABLE
+    }
+
+
+def __obtain_seed_statement_nodes(
+        cdg: ControlDependenceGraph,
+        root: CDGNode,
+        variable_node: CDGNode) -> Set[CDGNode]:
+    return {
+        node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
+        if __is_slicing_criterion(node, variable_node)
+    }
+
+
+def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGNode) -> Dict[CDGNode, Set[CDGNode]]:
+    variable_nodes = __obtain_variable_nodes(cdg, root)
+    return {
+        variable_node: __obtain_seed_statement_nodes(cdg, root, variable_node) for variable_node in variable_nodes}
+
+
+def __is_slicing_criterion(assignment_node: CDGNode, variable_node: CDGNode) -> bool:
+    return \
+        assignment_node.node_type == CDG_NODE_TYPE_ASSIGNMENT and \
+        variable_node.node_type == CDG_NODE_TYPE_VARIABLE and \
+        variable_node.name == assignment_node.name
 
 
 def __get_applicable_formats() -> List[str]:

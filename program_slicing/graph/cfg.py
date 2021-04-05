@@ -4,19 +4,21 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
-import networkx
 from typing import Set
-from program_slicing.graph.cfg_content import CFGContent
+
+import networkx
+
+from program_slicing.graph.cfg_node import CFGNode
 
 
 class ControlFlowGraph(networkx.DiGraph):
 
     def __init__(self):
         super().__init__()
-        self.entry_points: Set[CFGContent] = set()
+        self.entry_points: Set[CFGNode] = set()
 
-    def get_entry_points(self) -> Set[CFGContent]:
+    def get_entry_points(self) -> Set[CFGNode]:
         return self.entry_points
 
-    def add_entry_point(self, root: CFGContent) -> None:
+    def add_entry_point(self, root: CFGNode) -> None:
         self.entry_points.add(root)
