@@ -9,7 +9,7 @@ from program_slicing.decomposition import slicing
 from program_slicing.graph.parse import LANG_JAVA
 
 
-class SliceTestCase(TestCase):
+class SlicingTestCase(TestCase):
 
     def test_decompose_dir(self):
         pass
