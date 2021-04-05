@@ -83,7 +83,7 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGN
         str(ast.__class__),
         node_type,
         line_range,
-        name=str(getattr(ast, 'name', None)))
+        name=__parse_node_name(ast))
     cdg.add_node(node)
     for child in children:
         cdg.add_edge(node, child)
@@ -100,3 +100,15 @@ def __parse_line_range(ast: javalang.parser.tree.Node, children: List[CDGNode]) 
     return (
         (children[0].line_range[0] if children else -1) if ast.position is None else ast.position[0],
         children[-1].line_range[1] if children else (-1 if ast.position is None else ast.position[0]))
+
+
+def __parse_node_name(ast: javalang.parser.tree.Node) -> str:
+    name = getattr(ast, 'name', None)
+    if name is not None:
+        return str(name)
+
+    node_type = __parse_node_type(ast)
+    if node_type == CDG_NODE_TYPE_ASSIGNMENT:
+        name = ast.children[0].member
+
+    return name

@@ -30,6 +30,14 @@ class SlicingTestCase(TestCase):
                "    }" \
                "}"
 
+    @staticmethod
+    def __get_cdg_and_variables_0():
+        source_code = SlicingTestCase.__get_source_code_0()
+        manager = ProgramGraphsManager(source_code, LANG_JAVA)
+        cdg = manager.cdg
+        function_nodes = [node for node in cdg.get_entry_points()]
+        return cdg, obtain_variable_nodes(cdg, function_nodes[0])
+
     def test_decompose_dir(self):
         pass
 
@@ -56,11 +64,15 @@ class SlicingTestCase(TestCase):
         self.assertFalse(is_slicing_criterion(c, c))
 
     def test_obtain_variable_nodes(self):
-        source_code = self.__get_source_code_0()
-        manager = ProgramGraphsManager(source_code, LANG_JAVA)
-        cdg = manager.cdg
-        function_nodes = cdg.get_entry_points()
-        self.assertEqual(1, len(function_nodes))
-        variable_nodes = obtain_variable_nodes(cdg, function_nodes.pop())
+        cdg, variable_nodes = self.__get_cdg_and_variables_0()
         self.assertEqual(2, len(variable_nodes))
         self.assertEqual({"a", "b"}, {variable_node.name for variable_node in variable_nodes})
+
+    def test_obtain_seed_statement_nodes(self):
+        cdg, variable_nodes = self.__get_cdg_and_variables_0()
+        function_nodes = [node for node in cdg.get_entry_points()]
+        for variable_node in variable_nodes:
+            seed_statement_nodes = obtain_seed_statement_nodes(cdg, function_nodes[0], variable_node)
+            self.assertEqual(1, len(seed_statement_nodes))
+            for seed_statement_node in seed_statement_nodes:
+                self.assertEqual(variable_node.name, seed_statement_node.name)
