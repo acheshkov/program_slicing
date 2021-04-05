@@ -12,15 +12,34 @@ from program_slicing.graph.cdg_node import CDG_NODE_TYPE_OBJECT
 
 class CGFNodeTestCase(TestCase):
 
-    def test_relations(self):
-        cdg_node_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
-        cdg_node_b = CDGNode("b", CDG_NODE_TYPE_OBJECT, (1, 1))
-        cdg_node_c = CDGNode("c", CDG_NODE_TYPE_OBJECT, (2, 2))
-        a = CFGNode(content=[cdg_node_a, cdg_node_b])
-        self.assertFalse(a.is_empty())
-        self.assertEqual([cdg_node_a, cdg_node_b], a.content)
-        a.append(cdg_node_c)
-        self.assertEqual([cdg_node_a, cdg_node_b, cdg_node_c], a.content)
-        self.assertEqual(cdg_node_a, a.get_root())
+    def test_constructor(self):
+        a = CFGNode()
+        self.assertEqual([], a.content)
+        cdg_content_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        cdg_content_b = CDGNode("b", CDG_NODE_TYPE_OBJECT, (1, 1))
+        a = CFGNode(content=[cdg_content_a, cdg_content_b])
+        self.assertEqual([cdg_content_a, cdg_content_b], a.content)
+
+    def test_is_empty(self):
         b = CFGNode()
         self.assertTrue(b.is_empty())
+        b.content = [CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))]
+        self.assertFalse(b.is_empty())
+
+    def test_append(self):
+        a = CFGNode()
+        self.assertEqual([], a.content)
+        cdg_content_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        a.append(cdg_content_a)
+        self.assertEqual([cdg_content_a], a.content)
+        cdg_content_b = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        a.append(cdg_content_b)
+        self.assertEqual([cdg_content_a, cdg_content_b], a.content)
+
+    def test_get_root(self):
+        a = CFGNode()
+        self.assertIsNone(a.get_root())
+        cdg_content_a = CDGNode("a", CDG_NODE_TYPE_OBJECT, (0, 0))
+        cdg_content_b = CDGNode("b", CDG_NODE_TYPE_OBJECT, (1, 1))
+        a = CFGNode(content=[cdg_content_a, cdg_content_b])
+        self.assertEqual(cdg_content_a, a.get_root())
