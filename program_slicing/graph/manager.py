@@ -4,8 +4,10 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-import networkx
 from typing import Dict, Optional
+
+import networkx
+
 from program_slicing.graph.parse import parse
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph

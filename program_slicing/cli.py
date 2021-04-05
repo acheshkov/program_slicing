@@ -6,6 +6,7 @@ __date__ = '2021/03/17'
 
 import argparse
 import os
+
 from program_slicing.decomposition import slicing
 
 SLICE = "slice"

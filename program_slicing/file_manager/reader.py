@@ -4,11 +4,11 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2020/05/19'
 
-from typing import Any, AnyStr, List, Generator, Tuple
-
 import json
 import os
 import stat
+
+from typing import Any, AnyStr, List, Generator, Tuple
 
 
 def read_json(path: str) -> Any:

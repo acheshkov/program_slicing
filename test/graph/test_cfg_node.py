@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
 from unittest import TestCase
+
 from program_slicing.graph.cfg_node import CFGNode
 from program_slicing.graph.cdg_node import CDGNode
 from program_slicing.graph.cdg_node import CDG_NODE_TYPE_OBJECT

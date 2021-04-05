@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
 from typing import List, Optional
+
 from program_slicing.graph.cdg_node import CDGNode
 
 

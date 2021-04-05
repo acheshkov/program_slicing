@@ -4,8 +4,10 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
-import networkx
 from typing import Set
+
+import networkx
+
 from program_slicing.graph.cfg_node import CFGNode
 
 

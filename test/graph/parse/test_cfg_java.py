@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
 from unittest import TestCase
+
 from program_slicing.graph.parse.cfg_java import parse
 
 

@@ -4,11 +4,11 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/17'
 
-from typing import List, Generator
-
 import os
+from typing import Set, Dict, List, Generator
+
 import networkx
-from typing import Set, Dict
+
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 from program_slicing.graph.manager import ProgramGraphsManager
