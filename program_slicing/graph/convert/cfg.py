@@ -15,4 +15,4 @@ def to_cdg(cdg: ControlFlowGraph) -> ControlDependenceGraph:
     :param cdg: Control Flow Graph that should to be converted.
     :return: Control Dependence Graph
     """
-    return ControlDependenceGraph()
+    raise NotImplementedError()
