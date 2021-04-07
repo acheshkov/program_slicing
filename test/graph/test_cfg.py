@@ -9,5 +9,5 @@ from unittest import TestCase
 
 class CFGTestCase(TestCase):
 
-    def test_roots(self):
+    def test_entry_points(self):
         pass

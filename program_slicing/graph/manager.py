@@ -4,7 +4,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from typing import Dict, Optional
+from typing import Dict, Optional, Set
 
 import networkx
 
@@ -22,6 +22,7 @@ class ProgramGraphsManager:
         self.cdg: ControlDependenceGraph = ControlDependenceGraph()
         self.cfg: ControlFlowGraph = ControlFlowGraph()
         self.simple_block: Dict[CDGNode, CFGNode] = {}
+        self.reach_blocks: Dict[CFGNode, Set[CFGNode]] = {}
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
 
@@ -46,6 +47,9 @@ class ProgramGraphsManager:
     def get_simple_block(self, node: CDGNode) -> Optional[CFGNode]:
         return self.simple_block.get(node, None)
 
+    def get_reach_blocks(self, block: CFGNode) -> Set[CFGNode]:
+        return self.__build_reach_blocks(block)
+
     def init_by_source_code(self, source_code: str, lang: str) -> None:
         self.init_by_control_dependence_graph(parse.control_dependence_graph(source_code, lang))
 
@@ -64,3 +68,16 @@ class ProgramGraphsManager:
         for block in networkx.algorithms.traversal.dfs_tree(self.cfg):
             for node in block.get_content():
                 self.simple_block[node] = block
+
+    def __build_reach_blocks(self, block: CFGNode, visited_nodes: Set[CFGNode] = None) -> Set[CFGNode]:
+        if block in self.reach_blocks:
+            return self.reach_blocks[block]
+        if visited_nodes is None:
+            visited_nodes = set()
+        visited_nodes.add(block)
+        result = set()
+        for child in self.cfg.successors(block):
+            if child not in visited_nodes:
+                result += self.__build_reach_blocks(child, visited_nodes)
+        self.reach_blocks[block] = result
+        return result
