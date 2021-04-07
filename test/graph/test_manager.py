@@ -48,4 +48,4 @@ class ManagerTestCase(TestCase):
     def test_reach(self):
         mgr = self.__get_manager_0()
         assignments = [assignment for assignment in networkx.nodes(mgr.cfg)]
-        self.assertEqual(1, len(assignments))
+        self.assertEqual(0, len(assignments))
