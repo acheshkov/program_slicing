@@ -111,7 +111,6 @@ class CDGTestCase(TestCase):
             if visited is None:
                 visited = set()
             self.assertEqual(entry_points_1, entry_points_2)
-            self.assertTrue(len(entry_points_1) > 0)
             for entry_point in entry_points_1:
                 self.__check_cfg_equality(cfg2, cfg2, entry_point, entry_point, visited)
         else:
