@@ -65,14 +65,27 @@ class CDGTestCase(TestCase):
         cdg.add_edge(branch, assign_b)
         cdg.add_edge(loop, obj_1)
         cdg.add_edge(entry_point, exit_node)
+        cdg.control_flow = {
+            entry_point: [variable_a],
+            variable_a: [variable_b],
+            variable_b: [loop],
+            loop: [assign_a, exit_node],
+            assign_a: [branch],
+            branch: [statements, assign_b],
+            statements: [obj_0],
+            obj_0: [goto],
+            goto: [loop],
+            assign_b: [obj_1],
+            obj_1: [loop]
+        }
+        cdg.add_entry_point(entry_point)
 
-        block_0 = CFGNode([entry_point, variable_a, variable_b])
+        block_0 = CFGNode([variable_a, variable_b])
         block_1 = CFGNode([loop])
         block_2 = CFGNode([assign_a, branch])
         block_3 = CFGNode([statements, obj_0, goto])
-        block_4 = CFGNode([assign_b])
-        block_5 = CFGNode([obj_1])
-        block_6 = CFGNode([exit_node])
+        block_4 = CFGNode([assign_b, obj_1])
+        block_5 = CFGNode([exit_node])
 
         cfg = ControlFlowGraph()
         cfg.add_nodes_from([
@@ -82,16 +95,15 @@ class CDGTestCase(TestCase):
             block_3,
             block_4,
             block_5,
-            block_6,
         ])
         cfg.add_edge(block_0, block_1)
         cfg.add_edge(block_1, block_2)
         cfg.add_edge(block_2, block_3)
         cfg.add_edge(block_2, block_4)
         cfg.add_edge(block_3, block_1)
-        cfg.add_edge(block_4, block_5)
-        cfg.add_edge(block_5, block_1)
-        cfg.add_edge(block_1, block_6)
+        cfg.add_edge(block_4, block_1)
+        cfg.add_edge(block_1, block_5)
+        cfg.add_entry_point(block_0)
 
         return cdg, cfg
 
@@ -110,15 +122,16 @@ class CDGTestCase(TestCase):
                 entry_points_2 = {root2}
             if visited is None:
                 visited = set()
-            self.assertEqual(entry_points_1, entry_points_2)
-            for entry_point in entry_points_1:
-                self.__check_cfg_equality(cfg2, cfg2, entry_point, entry_point, visited)
+            self.assertEqual(len(entry_points_1), len(entry_points_2))
+            self.assertTrue(len(entry_points_1) > 0)
+            for entry_point_1, entry_point_2 in zip(entry_points_1, entry_points_2):
+                self.__check_cfg_equality(cfg1, cfg2, entry_point_1, entry_point_2, visited)
         else:
-            self.assertEqual(root1, root2)
+            self.assertEqual(root1.content, root2.content)
             visited.add(root1)
             for child1, child2 in zip(cfg1.successors(root1), cfg2.successors(root2)):
                 if child1 not in visited:
-                    self.__check_cfg_equality(cfg2, cfg2, child1, child2, visited)
+                    self.__check_cfg_equality(cfg1, cfg2, child1, child2, visited)
 
     def test_to_cfg(self):
         cdg, cfg = self.__get_cdg_and_cfg_0()
