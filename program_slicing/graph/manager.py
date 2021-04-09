@@ -22,6 +22,7 @@ class ProgramGraphsManager:
         self.cdg: ControlDependenceGraph = ControlDependenceGraph()
         self.cfg: ControlFlowGraph = ControlFlowGraph()
         self.simple_block: Dict[CDGNode, CFGNode] = {}
+        self.dom_blocks: Dict[CFGNode, Set[CFGNode]] = {}
         self.reach_blocks: Dict[CFGNode, Set[CFGNode]] = {}
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
@@ -46,6 +47,17 @@ class ProgramGraphsManager:
 
     def get_simple_block(self, node: CDGNode) -> Optional[CFGNode]:
         return self.simple_block.get(node, None)
+
+    def get_dom_blocks(self, block: CFGNode) -> Set[CFGNode]:
+        if block in self.dom_blocks:
+            return self.dom_blocks[block]
+        result = set()
+        for node in networkx.algorithms.dominating_set(self.cdg, block.get_root()):
+            current_block = self.get_simple_block(node)
+            if current_block is not None:
+                result.add(self.get_simple_block(node))
+        self.dom_blocks[block] = result
+        return result
 
     def get_reach_blocks(self, block: CFGNode) -> Set[CFGNode]:
         return self.__build_reach_blocks(block)
