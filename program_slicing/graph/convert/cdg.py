@@ -4,7 +4,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/04/01'
 
-from typing import Dict
+from typing import Dict, List
 
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
@@ -32,11 +32,11 @@ def __to_cfg(
         cdg: ControlDependenceGraph,
         cfg: ControlFlowGraph,
         block: Dict[CDGNode, CFGNode]) -> None:
-    cfg_children = cdg.control_flow.get(cdg_node, [])
-    prev_block = block.get(cdg_node, None)
-    process_list = []
-    if len(cfg_children) > 1:
-        for child in cfg_children:
+    f_children: List[CDGNode] = cdg.control_flow.get(cdg_node, [])
+    prev_block: CFGNode = block.get(cdg_node, None)
+    process_list: List[CDGNode] = []
+    if len(f_children) > 1:
+        for child in f_children:
             if child in block:
                 __process_loop(child, cfg, block, prev_block)
             else:
@@ -49,7 +49,7 @@ def __to_cfg(
                 block[child] = new_block
                 process_list.append(child)
     else:
-        for child in cfg_children:
+        for child in f_children:
             if child in block:
                 __process_loop(child, cfg, block, prev_block)
             else:
@@ -69,7 +69,7 @@ def __process_loop(
         cfg: ControlFlowGraph,
         block: Dict[CDGNode, CFGNode],
         prev_block: CFGNode) -> None:
-    old_block = block[child]
+    old_block: CFGNode = block[child]
     index = old_block.content.index(child)
     if index == 0:
         if prev_block is not None:
@@ -79,7 +79,7 @@ def __process_loop(
     old_block.content = old_block.content[:index]
     block[child] = new_block
     cfg.add_node(new_block)
-    old_successors = [successor for successor in cfg.successors(old_block)]
+    old_successors: List[CFGNode] = [successor for successor in cfg.successors(old_block)]
     for old_successor in old_successors:
         cfg.remove_edge(old_block, old_successor)
         cfg.add_edge(new_block, old_successor)

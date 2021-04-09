@@ -23,6 +23,3 @@ class ControlFlowGraph(networkx.DiGraph):
 
     def add_entry_point(self, root: CFGNode) -> None:
         self.entry_points.add(root)
-
-    def add_node(self, node: CFGNode, **attr):
-        super().add_node(node, node=node)

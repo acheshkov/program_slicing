@@ -106,15 +106,6 @@ class CDGTestCase(TestCase):
 
         return cdg, cfg
 
-    def __check_cfg_equality(
-            self,
-            cfg1: ControlFlowGraph,
-            cfg2: ControlFlowGraph):
-        def node_match(node1, node2):
-            self.assertEqual(node1["content"].content, node2["content"].content)
-            return node1["content"].content == node2["content"].content
-        return networkx.is_isomorphic(cfg1, cfg2, node_match=node_match)
-
     def test_to_cfg(self):
         cdg, cfg = self.__get_cdg_and_cfg_0()
-        self.assertTrue(self.__check_cfg_equality(cfg, convert.cdg.to_cfg(cdg)))
+        self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
