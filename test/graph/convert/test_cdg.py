@@ -6,6 +6,8 @@ __date__ = '2021/04/02'
 
 from unittest import TestCase
 
+import networkx
+
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph import convert
@@ -40,20 +42,19 @@ class CDGTestCase(TestCase):
         exit_node = CDGNode("", CDG_NODE_TYPE_EXIT, (9, 9))
 
         cdg = ControlDependenceGraph()
-        cdg.add_nodes_from([
-            entry_point,
-            variable_a,
-            variable_b,
-            loop,
-            assign_a,
-            branch,
-            statements,
-            obj_0,
-            goto,
-            assign_b,
-            obj_1,
-            exit_node
-        ])
+        cdg.add_node(entry_point)
+        cdg.add_node(variable_a)
+        cdg.add_node(variable_b)
+        cdg.add_node(loop)
+        cdg.add_node(assign_a)
+        cdg.add_node(branch)
+        cdg.add_node(statements)
+        cdg.add_node(obj_0)
+        cdg.add_node(goto)
+        cdg.add_node(assign_b)
+        cdg.add_node(obj_1)
+        cdg.add_node(exit_node)
+
         cdg.add_edge(entry_point, variable_a)
         cdg.add_edge(entry_point, variable_b)
         cdg.add_edge(entry_point, loop)
@@ -88,14 +89,12 @@ class CDGTestCase(TestCase):
         block_5 = CFGNode([exit_node])
 
         cfg = ControlFlowGraph()
-        cfg.add_nodes_from([
-            block_0,
-            block_1,
-            block_2,
-            block_3,
-            block_4,
-            block_5,
-        ])
+        cfg.add_node(block_0)
+        cfg.add_node(block_1)
+        cfg.add_node(block_2)
+        cfg.add_node(block_3)
+        cfg.add_node(block_4)
+        cfg.add_node(block_5)
         cfg.add_edge(block_0, block_1)
         cfg.add_edge(block_1, block_2)
         cfg.add_edge(block_2, block_3)
@@ -110,29 +109,12 @@ class CDGTestCase(TestCase):
     def __check_cfg_equality(
             self,
             cfg1: ControlFlowGraph,
-            cfg2: ControlFlowGraph,
-            root1: CFGNode = None,
-            root2: CFGNode = None,
-            visited=None):
-        if root1 is None:
-            entry_points_1 = {node for node in cfg1.get_entry_points()}
-            if root2 is None:
-                entry_points_2 = {node for node in cfg2.get_entry_points()}
-            else:
-                entry_points_2 = {root2}
-            if visited is None:
-                visited = set()
-            self.assertEqual(len(entry_points_1), len(entry_points_2))
-            self.assertTrue(len(entry_points_1) > 0)
-            for entry_point_1, entry_point_2 in zip(entry_points_1, entry_points_2):
-                self.__check_cfg_equality(cfg1, cfg2, entry_point_1, entry_point_2, visited)
-        else:
-            self.assertEqual(root1.content, root2.content)
-            visited.add(root1)
-            for child1, child2 in zip(cfg1.successors(root1), cfg2.successors(root2)):
-                if child1 not in visited:
-                    self.__check_cfg_equality(cfg1, cfg2, child1, child2, visited)
+            cfg2: ControlFlowGraph):
+        def node_match(node1, node2):
+            self.assertEqual(node1["content"].content, node2["content"].content)
+            return node1["content"].content == node2["content"].content
+        return networkx.is_isomorphic(cfg1, cfg2, node_match=node_match)
 
     def test_to_cfg(self):
         cdg, cfg = self.__get_cdg_and_cfg_0()
-        self.__check_cfg_equality(cfg, convert.cdg.to_cfg(cdg))
+        self.assertTrue(self.__check_cfg_equality(cfg, convert.cdg.to_cfg(cdg)))

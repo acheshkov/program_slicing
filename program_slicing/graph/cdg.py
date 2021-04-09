@@ -23,3 +23,6 @@ class ControlDependenceGraph(networkx.DiGraph):
 
     def add_entry_point(self, root: CDGNode) -> None:
         self.entry_points.add(root)
+
+    def add_node(self, node: CDGNode, **attr):
+        super().add_node(node, node=node)

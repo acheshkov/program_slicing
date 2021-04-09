@@ -40,6 +40,7 @@ def __to_cfg(
                 __process_loop(child, cfg, block, prev_block)
             else:
                 new_block = CFGNode(content=[child])
+                cfg.add_node(new_block)
                 if prev_block is None:
                     cfg.add_entry_point(new_block)
                 else:
@@ -53,6 +54,7 @@ def __to_cfg(
             else:
                 if prev_block is None:
                     prev_block = CFGNode()
+                    cfg.add_node(prev_block)
                     cfg.add_entry_point(prev_block)
                 prev_block.append(child)
                 block[child] = prev_block
@@ -69,6 +71,8 @@ def __process_loop(
     old_block = block[child]
     index = old_block.content.index(child)
     if index == 0:
+        if prev_block is not None:
+            cfg.add_edge(prev_block, old_block)
         return
     new_block = CFGNode(content=old_block.content[index:])
     old_block.content = old_block.content[:index]
