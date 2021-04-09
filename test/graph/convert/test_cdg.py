@@ -37,9 +37,9 @@ class CDGTestCase(TestCase):
         statements = CDGNode("", CDG_NODE_TYPE_STATEMENTS, (6, 7))
         obj_0 = CDGNode("", CDG_NODE_TYPE_OBJECT, (6, 6))
         goto = CDGNode("", CDG_NODE_TYPE_GOTO, (7, 7))
-        assign_b = CDGNode("", CDG_NODE_TYPE_ASSIGNMENT, (7, 7), name="b")
-        obj_1 = CDGNode("", CDG_NODE_TYPE_OBJECT, (8, 8))
-        exit_node = CDGNode("", CDG_NODE_TYPE_EXIT, (9, 9))
+        assign_b = CDGNode("", CDG_NODE_TYPE_ASSIGNMENT, (8, 8), name="b")
+        obj_1 = CDGNode("", CDG_NODE_TYPE_OBJECT, (9, 9))
+        exit_node = CDGNode("", CDG_NODE_TYPE_EXIT, (10, 10))
 
         cdg = ControlDependenceGraph()
         cdg.add_node(entry_point)
