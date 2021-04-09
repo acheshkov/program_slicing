@@ -35,31 +35,26 @@ def __to_cfg(
     f_children: List[CDGNode] = cdg.control_flow.get(cdg_node, [])
     prev_block: CFGNode = block.get(cdg_node, None)
     process_list: List[CDGNode] = []
-    if len(f_children) > 1:
-        for child in f_children:
-            if child in block:
-                __process_loop(child, cfg, block, prev_block)
+    for child in f_children:
+        if child in block:
+            __process_loop(child, cfg, block, prev_block)
+        elif len(f_children) > 1:
+            new_block = CFGNode(content=[child])
+            cfg.add_node(new_block)
+            if prev_block is None:
+                cfg.add_entry_point(new_block)
             else:
-                new_block = CFGNode(content=[child])
-                cfg.add_node(new_block)
-                if prev_block is None:
-                    cfg.add_entry_point(new_block)
-                else:
-                    cfg.add_edge(prev_block, new_block)
-                block[child] = new_block
-                process_list.append(child)
-    else:
-        for child in f_children:
-            if child in block:
-                __process_loop(child, cfg, block, prev_block)
-            else:
-                if prev_block is None:
-                    prev_block = CFGNode()
-                    cfg.add_node(prev_block)
-                    cfg.add_entry_point(prev_block)
-                prev_block.append(child)
-                block[child] = prev_block
-                process_list.append(child)
+                cfg.add_edge(prev_block, new_block)
+            block[child] = new_block
+            process_list.append(child)
+        else:
+            if prev_block is None:
+                prev_block = CFGNode()
+                cfg.add_node(prev_block)
+                cfg.add_entry_point(prev_block)
+            prev_block.append(child)
+            block[child] = prev_block
+            process_list.append(child)
     for child in process_list:
         __to_cfg(child, cdg, cfg, block)
 
