@@ -17,7 +17,7 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     Convert the Control Dependence Graph into a Control Flow Graph.
     Any changes in the original graph after converting will affect the converted one.
     :param cdg: Control Dependence Graph that should to be converted.
-    :return: Control Flow Graph
+    :return: Control Flow Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
     """
     cfg = ControlFlowGraph()
     block: Dict[CDGNode, CFGNode] = {}
