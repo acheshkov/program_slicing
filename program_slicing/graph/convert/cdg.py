@@ -4,60 +4,80 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/04/01'
 
-from typing import List
+from typing import Dict, List
 
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.cdg_node import CDGNode
 from program_slicing.graph.cfg_node import CFGNode
-from program_slicing.graph.cdg_node import \
-    CDG_NODE_TYPE_BRANCH, \
-    CDG_NODE_TYPE_LOOP
 
 
 def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     """
     Convert the Control Dependence Graph into a Control Flow Graph.
-    Any changes in the original graph after converting will affect the converted one.
+    New graph will contain links on nodes of the original one so that
+    any changes made after converting in the original graph will affect the converted one.
     :param cdg: Control Dependence Graph that should to be converted.
-    :return: Control Flow Graph
+    :return: Control Flow Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
     """
     cfg = ControlFlowGraph()
+    block: Dict[CDGNode, CFGNode] = {}
     for root in cdg.get_entry_points():
-        __to_cfg(root, cdg=cdg, cfg=cfg)
+        __to_cfg(root, cdg=cdg, cfg=cfg, block=block)
     return cfg
 
 
-def __to_cfg(cdg_node: CDGNode, cdg: ControlDependenceGraph, cfg: ControlFlowGraph) -> None:
-    node_type = cdg_node.node_type
-    children = [child for child in cdg.successors(cdg_node)]
-    if node_type == CDG_NODE_TYPE_BRANCH:
-        __to_cfg_block_branch(children, cfg)
-    elif node_type == CDG_NODE_TYPE_LOOP:
-        __to_cfg_block_loop(children, cfg)
+def __to_cfg(
+        cdg_node: CDGNode,
+        cdg: ControlDependenceGraph,
+        cfg: ControlFlowGraph,
+        block: Dict[CDGNode, CFGNode]) -> None:
+    f_children: List[CDGNode] = cdg.control_flow.get(cdg_node, [])
+    prev_block: CFGNode = block.get(cdg_node, None)
+    process_list: List[CDGNode] = []
+    for child in f_children:
+        if child in block:
+            __process_loop(child, cfg, block, prev_block)
+        elif len(f_children) > 1:
+            new_block = CFGNode(content=[child])
+            cfg.add_node(new_block)
+            if prev_block is None:
+                cfg.add_entry_point(new_block)
+            else:
+                cfg.add_edge(prev_block, new_block)
+            block[child] = new_block
+            process_list.append(child)
+        else:
+            if prev_block is None:
+                prev_block = CFGNode()
+                cfg.add_node(prev_block)
+                cfg.add_entry_point(prev_block)
+            prev_block.append(child)
+            block[child] = prev_block
+            process_list.append(child)
+    for child in process_list:
+        __to_cfg(child, cdg, cfg, block)
 
 
-def __to_cfg_block_branch(children: List[CDGNode], cfg: ControlFlowGraph) -> None:
-    condition_block = CFGNode(
-        content=[children[0]])
-    true_block = CFGNode(
-        content=[children[-1]])
-    cfg.add_node(condition_block)
-    cfg.add_node(true_block)
-    cfg.add_edge(condition_block, true_block)
-    if len(children) == 3:
-        false_block = CFGNode(
-            content=[children[-2]])
-        cfg.add_node(false_block)
-        cfg.add_edge(condition_block, false_block)
-
-
-def __to_cfg_block_loop(children: List[CDGNode], cfg: ControlFlowGraph) -> None:
-    condition_block = CFGNode(
-        content=[children[0]])
-    body_block = CFGNode(
-        content=[children[-1]])
-    cfg.add_node(condition_block)
-    cfg.add_node(body_block)
-    cfg.add_edge(condition_block, body_block)
-    cfg.add_edge(body_block, condition_block)
+def __process_loop(
+        child: CDGNode,
+        cfg: ControlFlowGraph,
+        block: Dict[CDGNode, CFGNode],
+        prev_block: CFGNode) -> None:
+    old_block: CFGNode = block[child]
+    index = old_block.content.index(child)
+    if index == 0:
+        if prev_block is not None:
+            cfg.add_edge(prev_block, old_block)
+        return
+    new_block = CFGNode(content=old_block.content[index:])
+    old_block.content = old_block.content[:index]
+    block[child] = new_block
+    cfg.add_node(new_block)
+    old_successors: List[CFGNode] = [successor for successor in cfg.successors(old_block)]
+    for old_successor in old_successors:
+        cfg.remove_edge(old_block, old_successor)
+        cfg.add_edge(new_block, old_successor)
+    cfg.add_edge(old_block, new_block)
+    if prev_block is not None:
+        cfg.add_edge(prev_block, new_block)
