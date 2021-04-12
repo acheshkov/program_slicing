@@ -21,14 +21,16 @@ class SlicingTestCase(TestCase):
 
     @staticmethod
     def __get_source_code_0():
-        return "class A {" \
-               "    void main() {" \
-               "        int a = 0;" \
-               "        int b = 10;" \
-               "        a = b;" \
-               "        b += a;" \
-               "    }" \
-               "}"
+        return """
+        class A {
+            void main() {
+                int a = 0;
+                int b = 10;
+                a = b;
+                b += a;
+            }
+        }
+        """
 
     @staticmethod
     def __get_cdg_and_variables_0():

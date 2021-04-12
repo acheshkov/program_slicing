@@ -16,24 +16,26 @@ class ManagerTestCase(TestCase):
 
     @staticmethod
     def __get_source_code_0():
-        return "class A {" \
-               "    public static int main(){" \
-               "        int n = 10;" \
-               "        for(int i = 0; i < n; i += 1) {" \
-               "            if (i > 4) {" \
-               "                System.out.println(\"cheburek\");" \
-               "                continue;" \
-               "            }" \
-               "            if (i < 6)" \
-               "                System.out.println(\"lol\");" \
-               "            else {" \
-               "                System.out.println(\"kek\");" \
-               "                break;" \
-               "            }" \
-               "        }" \
-               "        return n;" \
-               "    }" \
-               "}"
+        return """
+        class A {
+            public static int main(){
+                int n = 10;
+                for(int i = 0; i < n; i += 1) {
+                    if (i < 4) {
+                        System.out.println("lol");
+                        continue;
+                    }
+                    if (i > 6)
+                        System.out.println("che bu rek");
+                        break;
+                    else {
+                        System.out.println("kek");
+                    }
+                }
+                return n;
+            }
+        }
+        """
 
     @staticmethod
     def __get_manager_0():
@@ -48,4 +50,4 @@ class ManagerTestCase(TestCase):
     def test_reach(self):
         mgr = self.__get_manager_0()
         assignments = [assignment for assignment in networkx.nodes(mgr.cfg)]
-        self.assertEqual(0, len(assignments))
+        self.assertEqual(1, len(assignments))
