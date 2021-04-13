@@ -4,9 +4,11 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
-import javalang
 from typing import List, Tuple
 
+from tree_sitter import Node
+
+from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cdg_node import CDGNode, \
     CDG_NODE_TYPE_FUNCTION, \
@@ -22,30 +24,31 @@ from program_slicing.graph.cdg_node import CDGNode, \
     CDG_NODE_TYPE_EXIT
 
 
+parser = tree_sitter_parsers.java()
 node_type_map = {
-    javalang.parser.tree.VariableDeclarator:
+    "variable_definition":
         CDG_NODE_TYPE_VARIABLE,
-    javalang.parser.tree.MethodDeclaration:
+    "function_definition":
         CDG_NODE_TYPE_FUNCTION,
-    javalang.parser.tree.IfStatement:
+    "if":
         CDG_NODE_TYPE_BRANCH,
-    javalang.parser.tree.TryStatement:
+    "try":
         CDG_NODE_TYPE_BRANCH,
-    javalang.parser.tree.WhileStatement:
+    "while":
         CDG_NODE_TYPE_LOOP,
-    javalang.parser.tree.ForStatement:
+    "for":
         CDG_NODE_TYPE_LOOP,
-    javalang.parser.tree.Assignment:
+    "assign":
         CDG_NODE_TYPE_ASSIGNMENT,
-    javalang.parser.tree.MethodInvocation:
+    "call":
         CDG_NODE_TYPE_CALL,
-    javalang.parser.tree.BlockStatement:
+    "block":
         CDG_NODE_TYPE_STATEMENTS,
-    javalang.parser.tree.ContinueStatement:
+    "continue":
         CDG_NODE_TYPE_GOTO,
-    javalang.parser.tree.BreakStatement:
+    "break":
         CDG_NODE_TYPE_BREAK,
-    javalang.parser.tree.ReturnStatement:
+    "return":
         CDG_NODE_TYPE_EXIT
 }
 
@@ -56,13 +59,13 @@ def parse(source_code: str) -> ControlDependenceGraph:
     :param source_code: the string that should to be parsed.
     :return: Control Dependence Graph
     """
-    ast = javalang.parse.parse(source_code)
+    ast = parser.parse(bytes(source_code, "utf8"))
     result = ControlDependenceGraph()
-    __parse(ast, result)
+    __parse(ast.root_node, result)
     return result
 
 
-def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGNode:
+def __parse(ast: Node, cdg: ControlDependenceGraph) -> CDGNode:
     """
     Parse the javalang ast into a Control Dependence Graph.
     :param ast: javalang node
@@ -71,11 +74,11 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGN
     """
     children = []
     for child in ast.children:
-        if issubclass(type(child), javalang.parser.tree.Node):
+        if issubclass(type(child), Node):
             children.append(__parse(child, cdg))
         elif type(child) is list or type(child) is set:
             for sub_child in child:
-                if issubclass(type(sub_child), javalang.parser.tree.Node):
+                if issubclass(type(sub_child), Node):
                     children.append(__parse(sub_child, cdg))
     node_type = __parse_node_type(ast)
     line_range = __parse_line_range(ast, children)
@@ -92,17 +95,17 @@ def __parse(ast: javalang.parser.tree.Node, cdg: ControlDependenceGraph) -> CDGN
     return node
 
 
-def __parse_node_type(ast: javalang.parser.tree.Node) -> str:
+def __parse_node_type(ast: Node) -> str:
     return node_type_map.get(type(ast), CDG_NODE_TYPE_OBJECT)
 
 
-def __parse_line_range(ast: javalang.parser.tree.Node, children: List[CDGNode]) -> Tuple[int, int]:
+def __parse_line_range(ast: Node, children: List[CDGNode]) -> Tuple[int, int]:
     return (
-        (children[0].line_range[0] if children else -1) if ast.position is None else ast.position[0],
-        children[-1].line_range[1] if children else (-1 if ast.position is None else ast.position[0]))
+        (children[0].line_range[0] if children else -1) if ast.start_point is None else ast.start_point,
+        (children[-1].line_range[1] if children else -1) if ast.end_point is None else ast.end_point)
 
 
-def __parse_node_name(ast: javalang.parser.tree.Node) -> str:
+def __parse_node_name(ast: Node) -> str:
     name = getattr(ast, 'name', None)
     if name is not None:
         return str(name)
