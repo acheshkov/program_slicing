@@ -9,18 +9,21 @@ import os
 from tree_sitter import Language, Parser
 
 
+project_path = os.path.split(os.path.split(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0])[0])[0]
+
 Language.build_library(
     # Store the library in the `build` directory
-    os.path.join("..", "build", "languages.so"),
+    os.path.join(project_path, "build", "languages.so"),
 
     # Include one or more languages
     [
-        os.path.join("..", "vendor", "tree-sitter-java")
+        os.path.join(project_path, "vendor", "tree-sitter-java")
     ]
 )
 
 
 def java() -> Parser:
     parser = Parser()
-    parser.set_language(Language(os.path.join("..", "build", "languages.so"), "java"))
+    parser.set_language(Language(os.path.join(
+        project_path, "build", "languages.so"), "java"))
     return parser
