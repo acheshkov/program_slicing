@@ -5,11 +5,12 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/04/13'
 
 import os
+from pathlib import Path
 
 from tree_sitter import Language, Parser
 
 
-project_path = os.path.split(os.path.split(os.path.split(os.path.split(os.path.realpath(__file__))[0])[0])[0])[0]
+project_path = Path(*Path(__file__).parts[:-4])
 
 Language.build_library(
     # Store the library in the `build` directory
