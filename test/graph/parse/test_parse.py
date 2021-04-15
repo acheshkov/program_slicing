@@ -16,14 +16,12 @@ class ParseTestCase(TestCase):
 
     def __check_graph(self, graph):
         self.assertIsNotNone(graph)
-        # TODO: add more checks
+        self.assertTrue(len(graph) > 0)
 
     def test_control_flow_graph(self):
-        lang = LANG_JAVA
-        code = "class A {}"
-        self.__check_graph(control_flow_graph(code, lang))
+        code = "class A { void foo() {} }"
+        self.__check_graph(control_flow_graph(code, LANG_JAVA))
 
     def test_control_dependence_graph(self):
-        lang = LANG_JAVA
-        code = "class A {}"
-        self.__check_graph(control_dependence_graph(code, lang))
+        code = "class A { void foo() {} }"
+        self.__check_graph(control_dependence_graph(code, LANG_JAVA))

@@ -121,16 +121,6 @@ def __handle_try(
     return __handle_node(node, source_code_bytes, ast, cdg, break_nodes, continue_nodes)
 
 
-def __handle_while(
-        node: CDGNode,
-        source_code_bytes,
-        ast: Node,
-        cdg: ControlDependenceGraph,
-        break_nodes: List[CDGNode] = None,
-        continue_nodes: List[CDGNode] = None) -> Tuple[List[CDGNode], List[CDGNode]]:
-    return __handle_node(node, source_code_bytes, ast, cdg, break_nodes, continue_nodes)
-
-
 def __handle_for(
         node: CDGNode,
         source_code_bytes,
@@ -183,6 +173,80 @@ def __handle_for(
     else:
         entry_points += local_continue_nodes
     __route_control_flow(entry_points, condition[0], cdg)
+    for child in body:
+        cdg.add_edge(node, child)
+    local_break_nodes.append(node)
+    return siblings, local_break_nodes
+
+
+def __handle_for_each(
+        node: CDGNode,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_nodes: List[CDGNode] = None,
+        continue_nodes: List[CDGNode] = None) -> Tuple[List[CDGNode], List[CDGNode]]:
+    modifiers_node = ast.children[0].next_named_sibling
+    modifiers_node = modifiers_node if modifiers_node.type == "modifiers" else None
+    type_node = ast.child_by_field_name("type")
+    name_node = ast.child_by_field_name("name")
+    if modifiers_node is None:
+        start_point, _ = __parse_position_range(type_node)
+    else:
+        start_point, _ = __parse_position_range(modifiers_node)
+    _, end_point = __parse_position_range(name_node)
+    variable = CDGNode(
+        "enhanced_for_variable_declarator",
+        CDG_NODE_TYPE_VARIABLE,
+        start_point=start_point,
+        end_point=end_point,
+        name=__parse_node_name(source_code_bytes, name_node))
+    cdg.add_node(variable)
+    siblings = [variable]
+    entry_points = [variable]
+    if modifiers_node is not None:
+        siblings += __parse(
+            source_code_bytes,
+            modifiers_node,
+            cdg,
+            entry_points,
+            break_nodes=break_nodes,
+            continue_nodes=continue_nodes)
+    siblings += __parse(
+        source_code_bytes,
+        type_node,
+        cdg,
+        entry_points,
+        break_nodes=break_nodes,
+        continue_nodes=continue_nodes)
+    siblings += __parse(
+        source_code_bytes,
+        name_node,
+        cdg,
+        entry_points,
+        break_nodes=break_nodes,
+        continue_nodes=continue_nodes)
+    siblings += __parse(
+        source_code_bytes,
+        ast.child_by_field_name("value"),
+        cdg,
+        entry_points,
+        break_nodes=break_nodes,
+        continue_nodes=continue_nodes)
+    siblings.append(node)
+    __route_control_flow(entry_points, node, cdg)
+    entry_points = [node]
+    local_break_nodes = []
+    local_continue_nodes = []
+    body = __parse(
+        source_code_bytes,
+        ast.child_by_field_name("body"),
+        cdg,
+        entry_points,
+        break_nodes=local_break_nodes,
+        continue_nodes=local_continue_nodes)
+    entry_points += local_continue_nodes
+    __route_control_flow(entry_points, siblings[0], cdg)
     for child in body:
         cdg.add_edge(node, child)
     local_break_nodes.append(node)
@@ -254,9 +318,11 @@ node_type_and_handler_map = {
     "try_statement":
         (CDG_NODE_TYPE_BRANCH, __handle_try),
     "while_statement":
-        (CDG_NODE_TYPE_LOOP, __handle_while),
+        (CDG_NODE_TYPE_LOOP, __handle_for),
     "for_statement":
         (CDG_NODE_TYPE_LOOP, __handle_for),
+    "enhanced_for_statement":
+        (CDG_NODE_TYPE_LOOP, __handle_for_each),
     "assignment_expression":
         (CDG_NODE_TYPE_ASSIGNMENT, __handle_assignment),
     "method_invocation":
@@ -341,7 +407,7 @@ def __parse_node_name(source_code_bytes: bytes, ast: Node) -> Optional[str]:
     return None
 
 
-def __route_control_flow(nodes_from: List[CDGNode], node_to: CDGNode, cdg: ControlDependenceGraph):
+def __route_control_flow(nodes_from: List[CDGNode], node_to: CDGNode, cdg: ControlDependenceGraph) -> None:
     for entry_point in nodes_from:
         if entry_point not in cdg.control_flow:
             cdg.control_flow[entry_point] = [node_to]
