@@ -13,7 +13,6 @@ CDG_NODE_TYPE_CALL = "CALL"
 CDG_NODE_TYPE_STATEMENTS = "STATEMENTS"
 CDG_NODE_TYPE_BRANCH = "BRANCH"
 CDG_NODE_TYPE_LOOP = "LOOP"
-CDG_NODE_TYPE_BREAK = "BREAK"
 CDG_NODE_TYPE_GOTO = "GOTO"
 CDG_NODE_TYPE_OBJECT = "OBJECT"
 CDG_NODE_TYPE_EXIT = "EXIT"
@@ -24,9 +23,11 @@ class CDGNode:
             self,
             ast_class: str,
             node_type: str,
-            line_range: Tuple[int, int],
+            start_point: Tuple[int, int],
+            end_point: Tuple[int, int],
             name: Optional[str] = None):
         self.ast_class: str = ast_class
         self.node_type: int = node_type
-        self.line_range: Tuple[int, int] = line_range
+        self.start_point: Tuple[int, int] = start_point
+        self.end_point: Tuple[int, int] = end_point
         self.name: Optional[str] = name

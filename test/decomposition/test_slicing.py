@@ -21,14 +21,16 @@ class SlicingTestCase(TestCase):
 
     @staticmethod
     def __get_source_code_0():
-        return "class A {" \
-               "    void main() {" \
-               "        int a = 0;" \
-               "        int b = 10;" \
-               "        a = b;" \
-               "        b += a;" \
-               "    }" \
-               "}"
+        return """
+        class A {
+            void main() {
+                int a = 0;
+                int b = 10;
+                a = b;
+                b += a;
+            }
+        }
+        """
 
     @staticmethod
     def __get_cdg_and_variables_0():
@@ -50,9 +52,9 @@ class SlicingTestCase(TestCase):
         self.assertEqual(2, len(res))
 
     def test_is_slicing_criterion(self):
-        a = CDGNode("", CDG_NODE_TYPE_ASSIGNMENT, (1, 1), name="a")
-        b = CDGNode("", CDG_NODE_TYPE_VARIABLE, (2, 2), name="b")
-        c = CDGNode("", CDG_NODE_TYPE_VARIABLE, (3, 3), name="a")
+        a = CDGNode("", CDG_NODE_TYPE_ASSIGNMENT, (1, 1), (1, 2), name="a")
+        b = CDGNode("", CDG_NODE_TYPE_VARIABLE, (2, 2), (2, 3), name="b")
+        c = CDGNode("", CDG_NODE_TYPE_VARIABLE, (3, 3), (3, 4), name="a")
         self.assertFalse(is_slicing_criterion(a, a))
         self.assertFalse(is_slicing_criterion(a, b))
         self.assertTrue(is_slicing_criterion(a, c))
