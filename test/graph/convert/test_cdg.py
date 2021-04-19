@@ -54,6 +54,42 @@ class CDGTestCase(TestCase):
         ])
         return cdg, cfg
 
+    @staticmethod
+    def __get_cdg_and_cfg_1():
+        source_code = """
+        class A {
+            int main(String args) {
+                try {
+                    a = args[10];
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+                catch (MyException e) {
+                }
+                finally {
+                    System.out.println("The 'try catch' is finished.");
+                }
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        cfg = ControlFlowGraph()
+        cfg.add_edges_from([
+            ("2_5_try", "6_6_catch"),
+            ("2_5_try", "11_11_finally"),
+            ("6_6_catch", "9_9_catch"),
+            ("6_6_catch", "6_8_stack_trace"),
+            ("6_8_stack_trace", "11_11_finally"),
+            ("9_9_catch", "11_11_finally"),
+            ("9_9_catch", "9_10_empty_block"),
+            ("9_10_empty_block", "11_11_finally")
+        ])
+        return cdg, cfg
+
     def test_convert_cdg_to_cfg_isomorphic(self):
         cdg, cfg = self.__get_cdg_and_cfg_0()
+        self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
+        cdg, cfg = self.__get_cdg_and_cfg_1()
+        a = convert.cdg.to_cfg(cdg)
         self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
