@@ -95,12 +95,12 @@ def __handle_if(
         continue_nodes=continue_nodes)
     for child in consequence:
         cdg.add_edge(node, child)
-    alternative_node = ast.child_by_field_name("alternative")
+    alternative_ast = ast.child_by_field_name("alternative")
     alternative_entry_points = [node]
-    if alternative_node is not None:
+    if alternative_ast is not None:
         alternative = __parse(
             source_code_bytes,
-            alternative_node,
+            alternative_ast,
             cdg,
             alternative_entry_points,
             break_nodes=break_nodes,
@@ -118,7 +118,85 @@ def __handle_try(
         cdg: ControlDependenceGraph,
         break_nodes: List[CDGNode] = None,
         continue_nodes: List[CDGNode] = None) -> Tuple[List[CDGNode], List[CDGNode]]:
-    return __handle_node(node, source_code_bytes, ast, cdg, break_nodes, continue_nodes)
+    siblings = []
+    entry_points = []
+    resources_ast = ast.child_by_field_name("resources")
+    if resources_ast is not None:
+        siblings += __parse(
+            source_code_bytes,
+            resources_ast,
+            cdg,
+            entry_points,
+            break_nodes=break_nodes,
+            continue_nodes=continue_nodes)
+    body_ast = ast.child_by_field_name("body")
+    siblings += __parse(
+        source_code_bytes,
+        body_ast,
+        cdg,
+        entry_points,
+        break_nodes=break_nodes,
+        continue_nodes=continue_nodes)
+    siblings.append(node)
+    __route_control_flow(entry_points, node, cdg)
+    exit_nodes = [node]
+    entry_points = [node]
+    clause_ast = body_ast.next_named_sibling
+    while clause_ast is not None and clause_ast.type != "finally_clause":
+        clause = __parse(
+            source_code_bytes,
+            clause_ast,
+            cdg,
+            entry_points,
+            break_nodes=break_nodes,
+            continue_nodes=continue_nodes)
+        for child in clause:
+            cdg.add_edge(node, child)
+        node = clause[-1]
+        exit_nodes += entry_points
+        entry_points = [node]
+        clause_ast = clause_ast.next_named_sibling
+    if exit_nodes != entry_points:
+        exit_nodes += entry_points
+    if clause_ast is not None:
+        siblings += __parse(
+            source_code_bytes,
+            clause_ast,
+            cdg,
+            exit_nodes,
+            break_nodes=break_nodes,
+            continue_nodes=continue_nodes)
+    return siblings, exit_nodes
+
+
+def __handle_catch(
+        node: CDGNode,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_nodes: List[CDGNode] = None,
+        continue_nodes: List[CDGNode] = None) -> Tuple[List[CDGNode], List[CDGNode]]:
+    entry_points = []
+    siblings = __parse(
+        source_code_bytes,
+        ast.child_by_field_name("body").prev_named_sibling,
+        cdg,
+        entry_points,
+        break_nodes=break_nodes,
+        continue_nodes=continue_nodes)
+    siblings.append(node)
+    __route_control_flow(entry_points, node, cdg)
+    entry_points = [node]
+    body = __parse(
+        source_code_bytes,
+        ast.child_by_field_name("body"),
+        cdg,
+        entry_points,
+        break_nodes=break_nodes,
+        continue_nodes=continue_nodes)
+    for child in body:
+        cdg.add_edge(node, child)
+    return siblings, entry_points
 
 
 def __handle_for(
@@ -130,11 +208,11 @@ def __handle_for(
         continue_nodes: List[CDGNode] = None) -> Tuple[List[CDGNode], List[CDGNode]]:
     siblings = []
     entry_points = []
-    init_node = ast.child_by_field_name("init")
-    if init_node is not None:
+    init_ast = ast.child_by_field_name("init")
+    if init_ast is not None:
         siblings += __parse(
             source_code_bytes,
-            init_node,
+            init_ast,
             cdg,
             entry_points,
             break_nodes=break_nodes,
@@ -159,11 +237,11 @@ def __handle_for(
         entry_points,
         break_nodes=local_break_nodes,
         continue_nodes=local_continue_nodes)
-    update_node = ast.child_by_field_name("update")
-    if update_node is not None:
+    update_ast = ast.child_by_field_name("update")
+    if update_ast is not None:
         update = __parse(
             source_code_bytes,
-            update_node,
+            update_ast,
             cdg,
             entry_points,
             break_nodes=break_nodes,
@@ -186,42 +264,42 @@ def __handle_for_each(
         cdg: ControlDependenceGraph,
         break_nodes: List[CDGNode] = None,
         continue_nodes: List[CDGNode] = None) -> Tuple[List[CDGNode], List[CDGNode]]:
-    modifiers_node = ast.children[0].next_named_sibling
-    modifiers_node = modifiers_node if modifiers_node.type == "modifiers" else None
-    type_node = ast.child_by_field_name("type")
-    name_node = ast.child_by_field_name("name")
-    if modifiers_node is None:
-        start_point, _ = __parse_position_range(type_node)
+    modifiers_ast = ast.children[0].next_named_sibling
+    modifiers_ast = modifiers_ast if modifiers_ast.type == "modifiers" else None
+    type_ast = ast.child_by_field_name("type")
+    name_ast = ast.child_by_field_name("name")
+    if modifiers_ast is None:
+        start_point, _ = __parse_position_range(type_ast)
     else:
-        start_point, _ = __parse_position_range(modifiers_node)
-    _, end_point = __parse_position_range(name_node)
+        start_point, _ = __parse_position_range(modifiers_ast)
+    _, end_point = __parse_position_range(name_ast)
     variable = CDGNode(
         "enhanced_for_variable_declarator",
         CDG_NODE_TYPE_VARIABLE,
         start_point=start_point,
         end_point=end_point,
-        name=__parse_node_name(source_code_bytes, name_node))
+        name=__parse_node_name(source_code_bytes, name_ast))
     cdg.add_node(variable)
     siblings = [variable]
     entry_points = [variable]
-    if modifiers_node is not None:
+    if modifiers_ast is not None:
         siblings += __parse(
             source_code_bytes,
-            modifiers_node,
+            modifiers_ast,
             cdg,
             entry_points,
             break_nodes=break_nodes,
             continue_nodes=continue_nodes)
     siblings += __parse(
         source_code_bytes,
-        type_node,
+        type_ast,
         cdg,
         entry_points,
         break_nodes=break_nodes,
         continue_nodes=continue_nodes)
     siblings += __parse(
         source_code_bytes,
-        name_node,
+        name_ast,
         cdg,
         entry_points,
         break_nodes=break_nodes,
@@ -317,6 +395,10 @@ node_type_and_handler_map = {
         (CDG_NODE_TYPE_BRANCH, __handle_if),
     "try_statement":
         (CDG_NODE_TYPE_BRANCH, __handle_try),
+    "try_with_resources_statement":
+        (CDG_NODE_TYPE_BRANCH, __handle_try),
+    "catch_clause":
+        (CDG_NODE_TYPE_BRANCH, __handle_catch),
     "while_statement":
         (CDG_NODE_TYPE_LOOP, __handle_for),
     "for_statement":

@@ -113,6 +113,99 @@ class CDGJavaTestCase(TestCase):
             0: CDG_NODE_TYPE_STATEMENTS
         })
 
+    def test_try_catch(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                try {
+                    a = args[10];
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+                finally {
+                    System.out.println("The 'try catch' is finished.");
+                }
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        self.assertEqual(60, len(cdg.nodes))
+        entry_points = [entry_point for entry_point in cdg.entry_points]
+        self.assertEqual(1, len(entry_points))
+        self.check_cdg_children(entry_points, {
+            0: CDG_NODE_TYPE_FUNCTION
+        })
+        function_children = [child for child in cdg.successors(entry_points[0])]
+        self.assertEqual(35, len(function_children))
+        self.check_cdg_children(function_children, {
+            0: CDG_NODE_TYPE_STATEMENTS,
+            2: CDG_NODE_TYPE_STATEMENTS,
+            5: CDG_NODE_TYPE_ASSIGNMENT,
+            15: CDG_NODE_TYPE_BRANCH,
+            18: CDG_NODE_TYPE_STATEMENTS,
+            21: CDG_NODE_TYPE_CALL,
+        })
+        try_children = [child for child in cdg.successors(function_children[15])]
+        self.assertEqual(5, len(try_children))
+        self.check_cdg_children(try_children, {
+            4: CDG_NODE_TYPE_BRANCH
+        })
+        catch_children = [child for child in cdg.successors(try_children[4])]
+        self.assertEqual(12, len(catch_children))
+        self.check_cdg_children(catch_children, {
+            0: CDG_NODE_TYPE_STATEMENTS,
+            3: CDG_NODE_TYPE_CALL
+        })
+
+    def test_resourced_try_multi_catch(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                try (int i = 10) {
+                    a = args[i];
+                }
+                catch (MyException1 e) {
+                    e.printStackTrace();
+                }
+                catch (MyException2 e) {
+                }
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        self.assertEqual(59, len(cdg.nodes))
+        entry_points = [entry_point for entry_point in cdg.entry_points]
+        self.assertEqual(1, len(entry_points))
+        self.check_cdg_children(entry_points, {
+            0: CDG_NODE_TYPE_FUNCTION
+        })
+        function_children = [child for child in cdg.successors(entry_points[0])]
+        self.assertEqual(26, len(function_children))
+        self.check_cdg_children(function_children, {
+            0: CDG_NODE_TYPE_STATEMENTS,
+            11: CDG_NODE_TYPE_STATEMENTS,
+            14: CDG_NODE_TYPE_ASSIGNMENT,
+            24: CDG_NODE_TYPE_BRANCH
+        })
+        try_children = [child for child in cdg.successors(function_children[24])]
+        self.assertEqual(5, len(try_children))
+        self.check_cdg_children(try_children, {
+            4: CDG_NODE_TYPE_BRANCH
+        })
+        catch_1_children = [child for child in cdg.successors(try_children[4])]
+        self.assertEqual(17, len(catch_1_children))
+        self.check_cdg_children(catch_1_children, {
+            0: CDG_NODE_TYPE_STATEMENTS,
+            3: CDG_NODE_TYPE_CALL,
+            16: CDG_NODE_TYPE_BRANCH
+        })
+        catch_2_children = [child for child in cdg.successors(catch_1_children[16])]
+        self.assertEqual(3, len(catch_2_children))
+        self.check_cdg_children(catch_2_children, {
+            0: CDG_NODE_TYPE_STATEMENTS
+        })
+
     def test_parse(self):
         source_code = """
         class A {
