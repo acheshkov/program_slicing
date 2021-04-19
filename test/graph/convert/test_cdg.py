@@ -91,5 +91,4 @@ class CDGTestCase(TestCase):
         cdg, cfg = self.__get_cdg_and_cfg_0()
         self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
         cdg, cfg = self.__get_cdg_and_cfg_1()
-        a = convert.cdg.to_cfg(cdg)
         self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
