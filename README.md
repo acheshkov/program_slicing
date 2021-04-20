@@ -8,12 +8,14 @@ ___
 
 3. ```$ pip install -r requirements.txt```
 
-You should have access to global network to use pip. Python 3 is required.
+You should have access to global network to use pip.
+Python 3.9 with corresponding C compiler is required.
+Run Python Console to check the version of C compiler.
 
 ___
 ## Usage
 
-This project can be used via _Command Line Interface_ or 
+This project can be used via _Command Line Interface_, or
 it can be included into any other Python project as a submodule.
 
 ### Command Line Interface
