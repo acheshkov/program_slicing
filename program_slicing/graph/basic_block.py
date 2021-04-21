@@ -9,7 +9,8 @@ from typing import List, Optional
 from program_slicing.graph.cdg_node import CDGNode
 
 
-class CFGNode:
+class BasicBlock:
+
     def __init__(self, content: List[CDGNode] = None):
         self.content: List[CDGNode] = [] if content is None else content
 

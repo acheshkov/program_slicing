@@ -44,11 +44,11 @@ class ManagerTestCase(TestCase):
     def test_init(self):
         pass
 
-    def test_simple_blocks(self):
+    def test_basic_blocks(self):
         mgr = self.__get_manager_0()
         blocks = [block for block in networkx.nodes(mgr.cfg)]
         self.assertEqual(9, len(blocks))
-        self.assertEqual(9, len(set(mgr.simple_block.values())))
+        self.assertEqual(9, len(set(mgr.basic_block.values())))
 
     def test_reach(self):
         pass

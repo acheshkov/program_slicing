@@ -4,12 +4,17 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/04/01'
 
-from typing import Dict, List
+from typing import Dict, Set, List
+
+import networkx
 
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
-from program_slicing.graph.cdg_node import CDGNode
-from program_slicing.graph.cfg_node import CFGNode
+from program_slicing.graph.ddg import DataDependenceGraph
+from program_slicing.graph.basic_block import BasicBlock
+from program_slicing.graph.cdg_node import CDGNode, \
+    CDG_NODE_TYPE_VARIABLE, \
+    CDG_NODE_TYPE_ASSIGNMENT
 
 
 def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
@@ -21,25 +26,46 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     :return: Control Flow Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
     """
     cfg = ControlFlowGraph()
-    block: Dict[CDGNode, CFGNode] = {}
+    block: Dict[CDGNode, BasicBlock] = {}
     for root in cdg.get_entry_points():
         __to_cfg(root, cdg=cdg, cfg=cfg, block=block)
     return cfg
+
+
+def to_ddg(cdg: ControlDependenceGraph) -> DataDependenceGraph:
+    """
+    Convert the Control Dependence Graph into a Data Dependence Graph.
+    New graph will contain links on nodes of the original one so that
+    any changes made after converting in the original graph will affect the converted one.
+    :param cdg: Control Dependence Graph that should to be converted.
+    :return: Data Dependence Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
+    """
+    cfg = to_cfg(cdg)
+    ddg = DataDependenceGraph()
+    visited: Dict[BasicBlock, Dict[str, Set[BasicBlock]]] = {}
+    variables: Dict[str, Set[BasicBlock]] = {}
+    for root in cfg.get_entry_points():
+        __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
+        ddg.add_entry_point(root)
+        for node in networkx.algorithms.traversal.breadth_first_search.bfs_tree(cfg, root):
+            if node not in visited:
+                __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
+    return ddg
 
 
 def __to_cfg(
         cdg_node: CDGNode,
         cdg: ControlDependenceGraph,
         cfg: ControlFlowGraph,
-        block: Dict[CDGNode, CFGNode]) -> None:
+        block: Dict[CDGNode, BasicBlock]) -> None:
     f_children: List[CDGNode] = cdg.control_flow.get(cdg_node, [])
-    prev_block: CFGNode = block.get(cdg_node, None)
+    prev_block: BasicBlock = block.get(cdg_node, None)
     process_list: List[CDGNode] = []
     for child in f_children:
         if child in block:
             __process_loop(child, cfg, block, prev_block)
         elif len(f_children) > 1:
-            new_block = CFGNode(content=[child])
+            new_block = BasicBlock(content=[child])
             cfg.add_node(new_block)
             if prev_block is None:
                 cfg.add_entry_point(new_block)
@@ -49,7 +75,7 @@ def __to_cfg(
             process_list.append(child)
         else:
             if prev_block is None:
-                prev_block = CFGNode()
+                prev_block = BasicBlock()
                 cfg.add_node(prev_block)
                 cfg.add_entry_point(prev_block)
             prev_block.append(child)
@@ -62,22 +88,54 @@ def __to_cfg(
 def __process_loop(
         child: CDGNode,
         cfg: ControlFlowGraph,
-        block: Dict[CDGNode, CFGNode],
-        prev_block: CFGNode) -> None:
-    old_block: CFGNode = block[child]
+        block: Dict[CDGNode, BasicBlock],
+        prev_block: BasicBlock) -> None:
+    old_block: BasicBlock = block[child]
     index = old_block.content.index(child)
     if index == 0:
         if prev_block is not None:
             cfg.add_edge(prev_block, old_block)
         return
-    new_block = CFGNode(content=old_block.content[index:])
+    new_block = BasicBlock(content=old_block.content[index:])
     old_block.content = old_block.content[:index]
     block[child] = new_block
     cfg.add_node(new_block)
-    old_successors: List[CFGNode] = [successor for successor in cfg.successors(old_block)]
+    old_successors: List[BasicBlock] = [successor for successor in cfg.successors(old_block)]
     for old_successor in old_successors:
         cfg.remove_edge(old_block, old_successor)
         cfg.add_edge(new_block, old_successor)
     cfg.add_edge(old_block, new_block)
     if prev_block is not None:
         cfg.add_edge(prev_block, new_block)
+
+
+def __to_ddg(
+        root: BasicBlock,
+        cfg: ControlFlowGraph,
+        ddg: DataDependenceGraph,
+        visited: Dict[BasicBlock, Dict[str, Set[BasicBlock]]],
+        variables: Dict[str, Set[BasicBlock]]) -> None:
+    if root in visited:
+        variables_entered = visited[root]
+        if all(elem in variables_entered.items() for elem in variables.items()):
+            return
+        for variable, variable_block in variables.items():
+            if variable not in variables_entered:
+                variables_entered[variable] = variable_block.copy()
+            else:
+                variables_entered[variable] |= variable_block
+    else:
+        visited[root] = {variable: variable_block.copy() for variable, variable_block in variables.items()}
+        ddg.add_node(root)
+    variables_entered: Dict[str, Set[BasicBlock]] = visited[root]
+    variables_passed: Dict[str, Set[BasicBlock]] = {
+        variable: variable_block for variable, variable_block in variables_entered.items()
+    }
+    for node in root.get_content():
+        if node.name in variables_entered:
+            for variable_block in variables_entered[node.name]:
+                ddg.add_edge(variable_block, root)
+        if node.node_type == CDG_NODE_TYPE_VARIABLE or node.node_type == CDG_NODE_TYPE_ASSIGNMENT:
+            variables_passed[node.name] = {root}
+    for child in cfg.successors(root):
+        __to_ddg(child, cfg=cfg, ddg=ddg, visited=visited, variables=variables_passed)

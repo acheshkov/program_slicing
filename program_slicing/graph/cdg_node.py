@@ -19,6 +19,7 @@ CDG_NODE_TYPE_EXIT = "EXIT"
 
 
 class CDGNode:
+
     def __init__(
             self,
             ast_class: str,

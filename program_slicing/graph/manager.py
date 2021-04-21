@@ -11,8 +11,9 @@ import networkx
 from program_slicing.graph.parse import parse
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
+from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.cdg_node import CDGNode
-from program_slicing.graph.cfg_node import CFGNode
+from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph import convert
 
 
@@ -21,9 +22,10 @@ class ProgramGraphsManager:
     def __init__(self, source_code: str = None, lang: str = None):
         self.cdg: ControlDependenceGraph = ControlDependenceGraph()
         self.cfg: ControlFlowGraph = ControlFlowGraph()
-        self.simple_block: Dict[CDGNode, CFGNode] = {}
-        self.dom_blocks: Dict[CFGNode, Set[CFGNode]] = {}
-        self.reach_blocks: Dict[CFGNode, Set[CFGNode]] = {}
+        self.ddg: DataDependenceGraph = DataDependenceGraph()
+        self.basic_block: Dict[CDGNode, BasicBlock] = {}
+        self.dom_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
+        self.reach_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
 
@@ -39,27 +41,36 @@ class ProgramGraphsManager:
         result.init_by_control_flow_graph(graph)
         return result
 
+    @classmethod
+    def from_data_dependence_graph(cls, graph: DataDependenceGraph):
+        result = cls()
+        result.init_by_data_dependence_graph(graph)
+        return result
+
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.cdg
 
     def get_control_flow_graph(self) -> ControlFlowGraph:
         return self.cfg
 
-    def get_simple_block(self, node: CDGNode) -> Optional[CFGNode]:
-        return self.simple_block.get(node, None)
+    def get_data_dependence_graph(self) -> DataDependenceGraph:
+        return self.ddg
 
-    def get_dom_blocks(self, block: CFGNode) -> Set[CFGNode]:
+    def get_basic_block(self, node: CDGNode) -> Optional[BasicBlock]:
+        return self.basic_block.get(node, None)
+
+    def get_dom_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         if block in self.dom_blocks:
             return self.dom_blocks[block]
         result = set()
         for node in networkx.algorithms.dominating_set(self.cdg, block.get_root()):
-            current_block = self.get_simple_block(node)
+            current_block = self.get_basic_block(node)
             if current_block is not None:
-                result.add(self.get_simple_block(node))
+                result.add(self.get_basic_block(node))
         self.dom_blocks[block] = result
         return result
 
-    def get_reach_blocks(self, block: CFGNode) -> Set[CFGNode]:
+    def get_reach_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         return self.__build_reach_blocks(block)
 
     def init_by_source_code(self, source_code: str, lang: str) -> None:
@@ -68,20 +79,28 @@ class ProgramGraphsManager:
     def init_by_control_dependence_graph(self, cdg: ControlDependenceGraph) -> None:
         self.cdg = cdg
         self.cfg = convert.cdg.to_cfg(cdg)
+        self.ddg = convert.cdg.to_ddg(cdg)
         self.__build_dependencies()
 
     def init_by_control_flow_graph(self, cfg: ControlFlowGraph) -> None:
         self.cdg = convert.cfg.to_cdg(cfg)
         self.cfg = cfg
+        self.ddg = convert.cfg.to_ddg(cfg)
+        self.__build_dependencies()
+
+    def init_by_data_dependence_graph(self, ddg: DataDependenceGraph) -> None:
+        self.cdg = convert.ddg.to_cdg(ddg)
+        self.cfg = convert.ddg.to_cfg(ddg)
+        self.ddg = ddg
         self.__build_dependencies()
 
     def __build_dependencies(self) -> None:
-        self.simple_block.clear()
+        self.basic_block.clear()
         for block in networkx.algorithms.traversal.dfs_tree(self.cfg):
             for node in block.get_content():
-                self.simple_block[node] = block
+                self.basic_block[node] = block
 
-    def __build_reach_blocks(self, block: CFGNode, visited_nodes: Set[CFGNode] = None) -> Set[CFGNode]:
+    def __build_reach_blocks(self, block: BasicBlock, visited_nodes: Set[BasicBlock] = None) -> Set[BasicBlock]:
         if block in self.reach_blocks:
             return self.reach_blocks[block]
         if visited_nodes is None:

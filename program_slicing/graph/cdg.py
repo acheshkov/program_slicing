@@ -8,7 +8,7 @@ from typing import Set, Dict, List
 
 import networkx
 
-from program_slicing.graph.cfg_node import CDGNode
+from program_slicing.graph.cdg_node import CDGNode
 
 
 class ControlDependenceGraph(networkx.DiGraph):
@@ -17,6 +17,7 @@ class ControlDependenceGraph(networkx.DiGraph):
         super().__init__()
         self.entry_points: Set[CDGNode] = set()
         self.control_flow: Dict[CDGNode, List[CDGNode]] = {}
+        self.data_dependence: Dict[CDGNode, List[CDGNode]] = {}
 
     def get_entry_points(self) -> Set[CDGNode]:
         return self.entry_points
