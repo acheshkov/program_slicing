@@ -6,8 +6,6 @@ __date__ = '2021/04/01'
 
 from typing import Dict, Set, List
 
-import networkx
-
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
@@ -47,9 +45,6 @@ def to_ddg(cdg: ControlDependenceGraph) -> DataDependenceGraph:
     for root in cfg.get_entry_points():
         __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
         ddg.add_entry_point(root)
-        for node in networkx.algorithms.traversal.breadth_first_search.bfs_tree(cfg, root):
-            if node not in visited:
-                __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
     return ddg
 
 
