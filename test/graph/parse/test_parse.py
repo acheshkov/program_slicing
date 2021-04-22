@@ -9,6 +9,8 @@ from unittest import TestCase
 from program_slicing.graph.parse import \
     control_flow_graph, \
     control_dependence_graph, \
+    data_dependence_graph, \
+    program_dependence_graph, \
     LANG_JAVA
 
 
@@ -25,3 +27,11 @@ class ParseTestCase(TestCase):
     def test_control_dependence_graph(self):
         code = "class A { void foo() {} }"
         self.__check_graph(control_dependence_graph(code, LANG_JAVA))
+
+    def test_data_dependence_graph(self):
+        code = "class A { void foo() {} }"
+        self.__check_graph(data_dependence_graph(code, LANG_JAVA))
+
+    def test_program_dependence_graph(self):
+        code = "class A { void foo() {} }"
+        self.__check_graph(program_dependence_graph(code, LANG_JAVA))

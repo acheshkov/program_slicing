@@ -140,3 +140,11 @@ class CDGTestCase(TestCase):
         cdg = self.__get_cdg_1()
         ddg = self.__get_ddg_1()
         self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
+
+    def test_convert_cdg_to_pdg_isomorphic(self):
+        cdg = self.__get_cdg_0()
+        pdg = self.__get_ddg_0()
+        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_ddg(cdg)))
+        cdg = self.__get_cdg_1()
+        pdg = self.__get_ddg_1()
+        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_ddg(cdg)))

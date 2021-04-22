@@ -2,14 +2,14 @@ __licence__ = 'MIT'
 __author__ = 'kuyaki'
 __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
-__date__ = '2021/04/20'
+__date__ = '2021/04/22'
 
 from unittest import TestCase
 
-from program_slicing.graph.parse.ddg_java import parse
+from program_slicing.graph.parse.pdg_java import parse
 
 
-class DDGJavaTestCase(TestCase):
+class PDGJavaTestCase(TestCase):
 
     def test_parse(self):
         source_code = """
@@ -32,7 +32,7 @@ class DDGJavaTestCase(TestCase):
             }
         }
         """
-        ddg = parse(source_code)
-        roots = ddg.get_entry_points()
+        pdg = parse(source_code)
+        roots = pdg.get_entry_points()
         self.assertIsNotNone(roots)
         self.assertEqual(1, len(roots))

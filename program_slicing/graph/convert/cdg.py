@@ -4,15 +4,15 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/04/01'
 
-from typing import Dict, Set, List
+from typing import Dict, List
 
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
+from program_slicing.graph.pdg import ProgramDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
-from program_slicing.graph.cdg_node import CDGNode, \
-    CDG_NODE_TYPE_VARIABLE, \
-    CDG_NODE_TYPE_ASSIGNMENT
+from program_slicing.graph.cdg_node import CDGNode
+from program_slicing.graph.convert.cfg import to_ddg as cfg_to_ddg
 
 
 def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
@@ -39,13 +39,47 @@ def to_ddg(cdg: ControlDependenceGraph) -> DataDependenceGraph:
     :return: Data Dependence Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
     """
     cfg = to_cfg(cdg)
-    ddg = DataDependenceGraph()
-    visited: Dict[BasicBlock, Dict[str, Set[BasicBlock]]] = {}
-    variables: Dict[str, Set[BasicBlock]] = {}
-    for root in cfg.get_entry_points():
-        __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
-        ddg.add_entry_point(root)
-    return ddg
+    return cfg_to_ddg(cfg)
+
+
+def to_pdg(cdg: ControlDependenceGraph) -> ProgramDependenceGraph:
+    """
+    Convert the Control Dependence Graph into a Program Dependence Graph.
+    New graph will contain links on nodes of the original one so that
+    any changes made after converting in the original graph will affect the converted one.
+    :param cdg: Control Dependence Graph that should to be converted.
+    :return: Program Dependence Graph which nodes contain nodes of the original Control Dependence Graph.
+    """
+    ddg = to_ddg(cdg)
+    pdg = ProgramDependenceGraph()
+    block: Dict[CDGNode, BasicBlock] = {}
+    for node in ddg:
+        for cdg_node in node.get_content():
+            block[cdg_node] = node
+    for node in ddg:
+        __to_pdg(node, cdg=cdg, ddg=ddg, pdg=pdg, block=block)
+    for entry_point in ddg.get_entry_points():
+        pdg.add_entry_point(entry_point)
+    return pdg
+
+
+def __to_pdg(
+        node: BasicBlock,
+        cdg: ControlDependenceGraph,
+        ddg: DataDependenceGraph,
+        pdg: ProgramDependenceGraph,
+        block: Dict[CDGNode, BasicBlock]) -> None:
+    pdg.add_node(node)
+    for successor in ddg.successors(node):
+        pdg.add_edge(node, successor)
+    dom_set = set()
+    for cdg_node in node.get_content():
+        for successor in cdg.successors(cdg_node):
+            if successor in block:
+                dom_set.add(block[successor])
+    for successor in dom_set:
+        if successor != node:
+            pdg.add_edge(node, successor)
 
 
 def __to_cfg(
@@ -102,43 +136,3 @@ def __process_loop(
     cfg.add_edge(old_block, new_block)
     if prev_block is not None:
         cfg.add_edge(prev_block, new_block)
-
-
-def __to_ddg(
-        root: BasicBlock,
-        cfg: ControlFlowGraph,
-        ddg: DataDependenceGraph,
-        visited: Dict[BasicBlock, Dict[str, Set[BasicBlock]]],
-        variables: Dict[str, Set[BasicBlock]]) -> None:
-    if root in visited:
-        if not __update_variables(visited[root], variables):
-            return
-    else:
-        visited[root] = {variable: variable_set.copy() for variable, variable_set in variables.items()}
-        ddg.add_node(root)
-    variables_entered: Dict[str, Set[BasicBlock]] = visited[root]
-    variables_passed: Dict[str, Set[BasicBlock]] = {
-        variable: variable_set for variable, variable_set in variables_entered.items()
-    }
-    for node in root.get_content():
-        if node.name in variables_entered:
-            for variable_block in variables_entered[node.name]:
-                ddg.add_edge(variable_block, root)
-        if node.node_type == CDG_NODE_TYPE_VARIABLE or node.node_type == CDG_NODE_TYPE_ASSIGNMENT:
-            variables_passed[node.name] = {root}
-    for child in cfg.successors(root):
-        __to_ddg(child, cfg=cfg, ddg=ddg, visited=visited, variables=variables_passed)
-
-
-def __update_variables(old_variables: Dict[str, Set[BasicBlock]], new_variables: Dict[str, Set[BasicBlock]]) -> bool:
-    updated = False
-    for variable, variable_set in new_variables.items():
-        if variable not in old_variables:
-            old_variables[variable] = variable_set.copy()
-            updated = True
-        else:
-            variable_entered_set = old_variables[variable]
-            diff = variable_set.difference(variable_entered_set)
-            variable_entered_set.update(diff)
-            updated = len(diff) > 0
-    return updated

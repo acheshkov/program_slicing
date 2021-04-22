@@ -2,7 +2,7 @@ __licence__ = 'MIT'
 __author__ = 'kuyaki'
 __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
-__date__ = '2021/04/20'
+__date__ = '2021/04/22'
 
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
@@ -10,34 +10,34 @@ from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.pdg import ProgramDependenceGraph
 
 
-def to_cdg(ddg: DataDependenceGraph) -> ControlDependenceGraph:
+def to_cdg(pdg: ProgramDependenceGraph) -> ControlDependenceGraph:
     """
-    Convert the Data Dependence Graph into a Control Dependence Graph.
+    Convert the Program Dependence Graph into a Control Dependence Graph.
     New graph will contain nodes, links on which where listed in the original one so that
     any changes made after converting in the original graph's content will affect the converted one.
-    :param ddg: Data Dependence Graph that should to be converted.
-    :return: Control Dependence Graph which nodes where contained in the Data Dependence Graph on which it was based on.
+    :param pdg: Program Dependence Graph that should to be converted.
+    :return: Control Dependence Graph which nodes where contained in the original Program Dependence Graph.
     """
     raise NotImplementedError()
 
 
-def to_cfg(ddg: DataDependenceGraph) -> ControlFlowGraph:
+def to_cfg(pdg: ProgramDependenceGraph) -> ControlFlowGraph:
     """
-    Convert the Data Dependence Graph into a Control Flow Graph.
+    Convert the Program Dependence Graph into a Control Flow Graph.
     New graph will contain same nodes as in the original one so that
     any changes made after converting in the original graph's content will affect the converted one.
-    :param ddg: Data Dependence Graph that should to be converted.
-    :return: Control Flow Graph which nodes where presented in the Data Dependence Graph on which it was based on.
+    :param pdg: Program Dependence Graph that should to be converted.
+    :return: Control Flow Graph which nodes where presented in the Program Dependence Graph on which it was based on.
     """
     raise NotImplementedError()
 
 
-def to_pdg(ddg: DataDependenceGraph) -> ProgramDependenceGraph:
+def to_pdg(pdg: ProgramDependenceGraph) -> DataDependenceGraph:
     """
-    Convert the Data Dependence Graph into a Program Dependence Graph.
+    Convert the Program Dependence Graph into a Data Dependence Graph.
     New graph will contain same nodes as in the original one so that
     any changes made after converting in the original graph's content will affect the converted one.
-    :param ddg: Data Dependence Graph that should to be converted.
-    :return: Program Dependence Graph which nodes where presented in the Data Dependence Graph on which it was based on.
+    :param pdg: Program Dependence Graph that should to be converted.
+    :return: Data Dependence Graph which nodes where presented in the Program Dependence Graph on which it was based on.
     """
     raise NotImplementedError()

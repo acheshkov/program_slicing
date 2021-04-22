@@ -11,3 +11,9 @@ class DDGTestCase(TestCase):
 
     def test_to_cdg(self):
         pass
+
+    def test_to_cfg(self):
+        pass
+
+    def test_to_pdg(self):
+        pass
