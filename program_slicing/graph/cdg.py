@@ -17,7 +17,6 @@ class ControlDependenceGraph(networkx.DiGraph):
         super().__init__()
         self.entry_points: Set[CDGNode] = set()
         self.control_flow: Dict[CDGNode, List[CDGNode]] = {}
-        self.data_dependence: Dict[CDGNode, List[CDGNode]] = {}
 
     def get_entry_points(self) -> Set[CDGNode]:
         return self.entry_points
