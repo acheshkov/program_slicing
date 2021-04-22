@@ -116,19 +116,7 @@ def __to_ddg(
         visited: Dict[BasicBlock, Dict[str, Set[BasicBlock]]],
         variables: Dict[str, Set[BasicBlock]]) -> None:
     if root in visited:
-        variables_entered = visited[root]
-        updated = False
-        for variable, variable_set in variables.items():
-            if variable not in variables_entered:
-                variables_entered[variable] = variable_set.copy()
-                updated = True
-            else:
-                variable_entered_set = variables_entered[variable]
-                if not all(elem in variable_entered_set for elem in variable_set):
-                    for variable_block in variable_set:
-                        variable_entered_set.add(variable_block)
-                    updated = True
-        if not updated:
+        if not __update_variables(visited[root], variables):
             return
     else:
         visited[root] = {variable: variable_set.copy() for variable, variable_set in variables.items()}
@@ -145,3 +133,18 @@ def __to_ddg(
             variables_passed[node.name] = {root}
     for child in cfg.successors(root):
         __to_ddg(child, cfg=cfg, ddg=ddg, visited=visited, variables=variables_passed)
+
+
+def __update_variables(old_variables: Dict[str, Set[BasicBlock]], new_variables: Dict[str, Set[BasicBlock]]) -> bool:
+    updated = False
+    for variable, variable_set in new_variables.items():
+        if variable not in old_variables:
+            old_variables[variable] = variable_set.copy()
+            updated = True
+        else:
+            variable_entered_set = old_variables[variable]
+            if not all(elem in variable_entered_set for elem in variable_set):
+                for variable_block in variable_set:
+                    variable_entered_set.add(variable_block)
+                updated = True
+    return updated
