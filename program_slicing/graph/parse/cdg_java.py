@@ -399,6 +399,8 @@ node_type_and_handler_map = {
         (CDG_NODE_TYPE_BRANCH, __handle_try),
     "catch_clause":
         (CDG_NODE_TYPE_BRANCH, __handle_catch),
+    "catch_formal_parameter":
+        (CDG_NODE_TYPE_VARIABLE, __handle_node),
     "while_statement":
         (CDG_NODE_TYPE_LOOP, __handle_for),
     "for_statement":
@@ -484,6 +486,8 @@ def __parse_node_name(source_code_bytes: bytes, ast: Node) -> Optional[str]:
         return __parse_node_name(source_code_bytes, ast.child_by_field_name("name"))
     elif ast.type == "assignment_expression":
         return __parse_node_name(source_code_bytes, ast.child_by_field_name("left"))
+    elif ast.type == "catch_formal_parameter":
+        return __parse_node_name(source_code_bytes, ast.child_by_field_name("name"))
     elif ast.start_point[0] == ast.end_point[0]:
         return source_code_bytes[ast.start_byte: ast.end_byte].decode("utf8")
     return None

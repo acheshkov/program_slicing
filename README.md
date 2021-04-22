@@ -8,12 +8,14 @@ ___
 
 3. ```$ pip install -r requirements.txt```
 
-You should have access to global network to use pip. Python 3 is required.
+You should have access to global network to use pip.
+Python 3.9 with corresponding C compiler is required.
+Run Python Console to check the version of C compiler.
 
 ___
 ## Usage
 
-This project can be used via _Command Line Interface_ or 
+This project can be used via _Command Line Interface_, or
 it can be included into any other Python project as a submodule.
 
 ### Command Line Interface
@@ -112,7 +114,7 @@ ___
 ***Control Flow Graph Node*** - structure that represents _Control Flow Graph_ nodes.
 
 ```python
-from program_slicing.graph.cfg_node import CFGNode
+from program_slicing.graph.basic_block import BasicBlock
 ```
 
 - **get_content** - get the content of the _Control Flow Graph_ node, i.e a list of  _Control Dependence Graph_ nodes.
@@ -141,7 +143,7 @@ manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph
 
 - **get_control_dependence_graph** - return the _Control Dependence Graph_.
 - **get_control_flow_graph** - return the _Control Flow Graph_.
-- **get_simple_block** - return a simple block (that is a node of the _Control Flow Graph_) 
+- **get_basic_block** - return a basic block (that is a node of the _Control Flow Graph_ or Data Dependence Graph) 
 that contains a node from the _Control Dependence Graph_.
 - **init_by_source_code** - build all the graphs by a given source code string and a language description.
 - **init_by_control_dependence_graph** - build all the graphs by a given _Control Dependence Graph_.

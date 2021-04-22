@@ -8,7 +8,7 @@ from typing import Set, Dict, List
 
 import networkx
 
-from program_slicing.graph.cfg_node import CDGNode
+from program_slicing.graph.cdg_node import CDGNode
 
 
 class ControlDependenceGraph(networkx.DiGraph):

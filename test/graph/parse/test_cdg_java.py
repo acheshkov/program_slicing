@@ -149,6 +149,7 @@ class CDGJavaTestCase(TestCase):
         try_children = [child for child in cdg.successors(function_children[15])]
         self.assertEqual(5, len(try_children))
         self.check_cdg_children(try_children, {
+            0: CDG_NODE_TYPE_VARIABLE,
             4: CDG_NODE_TYPE_BRANCH
         })
         catch_children = [child for child in cdg.successors(try_children[4])]
@@ -191,6 +192,7 @@ class CDGJavaTestCase(TestCase):
         try_children = [child for child in cdg.successors(function_children[24])]
         self.assertEqual(5, len(try_children))
         self.check_cdg_children(try_children, {
+            0: CDG_NODE_TYPE_VARIABLE,
             4: CDG_NODE_TYPE_BRANCH
         })
         catch_1_children = [child for child in cdg.successors(try_children[4])]
@@ -198,6 +200,7 @@ class CDGJavaTestCase(TestCase):
         self.check_cdg_children(catch_1_children, {
             0: CDG_NODE_TYPE_STATEMENTS,
             3: CDG_NODE_TYPE_CALL,
+            12: CDG_NODE_TYPE_VARIABLE,
             16: CDG_NODE_TYPE_BRANCH
         })
         catch_2_children = [child for child in cdg.successors(catch_1_children[16])]
