@@ -139,8 +139,6 @@ def __update_variables(old_variables: Dict[str, Set[BasicBlock]], new_variables:
         else:
             variable_entered_set = old_variables[variable]
             diff = variable_set.difference(variable_entered_set)
-            if diff:
-                for variable_block in diff:
-                    variable_entered_set.add(variable_block)
-                updated = True
+            variable_entered_set.update(diff)
+            updated = len(diff) > 0
     return updated
