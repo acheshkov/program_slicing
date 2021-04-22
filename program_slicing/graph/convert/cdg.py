@@ -117,19 +117,25 @@ def __to_ddg(
         variables: Dict[str, Set[BasicBlock]]) -> None:
     if root in visited:
         variables_entered = visited[root]
-        if all(elem in variables_entered.items() for elem in variables.items()):
-            return
-        for variable, variable_block in variables.items():
+        updated = False
+        for variable, variable_set in variables.items():
             if variable not in variables_entered:
-                variables_entered[variable] = variable_block.copy()
+                variables_entered[variable] = variable_set.copy()
+                updated = True
             else:
-                variables_entered[variable] |= variable_block
+                variable_entered_set = variables_entered[variable]
+                if not all(elem in variable_entered_set for elem in variable_set):
+                    for variable_block in variable_set:
+                        variable_entered_set.add(variable_block)
+                    updated = True
+        if not updated:
+            return
     else:
-        visited[root] = {variable: variable_block.copy() for variable, variable_block in variables.items()}
+        visited[root] = {variable: variable_set.copy() for variable, variable_set in variables.items()}
         ddg.add_node(root)
     variables_entered: Dict[str, Set[BasicBlock]] = visited[root]
     variables_passed: Dict[str, Set[BasicBlock]] = {
-        variable: variable_block for variable, variable_block in variables_entered.items()
+        variable: variable_set for variable, variable_set in variables_entered.items()
     }
     for node in root.get_content():
         if node.name in variables_entered:

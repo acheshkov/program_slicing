@@ -64,12 +64,12 @@ class CDGTestCase(TestCase):
         ddg.add_edges_from([
             ("2_4_var_n_and_i", "4_4_for_condition"),
             ("2_4_var_n_and_i", "4_5_first_if"),
-            ("2_4_var_n_and_i", "9_9_second_if"),
             ("2_4_var_n_and_i", "4_4_update_i"),
+            ("2_4_var_n_and_i", "9_9_second_if"),
             ("4_4_update_i", "4_4_for_condition"),
             ("4_4_update_i", "4_5_first_if"),
-            ("4_4_update_i", "9_9_second_if"),
             ("4_4_update_i", "4_4_update_i"),
+            ("4_4_update_i", "9_9_second_if"),
             ("2_4_var_n_and_i", "16_16_return")
         ])
         ddg.add_node("5_7_print_and_continue")
@@ -136,7 +136,7 @@ class CDGTestCase(TestCase):
     def test_convert_cdg_to_ddg_isomorphic(self):
         cdg = self.__get_cdg_0()
         ddg = self.__get_ddg_0()
-        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_cfg(cdg)))
+        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
         cdg = self.__get_cdg_1()
         ddg = self.__get_ddg_1()
-        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_cfg(cdg)))
+        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
