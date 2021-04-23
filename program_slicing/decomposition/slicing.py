@@ -13,6 +13,7 @@ from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
+from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph.cdg_node import CDGNode, \
     CDG_NODE_TYPE_VARIABLE, \
     CDG_NODE_TYPE_ASSIGNMENT
@@ -66,9 +67,9 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     function_nodes = cdg.get_entry_points()
     for function_node in function_nodes:
         slicing_criteria = __obtain_slicing_criteria(cdg, function_node)
-        for variable_node, seed_statement_node in slicing_criteria.items():
-            # TODO: finish logic.
-            yield str((variable_node, seed_statement_node))
+        for variable_node, seed_statement_nodes in slicing_criteria.items():
+            common_boundary_blocks = __obtain_common_boundary_blocks(manager, seed_statement_nodes)
+            yield str((variable_node, common_boundary_blocks))
 
 
 def __obtain_variable_nodes(cdg: ControlDependenceGraph, root: CDGNode) -> Set[CDGNode]:
@@ -92,6 +93,15 @@ def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGNode) -> Dic
     variable_nodes = __obtain_variable_nodes(cdg, root)
     return {
         variable_node: __obtain_seed_statement_nodes(cdg, root, variable_node) for variable_node in variable_nodes}
+
+
+def __obtain_common_boundary_blocks(
+        manager: ProgramGraphsManager,
+        seed_statement_nodes: Set[CDGNode]) -> Set[BasicBlock]:
+    result = set()
+    for seed_statement in seed_statement_nodes:
+        result.update(manager.get_boundary_blocks_for_node(seed_statement))
+    return result
 
 
 def __is_slicing_criterion(assignment_node: CDGNode, variable_node: CDGNode) -> bool:
