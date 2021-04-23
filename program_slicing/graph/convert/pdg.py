@@ -32,7 +32,7 @@ def to_cfg(pdg: ProgramDependenceGraph) -> ControlFlowGraph:
     raise NotImplementedError()
 
 
-def to_pdg(pdg: ProgramDependenceGraph) -> DataDependenceGraph:
+def to_ddg(pdg: ProgramDependenceGraph) -> DataDependenceGraph:
     """
     Convert the Program Dependence Graph into a Data Dependence Graph.
     New graph will contain same nodes as in the original one so that
