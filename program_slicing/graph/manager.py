@@ -70,6 +70,10 @@ class ProgramGraphsManager:
     def get_basic_block(self, node: CDGNode) -> Optional[BasicBlock]:
         return self.basic_block.get(node, None)
 
+    def get_boundary_blocks_for_node(self, node: CDGNode) -> Set[BasicBlock]:
+        block = self.get_basic_block(node)
+        return self.get_boundary_blocks(block)
+
     def get_dominated_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         if block in self.dom_blocks:
             return self.dom_blocks[block]
@@ -93,8 +97,8 @@ class ProgramGraphsManager:
     def get_reach_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         return self.__build_reach_blocks(block)
 
-    def get_boundary_block(self, node: CDGNode) -> Set[BasicBlock]:
-        pass
+    def get_boundary_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
+        return self.get_dominated_blocks(block).intersection(self.get_reach_blocks(block))
 
     def init_by_source_code(self, source_code: str, lang: str) -> None:
         self.init_by_control_dependence_graph(parse.control_dependence_graph(source_code, lang))
