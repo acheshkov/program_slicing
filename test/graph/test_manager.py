@@ -6,8 +6,6 @@ __date__ = '2021/04/02'
 
 from unittest import TestCase
 
-import networkx
-
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import LANG_JAVA
 
@@ -46,9 +44,62 @@ class ManagerTestCase(TestCase):
 
     def test_basic_blocks(self):
         mgr = self.__get_manager_0()
-        blocks = [block for block in networkx.nodes(mgr.cfg)]
+        blocks = [block for block in mgr.cfg]
         self.assertEqual(9, len(blocks))
         self.assertEqual(9, len(set(mgr.basic_block.values())))
 
+    def test_dom(self):
+        mgr = self.__get_manager_0()
+        cfg = mgr.cfg
+        self.assertEqual(1, len(cfg.entry_points))
+        block_with_n = [entry_point for entry_point in cfg.entry_points][0]
+        block_with_for = [child for child in cfg.successors(block_with_n)][0]
+        block_with_first_if = [child for child in cfg.successors(block_with_for)][0]
+        block_with_continue = [child for child in cfg.successors(block_with_first_if)][0]
+        block_with_second_if = [child for child in cfg.successors(block_with_first_if)][1]
+        block_with_break = [child for child in cfg.successors(block_with_second_if)][0]
+        block_with_else = [child for child in cfg.successors(block_with_second_if)][1]
+        block_with_update_i = [child for child in cfg.successors(block_with_else)][0]
+        block_with_return = [child for child in cfg.successors(block_with_for)][1]
+
+        all_blocks = {
+            block_with_n,
+            block_with_for,
+            block_with_first_if,
+            block_with_continue,
+            block_with_second_if,
+            block_with_break,
+            block_with_else,
+            block_with_update_i,
+            block_with_return
+        }
+        self.assertEqual(all_blocks, mgr.get_dominated_blocks(block_with_n))
+        self.assertEqual(all_blocks, mgr.get_dominated_blocks(block_with_for))
+        self.assertEqual(all_blocks, mgr.get_dominated_blocks(block_with_return))
+        for_blocks = {
+            block_with_first_if,
+            block_with_continue,
+            block_with_second_if,
+            block_with_break,
+            block_with_else,
+            block_with_update_i
+        }
+        self.assertEqual(for_blocks, mgr.get_dominated_blocks(block_with_first_if))
+        self.assertEqual(for_blocks, mgr.get_dominated_blocks(block_with_second_if))
+        self.assertEqual(for_blocks, mgr.get_dominated_blocks(block_with_update_i))
+        first_if_blocks = {
+            block_with_continue
+        }
+        self.assertEqual(first_if_blocks, mgr.get_dominated_blocks(block_with_continue))
+        second_if_blocks = {
+            block_with_break,
+            block_with_else
+        }
+        self.assertEqual(second_if_blocks, mgr.get_dominated_blocks(block_with_break))
+        self.assertEqual(second_if_blocks, mgr.get_dominated_blocks(block_with_else))
+
     def test_reach(self):
+        pass
+
+    def test_boundary_blocks(self):
         pass

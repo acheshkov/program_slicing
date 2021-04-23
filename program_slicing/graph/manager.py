@@ -70,14 +70,23 @@ class ProgramGraphsManager:
     def get_basic_block(self, node: CDGNode) -> Optional[BasicBlock]:
         return self.basic_block.get(node, None)
 
-    def get_dom_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
+    def get_dominated_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         if block in self.dom_blocks:
             return self.dom_blocks[block]
         result = set()
-        for node in networkx.algorithms.dominating_set(self.cdg, block.get_root()):
-            current_block = self.get_basic_block(node)
-            if current_block is not None:
-                result.add(current_block)
+        root = block.get_root()
+        if root is None:
+            return result
+        predecessors = [predecessor for predecessor in self.cdg.predecessors(root)]
+        if len(predecessors) == 0:
+            predecessors = [root]
+        for root in predecessors:
+            for node in networkx.algorithms.bfs_tree(self.cdg, root):
+                if node == root:
+                    continue
+                current_block = self.get_basic_block(node)
+                if current_block is not None:
+                    result.add(current_block)
         self.dom_blocks[block] = result
         return result
 
