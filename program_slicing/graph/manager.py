@@ -139,9 +139,10 @@ class ProgramGraphsManager:
         if visited_nodes is None:
             visited_nodes = set()
         visited_nodes.add(block)
-        result = set()
+        result = {block}
         for child in self.cfg.successors(block):
             if child not in visited_nodes:
-                result += self.__build_reach_blocks(child, visited_nodes)
+                result.update(self.__build_reach_blocks(child, visited_nodes))
         self.reach_blocks[block] = result
+        visited_nodes.remove(block)
         return result
