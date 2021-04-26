@@ -28,7 +28,7 @@ class CDGNode:
             end_point: Tuple[int, int],
             name: Optional[str] = None):
         self.ast_class: str = ast_class
-        self.node_type: int = node_type
+        self.node_type: str = node_type
         self.start_point: Tuple[int, int] = start_point
         self.end_point: Tuple[int, int] = end_point
         self.name: Optional[str] = name
