@@ -113,7 +113,7 @@ def __is_slicing_criterion(assignment_node: CDGNode, variable_node: CDGNode) -> 
 
 def __get_applicable_formats() -> List[str]:
     """
-    Get the list of file formats that can be used in data generating or pattern mining tasks.
+    Get the list of file formats that are supported by parsers.
     :return: list of strings like '.java' or '.xml'
     """
     return [".java"]
