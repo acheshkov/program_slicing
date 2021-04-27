@@ -65,7 +65,7 @@ def read_files(
     :param path: string with the path to the directory to search in.
     :param suffix_list: list of suffixes of files that should be obtained. All the files will be obtained if Null.
     :param skip_hidden_dirs: if True - skips hidden directories, default = True.
-    :return: generator of file sub-path to its content pairs.
+    :return: generator of file sub-path to its statements pairs.
     """
     for filename in browse_file_sub_paths(path, suffix_list, skip_hidden_dirs=skip_hidden_dirs):
         yield filename, read_file(filename)

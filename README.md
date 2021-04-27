@@ -82,20 +82,21 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 ```
 
 - **add_entry_point** - mark specified node as entry point.
-- **get_entry_points** - return a set of nodes that where marked as a entry point.
+- **get_entry_points** - return a set of nodes that where marked as an entry point.
 
 ___
 
-***Control Dependence Graph Node*** - structure that represents _Control Dependence Graph_ nodes.
+***Statement*** - structure that represents _Control Dependence Graph_ or _Program Dependence Graph_ nodes.
 
 ```python
-from program_slicing.graph.cdg_node import CDGNode
+from program_slicing.graph.statement import Statement
 ```
 
-- **label** - string with the node's label.
-- **node_type** - string with a description af the node's type.
-- **line_range** - a tuple with two numbers:
-indexes of rhe first and the last strings of the source code where the node is presented.
+- **ast_class** - string which identifies an AST root's class.
+- **statement_type** - string with a description af the _Statement's_ type.
+- **start_point** - line and column numbers of the _Statement's_ start.
+- **end_point** - line and column numbers of the _Statement's_ end.
+- **name** - string with the name of the _Statement_. Not all _Statements_ are named. 
 
 ___
 
@@ -107,20 +108,20 @@ from program_slicing.graph.cfg import ControlFlowGraph
 ```
 
 - **add_entry_point** - mark specified node as entry point.
-- **get_entry_points** - return a set of nodes that where marked as a entry point.
+- **get_entry_points** - return a set of nodes that where marked as an entry point.
 
 ___
 
-***Control Flow Graph Node*** - structure that represents _Control Flow Graph_ nodes.
+***Basic Block*** - structure that represents _Control Flow Graph_ nodes.
 
 ```python
 from program_slicing.graph.basic_block import BasicBlock
 ```
 
-- **get_content** - get the content of the _Control Flow Graph_ node, i.e a list of  _Control Dependence Graph_ nodes.
-- **get_root** - get the first _Control Dependence Graph_ node from the content. None if content is empty.
-- **append** - add a specified _Control Dependence Graph_ node to the content.
-- **is_empty** - return True if content is empty, otherwise - False.
+- **get_statements** - get the content of the _Basic Block_, i.e a list of  _Statements_.
+- **get_root** - get the first _Statement_ from the _Basic Block_. None if it is empty.
+- **append** - add a specified _Statement_ to the _Basic Block_.
+- **is_empty** - return True if there are no statements in the _Basic Block_, otherwise - False.
 
 ___
 
@@ -143,7 +144,7 @@ manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph
 
 - **get_control_dependence_graph** - return the _Control Dependence Graph_.
 - **get_control_flow_graph** - return the _Control Flow Graph_.
-- **get_basic_block** - return a basic block (that is a node of the _Control Flow Graph_ or Data Dependence Graph) 
+- **get_basic_block** - return a basic block (that is a node of the _Control Flow Graph_) 
 that contains a node from the _Control Dependence Graph_.
 - **init_by_source_code** - build all the graphs by a given source code string and a language description.
 - **init_by_control_dependence_graph** - build all the graphs by a given _Control Dependence Graph_.

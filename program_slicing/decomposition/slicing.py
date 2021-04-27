@@ -14,9 +14,9 @@ from program_slicing.file_manager import writer
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
-from program_slicing.graph.cdg_node import CDGNode, \
-    CDG_NODE_TYPE_VARIABLE, \
-    CDG_NODE_TYPE_ASSIGNMENT
+from program_slicing.graph.statement import Statement, \
+    STATEMENT_TYPE_VARIABLE, \
+    STATEMENT_TYPE_ASSIGNMENT
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -64,51 +64,57 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     """
     manager = ProgramGraphsManager(source_code, lang)
     cdg = manager.cdg
-    function_nodes = cdg.get_entry_points()
-    for function_node in function_nodes:
-        slicing_criteria = __obtain_slicing_criteria(cdg, function_node)
-        for variable_node, seed_statement_nodes in slicing_criteria.items():
-            common_boundary_blocks = __obtain_common_boundary_blocks(manager, seed_statement_nodes)
-            yield str((variable_node, common_boundary_blocks))
+    function_statements = cdg.get_entry_points()
+    for function_statement in function_statements:
+        slicing_criteria = __obtain_slicing_criteria(cdg, function_statement)
+        for variable_statement, seed_statements in slicing_criteria.items():
+            common_boundary_blocks = __obtain_common_boundary_blocks(manager, seed_statements)
+            yield str((variable_statement, common_boundary_blocks))
 
 
-def __obtain_variable_nodes(cdg: ControlDependenceGraph, root: CDGNode) -> Set[CDGNode]:
+def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:
     return {
-        node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if node.node_type == CDG_NODE_TYPE_VARIABLE
+        statement for statement in networkx.algorithms.traversal.dfs_tree(cdg, root)
+        if statement.statement_type == STATEMENT_TYPE_VARIABLE
     }
 
 
-def __obtain_seed_statement_nodes(
+def __obtain_seed_statements(
         cdg: ControlDependenceGraph,
-        root: CDGNode,
-        variable_node: CDGNode) -> Set[CDGNode]:
+        root: Statement,
+        variable_statement: Statement) -> Set[Statement]:
     return {
-        node for node in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if __is_slicing_criterion(node, variable_node)
+        statement for statement in networkx.algorithms.traversal.dfs_tree(cdg, root)
+        if __is_slicing_criterion(statement, variable_statement)
     }
 
 
-def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: CDGNode) -> Dict[CDGNode, Set[CDGNode]]:
-    variable_nodes = __obtain_variable_nodes(cdg, root)
+def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: Statement) -> Dict[Statement, Set[Statement]]:
+    variable_statements = __obtain_variable_statements(cdg, root)
     return {
-        variable_node: __obtain_seed_statement_nodes(cdg, root, variable_node) for variable_node in variable_nodes}
+        variable_statement: __obtain_seed_statements(cdg, root, variable_statement)
+        for variable_statement in variable_statements
+    }
 
 
 def __obtain_common_boundary_blocks(
         manager: ProgramGraphsManager,
-        seed_statement_nodes: Set[CDGNode]) -> Set[BasicBlock]:
+        seed_statements: Set[Statement]) -> Set[BasicBlock]:
     result = set()
-    for seed_statement in seed_statement_nodes:
-        result.update(manager.get_boundary_blocks_for_node(seed_statement))
+    for seed_statement in seed_statements:
+        result.update(manager.get_boundary_blocks_for_statement(seed_statement))
     return result
 
 
-def __is_slicing_criterion(assignment_node: CDGNode, variable_node: CDGNode) -> bool:
+def __obtain_backward_slice(manager: ProgramGraphsManager, slicing_criterion):
+    pass
+
+
+def __is_slicing_criterion(assignment_statement: Statement, variable_statement: Statement) -> bool:
     return \
-        assignment_node.node_type == CDG_NODE_TYPE_ASSIGNMENT and \
-        variable_node.node_type == CDG_NODE_TYPE_VARIABLE and \
-        variable_node.name == assignment_node.name
+        assignment_statement.statement_type == STATEMENT_TYPE_ASSIGNMENT and \
+        variable_statement.statement_type == STATEMENT_TYPE_VARIABLE and \
+        variable_statement.name == assignment_statement.name
 
 
 def __get_applicable_formats() -> List[str]:

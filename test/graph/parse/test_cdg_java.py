@@ -7,25 +7,25 @@ __date__ = '2021/03/30'
 from unittest import TestCase
 
 from program_slicing.graph.parse import cdg_java
-from program_slicing.graph.cdg_node import \
-    CDG_NODE_TYPE_FUNCTION, \
-    CDG_NODE_TYPE_VARIABLE, \
-    CDG_NODE_TYPE_LOOP, \
-    CDG_NODE_TYPE_ASSIGNMENT, \
-    CDG_NODE_TYPE_BRANCH, \
-    CDG_NODE_TYPE_STATEMENTS, \
-    CDG_NODE_TYPE_CALL, \
-    CDG_NODE_TYPE_OBJECT, \
-    CDG_NODE_TYPE_GOTO, \
-    CDG_NODE_TYPE_EXIT
+from program_slicing.graph.statement import \
+    STATEMENT_TYPE_FUNCTION, \
+    STATEMENT_TYPE_VARIABLE, \
+    STATEMENT_TYPE_LOOP, \
+    STATEMENT_TYPE_ASSIGNMENT, \
+    STATEMENT_TYPE_BRANCH, \
+    STATEMENT_TYPE_STATEMENTS, \
+    STATEMENT_TYPE_CALL, \
+    STATEMENT_TYPE_OBJECT, \
+    STATEMENT_TYPE_GOTO, \
+    STATEMENT_TYPE_EXIT
 
 
 class CDGJavaTestCase(TestCase):
 
-    def __check_cdg_children(self, children, node_type_map):
+    def __check_cdg_children(self, children, statement_type_map):
         for i, child in enumerate(children):
-            node_type = node_type_map.get(i, CDG_NODE_TYPE_OBJECT)
-            self.assertEqual(node_type, child.node_type)
+            statement_type = statement_type_map.get(i, STATEMENT_TYPE_OBJECT)
+            self.assertEqual(statement_type, child.statement_type)
 
     def test_while(self):
         source_code = """
@@ -41,18 +41,18 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: CDG_NODE_TYPE_FUNCTION
+            0: STATEMENT_TYPE_FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(8, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            6: CDG_NODE_TYPE_LOOP
+            0: STATEMENT_TYPE_STATEMENTS,
+            6: STATEMENT_TYPE_LOOP
         })
         loop_children = [child for child in cdg.successors(function_children[6])]
         self.assertEqual(3, len(loop_children))
         self.__check_cdg_children(loop_children, {
-            0: CDG_NODE_TYPE_STATEMENTS
+            0: STATEMENT_TYPE_STATEMENTS
         })
 
     def test_for_each(self):
@@ -69,19 +69,19 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: CDG_NODE_TYPE_FUNCTION
+            0: STATEMENT_TYPE_FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(9, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            2: CDG_NODE_TYPE_VARIABLE,
-            7: CDG_NODE_TYPE_LOOP
+            0: STATEMENT_TYPE_STATEMENTS,
+            2: STATEMENT_TYPE_VARIABLE,
+            7: STATEMENT_TYPE_LOOP
         })
         loop_children = [child for child in cdg.successors(function_children[7])]
         self.assertEqual(3, len(loop_children))
         self.__check_cdg_children(loop_children, {
-            0: CDG_NODE_TYPE_STATEMENTS
+            0: STATEMENT_TYPE_STATEMENTS
         })
 
     def test_for_each_modifiers(self):
@@ -98,19 +98,19 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: CDG_NODE_TYPE_FUNCTION
+            0: STATEMENT_TYPE_FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(11, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            2: CDG_NODE_TYPE_VARIABLE,
-            9: CDG_NODE_TYPE_LOOP
+            0: STATEMENT_TYPE_STATEMENTS,
+            2: STATEMENT_TYPE_VARIABLE,
+            9: STATEMENT_TYPE_LOOP
         })
         loop_children = [child for child in cdg.successors(function_children[9])]
         self.assertEqual(3, len(loop_children))
         self.__check_cdg_children(loop_children, {
-            0: CDG_NODE_TYPE_STATEMENTS
+            0: STATEMENT_TYPE_STATEMENTS
         })
 
     def test_try_catch(self):
@@ -134,29 +134,29 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: CDG_NODE_TYPE_FUNCTION
+            0: STATEMENT_TYPE_FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(35, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            2: CDG_NODE_TYPE_STATEMENTS,
-            5: CDG_NODE_TYPE_ASSIGNMENT,
-            15: CDG_NODE_TYPE_BRANCH,
-            18: CDG_NODE_TYPE_STATEMENTS,
-            21: CDG_NODE_TYPE_CALL,
+            0: STATEMENT_TYPE_STATEMENTS,
+            2: STATEMENT_TYPE_STATEMENTS,
+            5: STATEMENT_TYPE_ASSIGNMENT,
+            15: STATEMENT_TYPE_BRANCH,
+            18: STATEMENT_TYPE_STATEMENTS,
+            21: STATEMENT_TYPE_CALL,
         })
         try_children = [child for child in cdg.successors(function_children[15])]
         self.assertEqual(5, len(try_children))
         self.__check_cdg_children(try_children, {
-            0: CDG_NODE_TYPE_VARIABLE,
-            4: CDG_NODE_TYPE_BRANCH
+            0: STATEMENT_TYPE_VARIABLE,
+            4: STATEMENT_TYPE_BRANCH
         })
         catch_children = [child for child in cdg.successors(try_children[4])]
         self.assertEqual(12, len(catch_children))
         self.__check_cdg_children(catch_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            3: CDG_NODE_TYPE_CALL
+            0: STATEMENT_TYPE_STATEMENTS,
+            3: STATEMENT_TYPE_CALL
         })
 
     def test_resourced_try_multi_catch(self):
@@ -179,34 +179,34 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: CDG_NODE_TYPE_FUNCTION
+            0: STATEMENT_TYPE_FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(26, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            11: CDG_NODE_TYPE_STATEMENTS,
-            14: CDG_NODE_TYPE_ASSIGNMENT,
-            24: CDG_NODE_TYPE_BRANCH
+            0: STATEMENT_TYPE_STATEMENTS,
+            11: STATEMENT_TYPE_STATEMENTS,
+            14: STATEMENT_TYPE_ASSIGNMENT,
+            24: STATEMENT_TYPE_BRANCH
         })
         try_children = [child for child in cdg.successors(function_children[24])]
         self.assertEqual(5, len(try_children))
         self.__check_cdg_children(try_children, {
-            0: CDG_NODE_TYPE_VARIABLE,
-            4: CDG_NODE_TYPE_BRANCH
+            0: STATEMENT_TYPE_VARIABLE,
+            4: STATEMENT_TYPE_BRANCH
         })
         catch_1_children = [child for child in cdg.successors(try_children[4])]
         self.assertEqual(17, len(catch_1_children))
         self.__check_cdg_children(catch_1_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            3: CDG_NODE_TYPE_CALL,
-            12: CDG_NODE_TYPE_VARIABLE,
-            16: CDG_NODE_TYPE_BRANCH
+            0: STATEMENT_TYPE_STATEMENTS,
+            3: STATEMENT_TYPE_CALL,
+            12: STATEMENT_TYPE_VARIABLE,
+            16: STATEMENT_TYPE_BRANCH
         })
         catch_2_children = [child for child in cdg.successors(catch_1_children[16])]
         self.assertEqual(3, len(catch_2_children))
         self.__check_cdg_children(catch_2_children, {
-            0: CDG_NODE_TYPE_STATEMENTS
+            0: STATEMENT_TYPE_STATEMENTS
         })
 
     def test_parse(self):
@@ -235,37 +235,37 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: CDG_NODE_TYPE_FUNCTION
+            0: STATEMENT_TYPE_FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(26, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            5: CDG_NODE_TYPE_VARIABLE,
-            13: CDG_NODE_TYPE_VARIABLE,
-            22: CDG_NODE_TYPE_LOOP,
-            24: CDG_NODE_TYPE_EXIT
+            0: STATEMENT_TYPE_STATEMENTS,
+            5: STATEMENT_TYPE_VARIABLE,
+            13: STATEMENT_TYPE_VARIABLE,
+            22: STATEMENT_TYPE_LOOP,
+            24: STATEMENT_TYPE_EXIT
         })
         loop_children = [child for child in cdg.successors(function_children[22])]
         self.assertEqual(23, len(loop_children))
         self.__check_cdg_children(loop_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            9: CDG_NODE_TYPE_BRANCH,
-            17: CDG_NODE_TYPE_BRANCH,
-            19: CDG_NODE_TYPE_ASSIGNMENT
+            0: STATEMENT_TYPE_STATEMENTS,
+            9: STATEMENT_TYPE_BRANCH,
+            17: STATEMENT_TYPE_BRANCH,
+            19: STATEMENT_TYPE_ASSIGNMENT
         })
         branch_1_children = [child for child in cdg.successors(loop_children[9])]
         self.assertEqual(17, len(branch_1_children))
         self.__check_cdg_children(branch_1_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            3: CDG_NODE_TYPE_CALL,
-            15: CDG_NODE_TYPE_GOTO
+            0: STATEMENT_TYPE_STATEMENTS,
+            3: STATEMENT_TYPE_CALL,
+            15: STATEMENT_TYPE_GOTO
         })
         branch_2_children = [child for child in cdg.successors(loop_children[17])]
         self.assertEqual(30, len(branch_2_children))
         self.__check_cdg_children(branch_1_children, {
-            0: CDG_NODE_TYPE_STATEMENTS,
-            3: CDG_NODE_TYPE_CALL,
-            15: CDG_NODE_TYPE_GOTO,
-            18: CDG_NODE_TYPE_CALL
+            0: STATEMENT_TYPE_STATEMENTS,
+            3: STATEMENT_TYPE_CALL,
+            15: STATEMENT_TYPE_GOTO,
+            18: STATEMENT_TYPE_CALL
         })

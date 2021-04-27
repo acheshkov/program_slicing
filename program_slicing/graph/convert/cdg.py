@@ -11,7 +11,7 @@ from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.pdg import ProgramDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
-from program_slicing.graph.cdg_node import CDGNode
+from program_slicing.graph.statement import Statement
 from program_slicing.graph.convert.cfg import to_ddg as cfg_to_ddg
 
 
@@ -24,7 +24,7 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     :return: Control Flow Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
     """
     cfg = ControlFlowGraph()
-    block: Dict[CDGNode, BasicBlock] = {}
+    block: Dict[Statement, BasicBlock] = {}
     for root in cdg.get_entry_points():
         __to_cfg(root, cdg=cdg, cfg=cfg, block=block)
     return cfg
@@ -52,10 +52,10 @@ def to_pdg(cdg: ControlDependenceGraph) -> ProgramDependenceGraph:
     """
     ddg = to_ddg(cdg)
     pdg = ProgramDependenceGraph()
-    block: Dict[CDGNode, BasicBlock] = {}
+    block: Dict[Statement, BasicBlock] = {}
     for node in ddg:
-        for cdg_node in node.get_content():
-            block[cdg_node] = node
+        for statement in node.get_statements():
+            block[statement] = node
     for node in ddg:
         __to_pdg(node, cdg=cdg, ddg=ddg, pdg=pdg, block=block)
     for entry_point in ddg.get_entry_points():
@@ -68,13 +68,13 @@ def __to_pdg(
         cdg: ControlDependenceGraph,
         ddg: DataDependenceGraph,
         pdg: ProgramDependenceGraph,
-        block: Dict[CDGNode, BasicBlock]) -> None:
+        block: Dict[Statement, BasicBlock]) -> None:
     pdg.add_node(node)
     for successor in ddg.successors(node):
         pdg.add_edge(node, successor)
     dom_set = set()
-    for cdg_node in node.get_content():
-        for successor in cdg.successors(cdg_node):
+    for statement in node.get_statements():
+        for successor in cdg.successors(statement):
             if successor in block:
                 dom_set.add(block[successor])
     for successor in dom_set:
@@ -83,18 +83,18 @@ def __to_pdg(
 
 
 def __to_cfg(
-        cdg_node: CDGNode,
+        statement: Statement,
         cdg: ControlDependenceGraph,
         cfg: ControlFlowGraph,
-        block: Dict[CDGNode, BasicBlock]) -> None:
-    f_children: List[CDGNode] = cdg.control_flow.get(cdg_node, [])
-    prev_block: BasicBlock = block.get(cdg_node, None)
-    process_list: List[CDGNode] = []
+        block: Dict[Statement, BasicBlock]) -> None:
+    f_children: List[Statement] = cdg.control_flow.get(statement, [])
+    prev_block: BasicBlock = block.get(statement, None)
+    process_list: List[Statement] = []
     for child in f_children:
         if child in block:
             __process_loop(child, cfg, block, prev_block)
         elif len(f_children) > 1:
-            new_block = BasicBlock(content=[child])
+            new_block = BasicBlock(statements=[child])
             cfg.add_node(new_block)
             if prev_block is None:
                 cfg.add_entry_point(new_block)
@@ -115,18 +115,17 @@ def __to_cfg(
 
 
 def __process_loop(
-        child: CDGNode,
+        child: Statement,
         cfg: ControlFlowGraph,
-        block: Dict[CDGNode, BasicBlock],
+        block: Dict[Statement, BasicBlock],
         prev_block: BasicBlock) -> None:
     old_block: BasicBlock = block[child]
-    index = old_block.content.index(child)
+    index = old_block.get_statements().index(child)
     if index == 0:
         if prev_block is not None:
             cfg.add_edge(prev_block, old_block)
         return
-    new_block = BasicBlock(content=old_block.content[index:])
-    old_block.content = old_block.content[:index]
+    new_block = old_block.split(index)
     block[child] = new_block
     cfg.add_node(new_block)
     old_successors: List[BasicBlock] = [successor for successor in cfg.successors(old_block)]
