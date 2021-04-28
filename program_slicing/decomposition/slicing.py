@@ -100,13 +100,16 @@ def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: Statement) -> D
 def __obtain_common_boundary_blocks(
         manager: ProgramGraphsManager,
         seed_statements: Set[Statement]) -> Set[BasicBlock]:
-    result = set()
+    result = None
     for seed_statement in seed_statements:
-        result.update(manager.get_boundary_blocks_for_statement(seed_statement))
+        if result is None:
+            result = manager.get_boundary_blocks_for_statement(seed_statement)
+        else:
+            result.intersection_update(manager.get_boundary_blocks_for_statement(seed_statement))
     return result
 
 
-def __obtain_backward_slice(manager: ProgramGraphsManager, slicing_criterion):
+def __obtain_backward_slice(manager: ProgramGraphsManager, slicing_criterion, boundary_block):
     pass
 
 
