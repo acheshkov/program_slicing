@@ -4,7 +4,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from typing import Tuple, Optional
+from typing import Tuple, Optional, Set
 
 STATEMENT_TYPE_FUNCTION = "FUNCTION"
 STATEMENT_TYPE_VARIABLE = "VARIABLE"
@@ -26,9 +26,11 @@ class Statement:
             statement_type: str,
             start_point: Tuple[int, int],
             end_point: Tuple[int, int],
+            affected_by: Set[str] = None,
             name: Optional[str] = None):
         self.ast_class: str = ast_class
         self.statement_type: str = statement_type
         self.start_point: Tuple[int, int] = start_point
         self.end_point: Tuple[int, int] = end_point
+        self.affected_by: Set[str] = set() if affected_by is None else affected_by
         self.name: Optional[str] = name

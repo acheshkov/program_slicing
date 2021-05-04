@@ -19,7 +19,7 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     """
     Convert the Control Dependence Graph into a Control Flow Graph.
     New graph will contain links on nodes of the original one so that
-    any changes made after converting in the original graph will affect the converted one.
+    any changes made after converting in the original graph's statements will affect the converted one.
     :param cdg: Control Dependence Graph that should to be converted.
     :return: Control Flow Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
     """
@@ -33,10 +33,10 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
 def to_ddg(cdg: ControlDependenceGraph) -> DataDependenceGraph:
     """
     Convert the Control Dependence Graph into a Data Dependence Graph.
-    New graph will contain links on nodes of the original one so that
-    any changes made after converting in the original graph will affect the converted one.
+    New graph will contain same nodes as in the original one so that
+    any changes made after converting in the original graph's statements will affect the converted one.
     :param cdg: Control Dependence Graph that should to be converted.
-    :return: Data Dependence Graph which nodes contain nodes of the Control Dependence Graph on which it was based on.
+    :return: Data Dependence Graph which nodes where presented in the Control Dependence Graph on which it was based on.
     """
     cfg = to_cfg(cdg)
     return cfg_to_ddg(cfg)
@@ -45,41 +45,23 @@ def to_ddg(cdg: ControlDependenceGraph) -> DataDependenceGraph:
 def to_pdg(cdg: ControlDependenceGraph) -> ProgramDependenceGraph:
     """
     Convert the Control Dependence Graph into a Program Dependence Graph.
-    New graph will contain links on nodes of the original one so that
-    any changes made after converting in the original graph will affect the converted one.
+    New graph will contain same nodes as in the original one so that
+    any changes made after converting in the original graph's statements will affect the converted one.
     :param cdg: Control Dependence Graph that should to be converted.
-    :return: Program Dependence Graph which nodes contain nodes of the original Control Dependence Graph.
+    :return: Program Dependence Graph which nodes where presented in the original Control Dependence Graph.
     """
     ddg = to_ddg(cdg)
     pdg = ProgramDependenceGraph()
-    block: Dict[Statement, BasicBlock] = {}
-    for node in ddg:
-        for statement in node.get_statements():
-            block[statement] = node
-    for node in ddg:
-        __to_pdg(node, cdg=cdg, ddg=ddg, pdg=pdg, block=block)
-    for entry_point in ddg.get_entry_points():
+    for node in cdg:
+        pdg.add_node(node)
+        for cdg_successor in cdg.successors(node):
+            pdg.add_edge(node, cdg_successor)
+        if node in ddg:
+            for ddg_successor in ddg.successors(node):
+                pdg.add_edge(node, ddg_successor)
+    for entry_point in cdg.get_entry_points():
         pdg.add_entry_point(entry_point)
     return pdg
-
-
-def __to_pdg(
-        node: BasicBlock,
-        cdg: ControlDependenceGraph,
-        ddg: DataDependenceGraph,
-        pdg: ProgramDependenceGraph,
-        block: Dict[Statement, BasicBlock]) -> None:
-    pdg.add_node(node)
-    for successor in ddg.successors(node):
-        pdg.add_edge(node, successor)
-    dom_set = set()
-    for statement in node.get_statements():
-        for successor in cdg.successors(statement):
-            if successor in block:
-                dom_set.add(block[successor])
-    for successor in dom_set:
-        if successor != node:
-            pdg.add_edge(node, successor)
 
 
 def __to_cfg(
