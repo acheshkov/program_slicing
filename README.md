@@ -129,12 +129,12 @@ _Program Dependence Graph_ nodes.
 from program_slicing.graph.statement import Statement
 ```
 
-- **ast_class** - string which identifies an AST root's class.
 - **statement_type** - string with a description af the _Statement's_ type.
 - **start_point** - line and column numbers of the _Statement's_ start.
 - **end_point** - line and column numbers of the _Statement's_ end.
 - **affected_by** - set of strings with names of variables that may affect the current _Statement_.
 - **name** - string with the name of the _Statement_. Not all _Statements_ are named.
+- **meta** - string with additional information about node (e.g. an AST root's class).
 
 ___
 

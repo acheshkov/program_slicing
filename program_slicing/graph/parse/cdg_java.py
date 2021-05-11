@@ -319,12 +319,12 @@ def __handle_for_each(
         start_point, _ = __parse_position_range(modifiers_ast)
     _, end_point = __parse_position_range(name_ast)
     variable = Statement(
-        "enhanced_for_variable_declarator",
         STATEMENT_TYPE_VARIABLE,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
-        name=__parse_statement_name(source_code_bytes, name_ast))
+        name=__parse_statement_name(source_code_bytes, name_ast),
+        meta="enhanced_for_variable_declarator")
     cdg.add_node(variable)
     siblings = [variable]
     entry_points = [variable]
@@ -528,12 +528,12 @@ def __parse(
     statement_type, statement_handler = __parse_statement_type_and_handler(ast)
     start_point, end_point = __parse_position_range(ast)
     statement = Statement(
-        ast.type,
         statement_type,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, ast, variable_names),
-        name=__parse_statement_name(source_code_bytes, ast))
+        name=__parse_statement_name(source_code_bytes, ast),
+        meta=ast.type)
     cdg.add_node(statement)
     siblings, exit_points = statement_handler(
         statement,

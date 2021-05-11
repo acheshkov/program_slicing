@@ -22,13 +22,13 @@ class Statement:
 
     def __init__(
             self,
-            ast_class: str,
             statement_type: str,
             start_point: Tuple[int, int],
             end_point: Tuple[int, int],
             affected_by: Set[str] = None,
-            name: Optional[str] = None):
-        self.ast_class: str = ast_class
+            name: Optional[str] = None,
+            meta: str = None):
+        self.meta: str = meta
         self.statement_type: str = statement_type
         self.start_point: Tuple[int, int] = start_point
         self.end_point: Tuple[int, int] = end_point
