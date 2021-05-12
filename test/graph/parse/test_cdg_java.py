@@ -4,15 +4,16 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
+from typing import List, Dict
 from unittest import TestCase
 
 from program_slicing.graph.parse import cdg_java
-from program_slicing.graph.statement import StatementType
+from program_slicing.graph.statement import Statement, StatementType
 
 
 class CDGJavaTestCase(TestCase):
 
-    def __check_cdg_children(self, children, statement_type_map):
+    def __check_cdg_children(self, children: List[Statement], statement_type_map: Dict[int, StatementType]):
         for i, child in enumerate(children):
             statement_type = statement_type_map.get(i, StatementType.object)
             self.assertEqual(statement_type, child.statement_type)
