@@ -23,6 +23,7 @@ class StatementType(Enum):
 
 StatementLineNumber = int
 StatementColumnNumber = int
+VariableName = str
 
 
 class Statement:
@@ -32,12 +33,12 @@ class Statement:
             statement_type: StatementType,
             start_point: Tuple[StatementLineNumber, StatementColumnNumber],
             end_point: Tuple[StatementLineNumber, StatementColumnNumber],
-            affected_by: Set[str] = None,
+            affected_by: Set[VariableName] = None,
             name: Optional[str] = None,
             meta: str = None):
         self.meta: str = meta
         self.statement_type: StatementType = statement_type
         self.start_point: Tuple[StatementLineNumber, StatementColumnNumber] = start_point
         self.end_point: Tuple[StatementLineNumber, StatementColumnNumber] = end_point
-        self.affected_by: Set[str] = set() if affected_by is None else affected_by
+        self.affected_by: Set[VariableName] = set() if affected_by is None else affected_by
         self.name: Optional[str] = name
