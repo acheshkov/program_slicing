@@ -14,9 +14,7 @@ from program_slicing.file_manager import writer
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
-from program_slicing.graph.statement import Statement, \
-    STATEMENT_TYPE_VARIABLE, \
-    STATEMENT_TYPE_ASSIGNMENT
+from program_slicing.graph.statement import Statement, StatementType
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -75,7 +73,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
 def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:
     return {
         statement for statement in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if statement.statement_type == STATEMENT_TYPE_VARIABLE
+        if statement.statement_type == StatementType.variable
     }
 
 
@@ -115,8 +113,8 @@ def __obtain_backward_slice(manager: ProgramGraphsManager, slicing_criterion, bo
 
 def __is_slicing_criterion(assignment_statement: Statement, variable_statement: Statement) -> bool:
     return \
-        assignment_statement.statement_type == STATEMENT_TYPE_ASSIGNMENT and \
-        variable_statement.statement_type == STATEMENT_TYPE_VARIABLE and \
+        assignment_statement.statement_type == StatementType.assignment and \
+        variable_statement.statement_type == StatementType.variable and \
         variable_statement.name == assignment_statement.name
 
 

@@ -10,17 +10,7 @@ from tree_sitter import Node
 
 from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.statement import Statement, \
-    STATEMENT_TYPE_FUNCTION, \
-    STATEMENT_TYPE_VARIABLE, \
-    STATEMENT_TYPE_ASSIGNMENT, \
-    STATEMENT_TYPE_CALL, \
-    STATEMENT_TYPE_STATEMENTS, \
-    STATEMENT_TYPE_BRANCH, \
-    STATEMENT_TYPE_LOOP, \
-    STATEMENT_TYPE_GOTO, \
-    STATEMENT_TYPE_OBJECT, \
-    STATEMENT_TYPE_EXIT
+from program_slicing.graph.statement import Statement, StatementType
 
 
 parser = tree_sitter_parsers.java()
@@ -319,7 +309,7 @@ def __handle_for_each(
         start_point, _ = __parse_position_range(modifiers_ast)
     _, end_point = __parse_position_range(name_ast)
     variable = Statement(
-        STATEMENT_TYPE_VARIABLE,
+        StatementType.variable,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
@@ -464,37 +454,37 @@ def __handle_return(
 
 statement_type_and_handler_map = {
     "variable_declarator":
-        (STATEMENT_TYPE_VARIABLE, __handle_variable),
+        (StatementType.variable, __handle_variable),
     "method_declaration":
-        (STATEMENT_TYPE_FUNCTION, __handle_method_declaration),
+        (StatementType.function, __handle_method_declaration),
     "if_statement":
-        (STATEMENT_TYPE_BRANCH, __handle_if),
+        (StatementType.branch, __handle_if),
     "try_statement":
-        (STATEMENT_TYPE_BRANCH, __handle_try),
+        (StatementType.branch, __handle_try),
     "try_with_resources_statement":
-        (STATEMENT_TYPE_BRANCH, __handle_try),
+        (StatementType.branch, __handle_try),
     "catch_clause":
-        (STATEMENT_TYPE_BRANCH, __handle_catch),
+        (StatementType.branch, __handle_catch),
     "catch_formal_parameter":
-        (STATEMENT_TYPE_VARIABLE, __handle_variable),
+        (StatementType.variable, __handle_variable),
     "while_statement":
-        (STATEMENT_TYPE_LOOP, __handle_for),
+        (StatementType.loop, __handle_for),
     "for_statement":
-        (STATEMENT_TYPE_LOOP, __handle_for),
+        (StatementType.loop, __handle_for),
     "enhanced_for_statement":
-        (STATEMENT_TYPE_LOOP, __handle_for_each),
+        (StatementType.loop, __handle_for_each),
     "assignment_expression":
-        (STATEMENT_TYPE_ASSIGNMENT, __handle_assignment),
+        (StatementType.assignment, __handle_assignment),
     "method_invocation":
-        (STATEMENT_TYPE_CALL, __handle_statement),
+        (StatementType.call, __handle_statement),
     "block":
-        (STATEMENT_TYPE_STATEMENTS, __handle_statement),
+        (StatementType.statements, __handle_statement),
     "continue_statement":
-        (STATEMENT_TYPE_GOTO, __handle_continue),
+        (StatementType.goto, __handle_continue),
     "break_statement":
-        (STATEMENT_TYPE_GOTO, __handle_break),
+        (StatementType.goto, __handle_break),
     "return_statement":
-        (STATEMENT_TYPE_EXIT, __handle_return)
+        (StatementType.exit, __handle_return)
 }
 
 
@@ -551,8 +541,8 @@ def __parse(
     return siblings
 
 
-def __parse_statement_type_and_handler(ast: Node) -> Tuple[str, Callable]:
-    return statement_type_and_handler_map.get(ast.type, (STATEMENT_TYPE_OBJECT, __handle_statement))
+def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callable]:
+    return statement_type_and_handler_map.get(ast.type, (StatementType.object, __handle_statement))
 
 
 def __parse_position_range(ast: Node) -> Tuple[Tuple[int, int], Tuple[int, int]]:

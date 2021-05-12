@@ -11,10 +11,7 @@ from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.pdg import ProgramDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
-from program_slicing.graph.statement import Statement
-from program_slicing.graph.statement import \
-    STATEMENT_TYPE_VARIABLE, \
-    STATEMENT_TYPE_ASSIGNMENT
+from program_slicing.graph.statement import Statement, StatementType
 
 
 def to_cdg(cfg: ControlFlowGraph) -> ControlDependenceGraph:
@@ -77,7 +74,7 @@ def __to_ddg(
             if affecting_variable_name in variables_passed:
                 for variable_statement in variables_passed[affecting_variable_name]:
                     ddg.add_edge(variable_statement, statement)
-        if statement.statement_type == STATEMENT_TYPE_VARIABLE or statement.statement_type == STATEMENT_TYPE_ASSIGNMENT:
+        if statement.statement_type == StatementType.variable or statement.statement_type == StatementType.assignment:
             variables_passed[statement.name] = {statement}
     for child in cfg.successors(root):
         __to_ddg(child, cfg=cfg, ddg=ddg, visited=visited, variables=variables_passed)
