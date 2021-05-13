@@ -13,7 +13,7 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.pdg import ProgramDependenceGraph
-from program_slicing.graph.cdg_node import CDGNode
+from program_slicing.graph.statement import Statement
 from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph import convert
 
@@ -25,7 +25,7 @@ class ProgramGraphsManager:
         self.cfg: ControlFlowGraph = ControlFlowGraph()
         self.ddg: DataDependenceGraph = DataDependenceGraph()
         self.pdg: ProgramDependenceGraph = ProgramDependenceGraph()
-        self.basic_block: Dict[CDGNode, BasicBlock] = {}
+        self.basic_block: Dict[Statement, BasicBlock] = {}
         self.dom_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         self.reach_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         if source_code is not None and lang is not None:
@@ -67,11 +67,11 @@ class ProgramGraphsManager:
     def get_program_dependence_graph(self) -> ProgramDependenceGraph:
         return self.pdg
 
-    def get_basic_block(self, node: CDGNode) -> Optional[BasicBlock]:
-        return self.basic_block.get(node, None)
+    def get_basic_block(self, statement: Statement) -> Optional[BasicBlock]:
+        return self.basic_block.get(statement, None)
 
-    def get_boundary_blocks_for_node(self, node: CDGNode) -> Set[BasicBlock]:
-        block = self.get_basic_block(node)
+    def get_boundary_blocks_for_statement(self, statement: Statement) -> Set[BasicBlock]:
+        block = self.get_basic_block(statement)
         return self.get_boundary_blocks(block)
 
     def get_dominated_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
@@ -85,10 +85,10 @@ class ProgramGraphsManager:
         if len(predecessors) == 0:
             predecessors = [root]
         for root in predecessors:
-            for node in networkx.algorithms.bfs_tree(self.cdg, root):
-                if node == root:
+            for statement in networkx.algorithms.bfs_tree(self.cdg, root):
+                if statement == root:
                     continue
-                current_block = self.get_basic_block(node)
+                current_block = self.get_basic_block(statement)
                 if current_block is not None:
                     result.add(current_block)
         self.dom_blocks[block] = result
@@ -98,7 +98,11 @@ class ProgramGraphsManager:
         return self.__build_reach_blocks(block)
 
     def get_boundary_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
-        return self.get_dominated_blocks(block).intersection(self.get_reach_blocks(block))
+        boundary_blocks = set()
+        for basic_block in self.cfg:
+            if block in self.get_dominated_blocks(basic_block).intersection(self.get_reach_blocks(basic_block)):
+                boundary_blocks.add(basic_block)
+        return boundary_blocks
 
     def init_by_source_code(self, source_code: str, lang: str) -> None:
         self.init_by_control_dependence_graph(parse.control_dependence_graph(source_code, lang))
@@ -134,19 +138,19 @@ class ProgramGraphsManager:
     def __build_dependencies(self) -> None:
         self.basic_block.clear()
         for block in networkx.algorithms.traversal.dfs_tree(self.cfg):
-            for node in block.get_content():
-                self.basic_block[node] = block
+            for statement in block.get_statements():
+                self.basic_block[statement] = block
 
-    def __build_reach_blocks(self, block: BasicBlock, visited_nodes: Set[BasicBlock] = None) -> Set[BasicBlock]:
+    def __build_reach_blocks(self, block: BasicBlock, visited_blocks: Set[BasicBlock] = None) -> Set[BasicBlock]:
         if block in self.reach_blocks:
             return self.reach_blocks[block]
-        if visited_nodes is None:
-            visited_nodes = set()
-        visited_nodes.add(block)
+        if visited_blocks is None:
+            visited_blocks = set()
+        visited_blocks.add(block)
         result = {block}
         for child in self.cfg.successors(block):
-            if child not in visited_nodes:
-                result.update(self.__build_reach_blocks(child, visited_nodes))
+            if child not in visited_blocks:
+                result.update(self.__build_reach_blocks(child, visited_blocks))
         self.reach_blocks[block] = result
-        visited_nodes.remove(block)
+        visited_blocks.remove(block)
         return result

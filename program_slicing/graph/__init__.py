@@ -8,6 +8,6 @@ import program_slicing.graph.cdg  # noqa: F401
 import program_slicing.graph.cfg  # noqa: F401
 import program_slicing.graph.ddg  # noqa: F401
 import program_slicing.graph.pdg  # noqa: F401
-import program_slicing.graph.cdg_node  # noqa: F401
+import program_slicing.graph.statement  # noqa: F401
 import program_slicing.graph.basic_block  # noqa: F401
 import program_slicing.graph.manager  # noqa: F401

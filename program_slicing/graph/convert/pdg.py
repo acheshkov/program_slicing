@@ -13,10 +13,10 @@ from program_slicing.graph.pdg import ProgramDependenceGraph
 def to_cdg(pdg: ProgramDependenceGraph) -> ControlDependenceGraph:
     """
     Convert the Program Dependence Graph into a Control Dependence Graph.
-    New graph will contain nodes, links on which where listed in the original one so that
-    any changes made after converting in the original graph's content will affect the converted one.
+    New graph will contain same nodes as in the original one so that
+    any changes made after converting in the original graph's statements will affect the converted one.
     :param pdg: Program Dependence Graph that should to be converted.
-    :return: Control Dependence Graph which nodes where contained in the original Program Dependence Graph.
+    :return: Control Dependence Graph which nodes where presented in the original Program Dependence Graph.
     """
     raise NotImplementedError()
 
@@ -24,10 +24,10 @@ def to_cdg(pdg: ProgramDependenceGraph) -> ControlDependenceGraph:
 def to_cfg(pdg: ProgramDependenceGraph) -> ControlFlowGraph:
     """
     Convert the Program Dependence Graph into a Control Flow Graph.
-    New graph will contain same nodes as in the original one so that
-    any changes made after converting in the original graph's content will affect the converted one.
+    New graph will contain links on nodes of the original one so that
+    any changes made after converting in the original graph's statements will affect the converted one.
     :param pdg: Program Dependence Graph that should to be converted.
-    :return: Control Flow Graph which nodes where presented in the Program Dependence Graph on which it was based on.
+    :return: Control Flow Graph which nodes contain nodes of the Program Dependence Graph on which it was based on.
     """
     raise NotImplementedError()
 
@@ -36,7 +36,7 @@ def to_ddg(pdg: ProgramDependenceGraph) -> DataDependenceGraph:
     """
     Convert the Program Dependence Graph into a Data Dependence Graph.
     New graph will contain same nodes as in the original one so that
-    any changes made after converting in the original graph's content will affect the converted one.
+    any changes made after converting in the original graph's statements will affect the converted one.
     :param pdg: Program Dependence Graph that should to be converted.
     :return: Data Dependence Graph which nodes where presented in the Program Dependence Graph on which it was based on.
     """

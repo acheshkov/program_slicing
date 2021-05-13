@@ -181,52 +181,52 @@ class ManagerTestCase(TestCase):
         block_with_update_i = [child for child in cfg.successors(block_with_else)][0]
         block_with_return = [child for child in cfg.successors(block_with_for)][1]
         self.assertEqual({
+            block_with_n
+        }, mgr.get_boundary_blocks(block_with_n))
+        self.assertEqual({
+            block_with_n,
+            block_with_for
+        }, mgr.get_boundary_blocks(block_with_for))
+        self.assertEqual({
+            block_with_n,
+            block_with_for,
+            block_with_first_if
+        }, mgr.get_boundary_blocks(block_with_first_if))
+        self.assertEqual({
             block_with_n,
             block_with_for,
             block_with_first_if,
-            block_with_continue,
-            block_with_second_if,
-            block_with_break,
-            block_with_else,
-            block_with_update_i,
-            block_with_return
-        }, mgr.get_boundary_blocks(block_with_n))
-        self.assertEqual({
-            block_with_for,
-            block_with_first_if,
-            block_with_continue,
-            block_with_second_if,
-            block_with_break,
-            block_with_else,
-            block_with_update_i,
-            block_with_return
-        }, mgr.get_boundary_blocks(block_with_for))
-        self.assertEqual({
-            block_with_first_if,
-            block_with_continue,
-            block_with_second_if,
-            block_with_break,
-            block_with_else,
-            block_with_update_i
-        }, mgr.get_boundary_blocks(block_with_first_if))
-        self.assertEqual({
             block_with_continue
         }, mgr.get_boundary_blocks(block_with_continue))
         self.assertEqual({
-            block_with_second_if,
-            block_with_break,
-            block_with_else,
-            block_with_update_i
+            block_with_n,
+            block_with_for,
+            block_with_first_if,
+            block_with_second_if
         }, mgr.get_boundary_blocks(block_with_second_if))
         self.assertEqual({
+            block_with_n,
+            block_with_for,
+            block_with_first_if,
+            block_with_second_if,
             block_with_break
         }, mgr.get_boundary_blocks(block_with_break))
         self.assertEqual({
+            block_with_n,
+            block_with_for,
+            block_with_first_if,
+            block_with_second_if,
             block_with_else
         }, mgr.get_boundary_blocks(block_with_else))
         self.assertEqual({
+            block_with_n,
+            block_with_for,
+            block_with_first_if,
+            block_with_second_if,
             block_with_update_i,
         }, mgr.get_boundary_blocks(block_with_update_i))
         self.assertEqual({
+            block_with_n,
+            block_with_for,
             block_with_return,
         }, mgr.get_boundary_blocks(block_with_return))
