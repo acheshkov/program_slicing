@@ -134,7 +134,7 @@ from program_slicing.graph.statement import Statement
 - **end_point** - line and column numbers of the _Statement's_ end.
 - **affected_by** - set of strings with names of variables that may affect the current _Statement_.
 - **name** - string with the name of the _Statement_. Not all _Statements_ are named.
-- **meta** - string with additional information about node (e.g. an AST root's class).
+- **ast_node_type** - string with additional information about node (e.g. an AST root's class).
 
 ___
 

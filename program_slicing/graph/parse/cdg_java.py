@@ -314,7 +314,7 @@ def __handle_for_each(
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
         name=__parse_statement_name(source_code_bytes, name_ast),
-        meta="enhanced_for_variable_declarator")
+        ast_node_type="enhanced_for_variable_declarator")
     cdg.add_node(variable)
     siblings = [variable]
     entry_points = [variable]
@@ -523,7 +523,7 @@ def __parse(
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, ast, variable_names),
         name=__parse_statement_name(source_code_bytes, ast),
-        meta=ast.type)
+        ast_node_type=ast.type)
     cdg.add_node(statement)
     siblings, exit_points = statement_handler(
         statement,

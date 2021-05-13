@@ -34,11 +34,11 @@ class Statement:
             start_point: Tuple[StatementLineNumber, StatementColumnNumber],
             end_point: Tuple[StatementLineNumber, StatementColumnNumber],
             affected_by: Set[VariableName] = None,
-            name: Optional[str] = None,
-            meta: str = None):
-        self.meta: str = meta
+            name: Optional[VariableName] = None,
+            ast_node_type: str = None):
+        self.ast_node_type: str = ast_node_type
         self.statement_type: StatementType = statement_type
         self.start_point: Tuple[StatementLineNumber, StatementColumnNumber] = start_point
         self.end_point: Tuple[StatementLineNumber, StatementColumnNumber] = end_point
         self.affected_by: Set[VariableName] = set() if affected_by is None else affected_by
-        self.name: Optional[str] = name
+        self.name: Optional[VariableName] = name
