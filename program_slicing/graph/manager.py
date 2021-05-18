@@ -98,7 +98,11 @@ class ProgramGraphsManager:
         return self.__build_reach_blocks(block)
 
     def get_boundary_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
-        return self.get_dominated_blocks(block).intersection(self.get_reach_blocks(block))
+        boundary_blocks = set()
+        for basic_block in self.cfg:
+            if block in self.get_dominated_blocks(basic_block).intersection(self.get_reach_blocks(basic_block)):
+                boundary_blocks.add(basic_block)
+        return boundary_blocks
 
     def init_by_source_code(self, source_code: str, lang: str) -> None:
         self.init_by_control_dependence_graph(parse.control_dependence_graph(source_code, lang))

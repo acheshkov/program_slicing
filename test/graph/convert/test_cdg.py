@@ -60,22 +60,71 @@ class CDGTestCase(TestCase):
 
     @staticmethod
     def __get_ddg_0():
-        ddg = ControlFlowGraph()
+        ddg = DataDependenceGraph()
         ddg.add_edges_from([
-            ("2_4_var_n_and_i", "4_4_for_condition"),
-            ("2_4_var_n_and_i", "4_5_first_if"),
-            ("2_4_var_n_and_i", "4_4_update_i"),
-            ("2_4_var_n_and_i", "9_9_second_if"),
-            ("4_4_update_i", "4_4_for_condition"),
-            ("4_4_update_i", "4_5_first_if"),
-            ("4_4_update_i", "4_4_update_i"),
-            ("4_4_update_i", "9_9_second_if"),
-            ("2_4_var_n_and_i", "16_16_return")
+            ("int n = 10", "loop"),
+            ("int n = 10", "i < n"),
+            ("int n = 10", "n from i < n"),
+            ("int i = 0", "i < n"),
+            ("int i = 0", "i from i < n"),
+            ("int i = 0", "loop body"),
+            ("int i = 0", "if (i < 4)"),
+            ("int i = 0", "(i < 4)"),
+            ("int i = 0", "i < 4"),
+            ("int i = 0", "i from i < 4"),
+            ("int i = 0", "i += 1"),
+            ("int i = 0", "i from i += 1"),
+            ("int i = 0", "if (i > 6)"),
+            ("int i = 0", "(i > 6)"),
+            ("int i = 0", "i > 6"),
+            ("int i = 0", "i from i > 6"),
+            ("i += 1", "i < n"),
+            ("i += 1", "i from i < n"),
+            ("i += 1", "loop body"),
+            ("i += 1", "if (i < 4)"),
+            ("i += 1", "(i < 4)"),
+            ("i += 1", "i < 4"),
+            ("i += 1", "i from i < 4"),
+            ("i += 1", "i += 1"),
+            ("i += 1", "i from i += 1"),
+            ("i += 1", "if (i > 6)"),
+            ("i += 1", "(i > 6)"),
+            ("i += 1", "i > 6"),
+            ("i += 1", "i from i > 6"),
+            ("int n = 10", "return n"),
+            ("int n = 10", "n from return n")
         ])
-        ddg.add_node("5_7_print_and_continue")
-        ddg.add_node("9_11_print_and_break")
-        ddg.add_node("14_14_last_print")
+        ddg.add_nodes_from(range(35))
         return ddg
+
+    @staticmethod
+    def __get_pdg_0():
+        pdg = CDGTestCase.__get_ddg_0()
+        pdg.add_edge(0, "int n = 10")
+        pdg.add_edge(0, "int i = 0")
+        pdg.add_edge(0, "i < n")
+        pdg.add_edge(0, "i from i < n")
+        pdg.add_edge(0, "n from i < n")
+        pdg.add_edge(0, "loop")
+        pdg.add_edge(0, "n from return n")
+        pdg.add_edge(0, "return n")
+        pdg.add_edge("loop", "loop body")
+        pdg.add_edge("loop", "(i < 4)")
+        pdg.add_edge("loop", "i < 4")
+        pdg.add_edge("loop", "i from i < 4")
+        pdg.add_edge("loop", "if (i < 4)")
+        pdg.add_edge("loop", "(i > 6)")
+        pdg.add_edge("loop", "i > 6")
+        pdg.add_edge("loop", "i from i > 6")
+        pdg.add_edge("loop", "if (i > 6)")
+        pdg.add_edge("loop", "i += 1")
+        pdg.add_edge("loop", "i from i += 1")
+        pdg.add_nodes_from(range(35, 39))
+        pdg.add_edges_from([(0, i) for i in range(1, 8)])
+        pdg.add_edges_from([("loop", i) for i in range(8, 11)])
+        pdg.add_edges_from([("if (i < 4)", i) for i in range(11, 20)])
+        pdg.add_edges_from([("if (i > 6)", i) for i in range(20, 36)])
+        return pdg
 
     @staticmethod
     def __get_cdg_1():
@@ -117,13 +166,32 @@ class CDGTestCase(TestCase):
     def __get_ddg_1():
         ddg = DataDependenceGraph()
         ddg.add_edges_from([
-            ("6_6_catch", "9_9_catch"),
-            ("6_6_catch", "6_8_stack_trace"),
+            ("Exception e", "first catch body"),
+            ("Exception e", "e.printStackTrace();"),
+            ("Exception e", "e.printStackTrace()"),
+            ("Exception e", "e from e.printStackTrace()"),
+            ("Exception e", "MyException e"),
+            ("MyException e", "catch (MyException e)"),
         ])
-        ddg.add_node("2_5_try")
-        ddg.add_node("9_10_empty_block")
-        ddg.add_node("11_11_finally")
+        ddg.add_nodes_from(range(25))
         return ddg
+
+    @staticmethod
+    def __get_pdg_1():
+        pdg = CDGTestCase.__get_ddg_1()
+        pdg.add_edge(1, "Exception e")
+        pdg.add_edge(19, "first catch body")
+        pdg.add_edge(19, "e.printStackTrace();")
+        pdg.add_edge(19, "e.printStackTrace()")
+        pdg.add_edge(19, "e from e.printStackTrace()")
+        pdg.add_edge(19, "MyException e")
+        pdg.add_edge(19, "catch (MyException e)")
+        pdg.add_nodes_from(range(25, 29))
+        pdg.add_edges_from([(0, i) for i in range(1, 19)])
+        pdg.add_edges_from([(1, i) for i in range(19, 22)])
+        pdg.add_edges_from([(19, i) for i in range(22, 25)])
+        pdg.add_edges_from([("catch (MyException e)", i) for i in range(25, 26)])
+        return pdg
 
     def test_convert_cdg_to_cfg_isomorphic(self):
         cdg = self.__get_cdg_0()
@@ -143,8 +211,8 @@ class CDGTestCase(TestCase):
 
     def test_convert_cdg_to_pdg_isomorphic(self):
         cdg = self.__get_cdg_0()
-        pdg = self.__get_ddg_0()
-        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_ddg(cdg)))
+        pdg = self.__get_pdg_0()
+        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
         cdg = self.__get_cdg_1()
-        pdg = self.__get_ddg_1()
-        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_ddg(cdg)))
+        pdg = self.__get_pdg_1()
+        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
