@@ -2,11 +2,9 @@
 Set of methods for source code decomposition.
 ___
 ## Installation
-1. Clone this repo.
+1. ```git clone --recurse-submodules git@github.com:acheshkov/program_slicing.git```
 
-2. ```$ git submodule update --recursive --init```
-
-3. ```$ pip install -r requirements.txt```
+2. ```$ pip install -r requirements.txt```
 
 You should have access to global network to use pip.
 Python 3.9 with corresponding C compiler is required.
