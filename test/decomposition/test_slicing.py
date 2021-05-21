@@ -60,11 +60,11 @@ class SlicingTestCase(TestCase):
         self.assertFalse(is_slicing_criterion(a, b))
         self.assertTrue(is_slicing_criterion(a, c))
         self.assertFalse(is_slicing_criterion(b, a))
-        self.assertFalse(is_slicing_criterion(b, b))
+        self.assertTrue(is_slicing_criterion(b, b))
         self.assertFalse(is_slicing_criterion(b, c))
         self.assertFalse(is_slicing_criterion(c, a))
         self.assertFalse(is_slicing_criterion(c, b))
-        self.assertFalse(is_slicing_criterion(c, c))
+        self.assertTrue(is_slicing_criterion(c, c))
 
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
@@ -77,7 +77,7 @@ class SlicingTestCase(TestCase):
         function_statements = [statement for statement in cdg.get_entry_points()]
         for variable_statement in variable_statements:
             seed_statements = obtain_seed_statements(cdg, function_statements[0], variable_statement)
-            self.assertEqual(1, len(seed_statements))
+            self.assertEqual(2, len(seed_statements))
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
 
@@ -88,7 +88,7 @@ class SlicingTestCase(TestCase):
         slicing_criteria = obtain_slicing_criteria(cdg, function_statements[0])
         self.assertEqual({"a", "b"}, {key.name for key in slicing_criteria.keys()})
         for variable_statement, seed_statements in slicing_criteria.items():
-            self.assertEqual(1, len(seed_statements))
+            self.assertEqual(2, len(seed_statements))
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
 

@@ -200,6 +200,40 @@ class CDGJavaTestCase(TestCase):
             0: StatementType.statements
         })
 
+    def test_update(self):
+        source_code = """
+        class A {
+            int main() {
+                int n = 0;
+                for (int i = 0; i < 10; i++) {
+                    ++n;
+                }
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        self.assertEqual(23, len(cdg.nodes))
+        entry_points = [entry_point for entry_point in cdg.entry_points]
+        self.assertEqual(1, len(entry_points))
+        self.__check_cdg_children(entry_points, {
+            0: StatementType.function
+        })
+        function_children = [child for child in cdg.successors(entry_points[0])]
+        self.assertEqual(13, len(function_children))
+        self.__check_cdg_children(function_children, {
+            0: StatementType.statements,
+            3: StatementType.variable,
+            7: StatementType.variable,
+            12: StatementType.loop
+        })
+        loop_children = [child for child in cdg.successors(function_children[12])]
+        self.assertEqual(6, len(loop_children))
+        self.__check_cdg_children(loop_children, {
+            0: StatementType.statements,
+            3: StatementType.assignment,
+            5: StatementType.assignment
+        })
+
     def test_parse(self):
         source_code = """
         class A {

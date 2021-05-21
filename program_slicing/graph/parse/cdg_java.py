@@ -127,7 +127,8 @@ def __handle_if(
             variable_names=variable_names)
         for child in alternative:
             cdg.add_edge(statement, child)
-
+        if consequence and alternative:
+            alternative[0].start_point = consequence[0].end_point
     return siblings, entry_points + alternative_entry_points
 
 
@@ -403,6 +404,31 @@ def __handle_assignment(
     return siblings, entry_points
 
 
+def __handle_update(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    entry_points = []
+    expression_ast = ast.children[0]
+    expression_ast = expression_ast if expression_ast.next_named_sibling is None else expression_ast.next_named_sibling
+    siblings = __parse(
+        source_code_bytes,
+        expression_ast,
+        cdg,
+        entry_points,
+        break_statements=break_statements,
+        continue_statements=continue_statements,
+        variable_names=variable_names)
+    siblings.append(statement)
+    __route_control_flow(entry_points, statement, cdg)
+    entry_points = [statement]
+    return siblings, entry_points
+
+
 def __handle_continue(
         statement: Statement,
         source_code_bytes,
@@ -475,6 +501,8 @@ statement_type_and_handler_map = {
         (StatementType.loop, __handle_for_each),
     "assignment_expression":
         (StatementType.assignment, __handle_assignment),
+    "update_expression":
+        (StatementType.assignment, __handle_update),
     "method_invocation":
         (StatementType.call, __handle_statement),
     "block":
@@ -554,6 +582,10 @@ def __parse_statement_name(source_code_bytes: bytes, ast: Node) -> Optional[str]
         return __parse_statement_name(source_code_bytes, ast.child_by_field_name("name"))
     elif ast.type == "assignment_expression":
         return __parse_statement_name(source_code_bytes, ast.child_by_field_name("left"))
+    elif ast.type == "update_expression":
+        expr_ast = ast.children[0]
+        expr_ast = expr_ast if expr_ast.next_named_sibling is None else expr_ast.next_named_sibling
+        return __parse_statement_name(source_code_bytes, expr_ast)
     elif ast.type == "catch_formal_parameter":
         return __parse_statement_name(source_code_bytes, ast.child_by_field_name("name"))
     elif ast.start_point[0] == ast.end_point[0]:
@@ -574,11 +606,13 @@ def __parse_affected_by_recursive(
         variable_names: Set[str],
         affected_by: Set[str]) -> None:
     body = ast.child_by_field_name("body")
+    consequence = ast.child_by_field_name("consequence")
+    alternative = ast.child_by_field_name("alternative")
     name = __parse_statement_name(source_code_bytes, ast)
     if name in variable_names:
         affected_by.add(name)
     for child in ast.children:
-        if child.type == "block" or child == body:
+        if child.type == "block" or child == body or child == consequence or child == alternative:
             continue
         __parse_affected_by_recursive(source_code_bytes, child, variable_names, affected_by)
 
