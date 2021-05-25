@@ -37,7 +37,7 @@ class ProgramSlice:
 
     def add_range(self, start_point: Tuple[int, int], end_point: Tuple[int, int], range_type: RangeType) -> None:
         """
-        Build source code for the current slice.
+        Add a specified range into a current slice.
         :param start_point: line and column numbers of the first symbol of the slice part.
         :param end_point: line and column of the last symbol that should to be added to the slice.
         :param range_type: all the lines between end and start point will be added to a slice if FULL.
