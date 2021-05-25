@@ -9,11 +9,11 @@ from unittest import TestCase
 
 class DDGTestCase(TestCase):
 
-    def test_to_cdg(self):
+    def test_convert_ddg_to_cdg(self):
         pass
 
-    def test_to_cfg(self):
+    def test_convert_ddg_to_cfg(self):
         pass
 
-    def test_to_pdg(self):
+    def test_convert_ddg_to_pdg(self):
         pass

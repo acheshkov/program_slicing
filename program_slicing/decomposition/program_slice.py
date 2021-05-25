@@ -59,7 +59,7 @@ class ProgramSlice:
         last_range_line = last_line if range_type == RangeType.FULL else min(last_line, first_line + 1)
         for line_number in range(start_point[0], last_range_line):
             self.end_points[line_number] = len(self.code_lines[line_number])
-        if range_type == RangeType.BEGINNING:
+        if range_type == RangeType.BEGINNING and last_range_line > first_line:
             return
         if last_line not in self.end_points:
             self.end_points[last_line] = end_point[1]
