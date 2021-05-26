@@ -15,7 +15,7 @@ from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph.statement import Statement, StatementType
-from program_slicing.decomposition.program_slice import ProgramSlice
+from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -69,13 +69,14 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
 
 def get_complete_computation_slices(
         source_code: str,
-        lang: str) -> Generator[Tuple[Statement, Statement, List[ProgramSlice]], None, None]:
+        lang: str) -> Generator[Tuple[Statement, Statement, List[CodeLinesSlicer]], None, None]:
     """
     For each function and variable in a specified source code generate list of slices.
     Slice is a list of position ranges.
     :param source_code: source code that should be decomposed.
     :param lang: source code format like '.java' or '.xml'.
-    :return: map from variable statement into a slices set.
+    :return: generator of the function Statement, variable Statement and a corresponding list of slices
+    (CodeLinesSlicer)
     """
     code_lines = str(source_code).split("\n")
     manager = ProgramGraphsManager(source_code, lang)
@@ -85,15 +86,15 @@ def get_complete_computation_slices(
         slicing_criteria = __obtain_slicing_criteria(cdg, function_statement)
         for variable_statement, seed_statements in slicing_criteria.items():
             complete_computation_slices = __obtain_complete_computation_slices(manager, seed_statements)
-            program_slices = []
+            code_lines_slicers = []
             for complete_computation_slice in complete_computation_slices.values():
                 if not complete_computation_slice:
                     continue
-                program_slice = ProgramSlice(code_lines)
+                code_lines_slicer = CodeLinesSlicer(code_lines)
                 for statement in complete_computation_slice:
-                    program_slice.add_statement(statement)
-                program_slices.append(program_slice)
-            yield function_statement, variable_statement, program_slices
+                    code_lines_slicer.add_statement(statement)
+                code_lines_slicers.append(code_lines_slicer)
+            yield function_statement, variable_statement, code_lines_slicers
 
 
 def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:

@@ -5,4 +5,4 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/04/02'
 
 import program_slicing.decomposition.slicing  # noqa: F401
-import program_slicing.decomposition.program_slice  # noqa: F401
+import program_slicing.decomposition.code_lines_slicer  # noqa: F401
