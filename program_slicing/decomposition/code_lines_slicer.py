@@ -16,7 +16,7 @@ class RangeType(Enum):
     BEGINNING = "BEGINNING"
 
 
-class ProgramSlice:
+class CodeLinesSlicer:
 
     def __init__(self, code_lines: List[str]):
         self.code_lines: List[str] = code_lines
@@ -26,7 +26,7 @@ class ProgramSlice:
 
     def add_statement(self, statement: Statement) -> None:
         """
-        Add a specified Statement to a slice.
+        Add a specified Statement to the current slice.
         :param statement: a concrete Statement that should to be presented in a slice.
         """
         range_type = \
@@ -41,7 +41,7 @@ class ProgramSlice:
             end_point: Tuple[StatementLineNumber, StatementColumnNumber],
             range_type: RangeType) -> None:
         """
-        Add a specified range into a current slice.
+        Add a specified range into the current slice.
         :param start_point: line and column numbers of the first symbol of the slice part.
         :param end_point: line and column of the last symbol that should to be added to the slice.
         :param range_type: all the lines between end and start point will be added to a slice if FULL.
