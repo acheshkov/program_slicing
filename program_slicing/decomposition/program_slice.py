@@ -7,7 +7,7 @@ __date__ = '2021/05/20'
 from enum import Enum
 from typing import List, Tuple, Dict, Optional
 
-from program_slicing.graph.statement import Statement, StatementType
+from program_slicing.graph.statement import Statement, StatementType, StatementColumnNumber, StatementLineNumber
 
 
 class RangeType(Enum):
@@ -20,9 +20,9 @@ class ProgramSlice:
 
     def __init__(self, code_lines: List[str]):
         self.code_lines: List[str] = code_lines
-        self.minimum_column: Optional[int] = None
-        self.start_point: Optional[Tuple[int, int]] = None
-        self.end_points: Dict[int, int] = {}
+        self.minimum_column: Optional[StatementColumnNumber] = None
+        self.start_point: Optional[Tuple[StatementLineNumber, StatementColumnNumber]] = None
+        self.end_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
 
     def add_statement(self, statement: Statement) -> None:
         """
@@ -35,7 +35,11 @@ class ProgramSlice:
             RangeType.BEGINNING
         self.add_range(statement.start_point, statement.end_point, range_type)
 
-    def add_range(self, start_point: Tuple[int, int], end_point: Tuple[int, int], range_type: RangeType) -> None:
+    def add_range(
+            self,
+            start_point: Tuple[StatementLineNumber, StatementColumnNumber],
+            end_point: Tuple[StatementLineNumber, StatementColumnNumber],
+            range_type: RangeType) -> None:
         """
         Add a specified range into a current slice.
         :param start_point: line and column numbers of the first symbol of the slice part.
@@ -83,7 +87,9 @@ class ProgramSlice:
             for start_point, end_point in self.get_ranges()
         ]
 
-    def get_ranges(self) -> List[Tuple[Tuple[int, int], Tuple[int, int]]]:
+    def get_ranges(self) -> List[Tuple[
+            Tuple[StatementLineNumber, StatementColumnNumber],
+            Tuple[StatementLineNumber, StatementColumnNumber]]]:
         """
         Build ranges of lines and columns for the current slice.
         :return: list of tuples of start and end points (point is a tuple of two integers).
