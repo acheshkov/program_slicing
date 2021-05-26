@@ -102,7 +102,12 @@ def __process_loop(
         block: Dict[Statement, BasicBlock],
         prev_block: BasicBlock) -> None:
     old_block: BasicBlock = block[child]
-    index = old_block.get_statements().index(child)
+    try:
+        index = old_block.get_statements().index(child)
+    except Exception:
+        print('ALARM')
+        # print('child', child.start_point, child.name)
+
     if index == 0:
         if prev_block is not None:
             cfg.add_edge(prev_block, old_block)
