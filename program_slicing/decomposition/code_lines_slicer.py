@@ -30,8 +30,8 @@ class CodeLinesSlicer:
         :param statement: a concrete Statement that should to be presented in a slice.
         """
         range_type = \
-            RangeType.BOUNDS if statement.statement_type == StatementType.statements else \
-            RangeType.FULL if statement.statement_type == StatementType.object else \
+            RangeType.BOUNDS if statement.statement_type == StatementType.SCOPE else \
+            RangeType.FULL if statement.statement_type == StatementType.UNKNOWN else \
             RangeType.BEGINNING
         self.add_range(statement.start_point, statement.end_point, range_type)
 

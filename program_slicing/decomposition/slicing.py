@@ -100,7 +100,7 @@ def get_complete_computation_slices(
 def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:
     return {
         statement for statement in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if statement.statement_type == StatementType.variable
+        if statement.statement_type == StatementType.VARIABLE
     }
 
 
@@ -162,8 +162,8 @@ def __obtain_backward_slice_recursive(
                 for predecessor in manager.ddg.predecessors(statement):
                     __obtain_backward_slice_recursive(manager, predecessor, region, result)
         elif statement.start_point[0] <= root.start_point[0] and statement.end_point[0] >= root.end_point[0] and (
-                statement.statement_type == StatementType.object or
-                statement.statement_type == StatementType.statements):
+                statement.statement_type == StatementType.UNKNOWN or
+                statement.statement_type == StatementType.SCOPE):
             result.add(statement)
     if root in manager.pdg:
         for statement in manager.pdg.predecessors(root):
@@ -185,9 +185,9 @@ def __obtain_complete_computation_slices(
 
 def __is_slicing_criterion(assignment_statement: Statement, variable_statement: Statement) -> bool:
     return \
-        (assignment_statement.statement_type == StatementType.variable or
-         assignment_statement.statement_type == StatementType.assignment) and \
-        variable_statement.statement_type == StatementType.variable and \
+        (assignment_statement.statement_type == StatementType.VARIABLE or
+         assignment_statement.statement_type == StatementType.ASSIGNMENT) and \
+        variable_statement.statement_type == StatementType.VARIABLE and \
         variable_statement.name == assignment_statement.name
 
 

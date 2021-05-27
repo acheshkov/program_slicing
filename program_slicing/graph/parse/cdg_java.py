@@ -310,7 +310,7 @@ def __handle_for_each(
         start_point, _ = __parse_position_range(modifiers_ast)
     _, end_point = __parse_position_range(name_ast)
     variable = Statement(
-        StatementType.variable,
+        StatementType.VARIABLE,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
@@ -480,39 +480,39 @@ def __handle_return(
 
 statement_type_and_handler_map = {
     "variable_declarator":
-        (StatementType.variable, __handle_variable),
+        (StatementType.VARIABLE, __handle_variable),
     "method_declaration":
-        (StatementType.function, __handle_method_declaration),
+        (StatementType.FUNCTION, __handle_method_declaration),
     "if_statement":
-        (StatementType.branch, __handle_if),
+        (StatementType.BRANCH, __handle_if),
     "try_statement":
-        (StatementType.branch, __handle_try),
+        (StatementType.BRANCH, __handle_try),
     "try_with_resources_statement":
-        (StatementType.branch, __handle_try),
+        (StatementType.BRANCH, __handle_try),
     "catch_clause":
-        (StatementType.branch, __handle_catch),
+        (StatementType.BRANCH, __handle_catch),
     "catch_formal_parameter":
-        (StatementType.variable, __handle_variable),
+        (StatementType.VARIABLE, __handle_variable),
     "while_statement":
-        (StatementType.loop, __handle_for),
+        (StatementType.LOOP, __handle_for),
     "for_statement":
-        (StatementType.loop, __handle_for),
+        (StatementType.LOOP, __handle_for),
     "enhanced_for_statement":
-        (StatementType.loop, __handle_for_each),
+        (StatementType.LOOP, __handle_for_each),
     "assignment_expression":
-        (StatementType.assignment, __handle_assignment),
+        (StatementType.ASSIGNMENT, __handle_assignment),
     "update_expression":
-        (StatementType.assignment, __handle_update),
+        (StatementType.ASSIGNMENT, __handle_update),
     "method_invocation":
-        (StatementType.call, __handle_statement),
+        (StatementType.CALL, __handle_statement),
     "block":
-        (StatementType.statements, __handle_statement),
+        (StatementType.SCOPE, __handle_statement),
     "continue_statement":
-        (StatementType.goto, __handle_continue),
+        (StatementType.GOTO, __handle_continue),
     "break_statement":
-        (StatementType.goto, __handle_break),
+        (StatementType.GOTO, __handle_break),
     "return_statement":
-        (StatementType.exit, __handle_return)
+        (StatementType.EXIT, __handle_return)
 }
 
 
@@ -570,7 +570,7 @@ def __parse(
 
 
 def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callable]:
-    return statement_type_and_handler_map.get(ast.type, (StatementType.object, __handle_statement))
+    return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_statement))
 
 
 def __parse_position_range(ast: Node) -> Tuple[Tuple[int, int], Tuple[int, int]]:
