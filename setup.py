@@ -1,5 +1,20 @@
 from setuptools import setup, find_packages
 import program_slicing
+import os
+from setuptools.command.build_py import build_py
+from shutil import copytree
+
+HERE = os.path.abspath(os.path.dirname(__file__))
+NAME = "vendor"
+
+
+class BuildCommand(build_py):
+    def run(self):
+        build_py.run(self)
+        if not self.dry_run:
+            target_dir = os.path.join(self.build_lib, NAME)
+            copytree(os.path.join(HERE, NAME), target_dir)
+
 
 setup(
     name='program_slicing',
@@ -9,7 +24,7 @@ setup(
     url='https://github.com/acheshkov/program_slicing',
     download_url='https://github.com/acheshkov/program_slicing',
     author=program_slicing.__author__,
-    author_email=['katya.garmash@gmail.com'],
+    author_email=['yakimetsku@gmail.com'],
     license=program_slicing.__licence__,
     packages=find_packages(),
     extras_require={},
@@ -22,5 +37,6 @@ setup(
         'License :: OSI Approved :: MIT License',
         'Topic :: Software Development',
         'Topic :: Utilities'
-    ]
+    ],
+    cmdclass={"build_py": BuildCommand},
 )

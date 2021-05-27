@@ -13,7 +13,7 @@ from program_slicing.graph.statement import Statement, StatementType
 
 class CDGJavaTestCase(TestCase):
 
-    def __check_cdg_children(self, children: List[Statement], statement_type_map: Dict[int, StatementType]):
+    def __check_cdg_children(self, children: List[Statement], statement_type_map: Dict[int, StatementType]) -> None:
         for i, child in enumerate(children):
             statement_type = statement_type_map.get(i, StatementType.object)
             self.assertEqual(statement_type, child.statement_type)
@@ -198,6 +198,40 @@ class CDGJavaTestCase(TestCase):
         self.assertEqual(1, len(catch_2_children))
         self.__check_cdg_children(catch_2_children, {
             0: StatementType.statements
+        })
+
+    def test_update(self):
+        source_code = """
+        class A {
+            int main() {
+                int n = 0;
+                for (int i = 0; i < 10; i++) {
+                    ++n;
+                }
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        self.assertEqual(23, len(cdg.nodes))
+        entry_points = [entry_point for entry_point in cdg.entry_points]
+        self.assertEqual(1, len(entry_points))
+        self.__check_cdg_children(entry_points, {
+            0: StatementType.function
+        })
+        function_children = [child for child in cdg.successors(entry_points[0])]
+        self.assertEqual(13, len(function_children))
+        self.__check_cdg_children(function_children, {
+            0: StatementType.statements,
+            3: StatementType.variable,
+            7: StatementType.variable,
+            12: StatementType.loop
+        })
+        loop_children = [child for child in cdg.successors(function_children[12])]
+        self.assertEqual(6, len(loop_children))
+        self.__check_cdg_children(loop_children, {
+            0: StatementType.statements,
+            3: StatementType.assignment,
+            5: StatementType.assignment
         })
 
     def test_parse(self):
