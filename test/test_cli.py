@@ -15,5 +15,5 @@ class CLITestCase(TestCase):
     def test_get_uri_message(self):
         pass
 
-    def test_main(self):
+    def test_cli(self):
         pass

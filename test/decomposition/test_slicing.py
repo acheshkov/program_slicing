@@ -16,6 +16,8 @@ obtain_variable_statements = slicing.__obtain_variable_statements
 obtain_seed_statements = slicing.__obtain_seed_statements
 obtain_slicing_criteria = slicing.__obtain_slicing_criteria
 obtain_common_boundary_blocks = slicing.__obtain_common_boundary_blocks
+obtain_backward_slice = slicing.__obtain_backward_slice
+obtain_complete_computation_slices = slicing.__obtain_complete_computation_slices
 
 
 class SlicingTestCase(TestCase):
@@ -60,11 +62,11 @@ class SlicingTestCase(TestCase):
         self.assertFalse(is_slicing_criterion(a, b))
         self.assertTrue(is_slicing_criterion(a, c))
         self.assertFalse(is_slicing_criterion(b, a))
-        self.assertFalse(is_slicing_criterion(b, b))
+        self.assertTrue(is_slicing_criterion(b, b))
         self.assertFalse(is_slicing_criterion(b, c))
         self.assertFalse(is_slicing_criterion(c, a))
         self.assertFalse(is_slicing_criterion(c, b))
-        self.assertFalse(is_slicing_criterion(c, c))
+        self.assertTrue(is_slicing_criterion(c, c))
 
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
@@ -77,7 +79,7 @@ class SlicingTestCase(TestCase):
         function_statements = [statement for statement in cdg.get_entry_points()]
         for variable_statement in variable_statements:
             seed_statements = obtain_seed_statements(cdg, function_statements[0], variable_statement)
-            self.assertEqual(1, len(seed_statements))
+            self.assertEqual(2, len(seed_statements))
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
 
@@ -88,7 +90,7 @@ class SlicingTestCase(TestCase):
         slicing_criteria = obtain_slicing_criteria(cdg, function_statements[0])
         self.assertEqual({"a", "b"}, {key.name for key in slicing_criteria.keys()})
         for variable_statement, seed_statements in slicing_criteria.items():
-            self.assertEqual(1, len(seed_statements))
+            self.assertEqual(2, len(seed_statements))
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
 
@@ -99,3 +101,52 @@ class SlicingTestCase(TestCase):
         for variable_statement in variable_statements:
             seed_statements = obtain_seed_statements(cdg, function_statements[0], variable_statement)
             self.assertEqual(1, len(obtain_common_boundary_blocks(manager, seed_statements)))
+
+    def test_obtain_backward_slice(self):
+        manager, variable_statements = self.__get_manager_and_variables_0()
+        cdg = manager.cdg
+        function_statements = [statement for statement in cdg.get_entry_points()]
+        slicing_criteria = obtain_slicing_criteria(cdg, function_statements[0])
+        basic_blocks = [block for block in manager.cfg]
+        self.assertEqual(1, len(basic_blocks))
+        boundary_block = basic_blocks[0]
+        for variable_statement, seed_statements in slicing_criteria.items():
+            for seed_statement in seed_statements:
+                backward_slice = obtain_backward_slice(manager, seed_statement, boundary_block)
+                if seed_statement.start_point[0] == 3:
+                    self.assertEqual(
+                        {2, 3},
+                        {slice_statement.start_point[0] for slice_statement in backward_slice})
+                    self.assertEqual(
+                        {3, 7},
+                        {slice_statement.end_point[0] for slice_statement in backward_slice})
+                elif seed_statement.start_point[0] == 4:
+                    self.assertEqual(
+                        {2, 4},
+                        {slice_statement.start_point[0] for slice_statement in backward_slice})
+                    self.assertEqual(
+                        {4, 7},
+                        {slice_statement.end_point[0] for slice_statement in backward_slice})
+                elif seed_statement.start_point[0] == 5:
+                    self.assertEqual(
+                        {2, 3, 4, 5},
+                        {slice_statement.start_point[0] for slice_statement in backward_slice})
+                    self.assertEqual(
+                        {3, 4, 5, 7},
+                        {slice_statement.end_point[0] for slice_statement in backward_slice})
+                elif seed_statement.start_point[0] == 6:
+                    self.assertEqual(
+                        {2, 3, 4, 5, 6},
+                        {slice_statement.start_point[0] for slice_statement in backward_slice})
+                    self.assertEqual(
+                        {3, 4, 5, 6, 7},
+                        {slice_statement.end_point[0] for slice_statement in backward_slice})
+
+    def test_obtain_complete_computation_slices(self):
+        manager, variable_statements = self.__get_manager_and_variables_0()
+        cdg = manager.cdg
+        function_statements = [statement for statement in cdg.get_entry_points()]
+        slicing_criteria = obtain_slicing_criteria(cdg, function_statements[0])
+        for variable_statement, seed_statements in slicing_criteria.items():
+            complete_computation_slices = obtain_complete_computation_slices(manager, seed_statements)
+            self.assertEqual(1, len(complete_computation_slices))

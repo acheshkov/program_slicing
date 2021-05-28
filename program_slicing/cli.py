@@ -130,4 +130,5 @@ def __check_slice_from_directory(source: str, output_option: str, args: argparse
 
 
 if __name__ == "__main__":
+    print("\033[91m {}\033[00m" .format(""))
     cli()
