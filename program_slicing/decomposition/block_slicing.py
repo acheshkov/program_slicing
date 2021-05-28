@@ -1,6 +1,6 @@
 import itertools
 from itertools import combinations_with_replacement
-from typing import Tuple, Iterator, List, Dict, Set
+from typing import Tuple, Iterator, List, Dict
 
 import tree_sitter
 from sortedcontainers import SortedSet
@@ -25,7 +25,7 @@ def get_function_nodes(root: tree_sitter.Node) -> Iterator[tree_sitter.Node]:
             yield ast
 
 
-def get_block_nodes_per_level(root: tree_sitter.Node, source_code_bytes: bytes, function_name: str) -> Iterator[Tuple[tree_sitter.Node, int]]:
+def get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_sitter.Node, int]]:
     for ast, level in traverse_ast(root):
         # get blocks for cycles, etc.
         body_node = ast.child_by_field_name("body")
@@ -102,7 +102,7 @@ def determine_unique_blocks(source_code: str) -> Dict[int, List[tree_sitter.Node
     ast = tree_sitter_parsers.java().parse(source_code_bytes).root_node
 
     function = next(find_first_function(source_code_bytes, ast, 'function'))
-    for block_node, level in get_block_nodes_per_level(function, source_code_bytes, 'function'):
+    for block_node, level in get_block_nodes_per_level(function):
         named_node = block_node.children[0]
         named_node = named_node if named_node.is_named else named_node.next_named_sibling
         statements_by_block_id[counter] = []

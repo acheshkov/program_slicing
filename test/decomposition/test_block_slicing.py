@@ -83,7 +83,7 @@ class SlicingTestCase(TestCase):
     def test_identify_unique_blocks_with_anonymous_classn(self):
         block_without_try = '''
         HelloWorld englishGreeting = new EnglishGreeting();
-        
+
         HelloWorld frenchGreeting = new HelloWorld() {
             public void greet() {
                 greetSomeone("tout le monde");
@@ -95,7 +95,7 @@ class SlicingTestCase(TestCase):
         };
         '''
         blocks = determine_unique_blocks(block_without_try)
-        self.assertEqual(len(blocks), 4)
+        self.assertEqual(len(blocks), 3)
 
     def test_identify_unique_blocks_with_lambda(self):
         block_without_lambda = '''
@@ -135,7 +135,7 @@ class SlicingTestCase(TestCase):
 
         }
         HelloWorld englishGreeting = new EnglishGreeting();
-    
+
         HelloWorld frenchGreeting = new HelloWorld() {
             public void greet() {
                 greetSomeone("tout le monde");
@@ -145,7 +145,7 @@ class SlicingTestCase(TestCase):
                 System.out.println("Salut " + name);
             }
         };
-    
+
         ArrayList<String> strs = new ArrayList<>();
         for (String s: strs)
             System.out.println(s);
@@ -154,7 +154,7 @@ class SlicingTestCase(TestCase):
             System.out.println(s);
         return t;'''
 
-        expected_opportunities = [
+        expected_opportunities = set(
             [(2, 2), (2, 3), (2, 4), (2, 15), (2, 29), (2, 30), (2, 40), (2, 42), (2, 44), (2, 47), (2, 48),
              (3, 3), (3, 4), (3, 15), (3, 29), (3, 30), (3, 40), (3, 42), (3, 44), (3, 47), (3, 48),
              (4, 4), (4, 15), (4, 29), (4, 30), (4, 40), (4, 42), (4, 44), (4, 47), (4, 48),
@@ -180,7 +180,6 @@ class SlicingTestCase(TestCase):
              (44, 44),
              (46, 47), (46, 48),
              (47, 47),
-             (48, 48)]
-        ]
-        found_opportunities = get_opportunities_list(code)
+             (48, 48)])
+        found_opportunities = set(get_opportunities_list(code))
         self.assertEqual(expected_opportunities, found_opportunities)
