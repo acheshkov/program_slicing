@@ -102,11 +102,7 @@ def __process_loop(
         block: Dict[Statement, BasicBlock],
         prev_block: BasicBlock) -> None:
     old_block: BasicBlock = block[child]
-    try:
-        index = old_block.get_statements().index(child)
-    except Exception:
-        print('ALARM')
-        # print('child', child.start_point, child.name)
+    index = old_block.get_statements().index(child)
 
     if index == 0:
         if prev_block is not None:
