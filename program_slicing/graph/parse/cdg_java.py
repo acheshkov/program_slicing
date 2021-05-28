@@ -523,9 +523,58 @@ def parse(source_code: str) -> ControlDependenceGraph:
     :return: Control Dependence Graph
     """
     source_code_bytes = bytes(source_code, "utf8")
-    ast = parser.parse(source_code_bytes)
+    ast = parser.parse(source_code_bytes).root_node
     result = ControlDependenceGraph()
-    __parse(source_code_bytes, ast.root_node, result, [], [], [], set())
+    for node in ast.children:
+        if node.type == "ERROR" and \
+                node.next_named_sibling.type == "block" and \
+                node.prev_named_sibling.type == "local_variable_declaration":
+            scope = node.next_named_sibling
+            declaration = node.prev_named_sibling
+            start_point, end_point = __parse_position_range(scope)
+            entry_point = Statement(
+                StatementType.function,
+                start_point=start_point,
+                end_point=end_point,
+                affected_by=set(),
+                name=__parse_statement_name(source_code_bytes, declaration.children[-1]),
+                ast_node_type="method_declaration")
+            result.add_node(entry_point)
+            result.add_entry_point(entry_point)
+            for child in __parse(source_code_bytes, scope, result, [entry_point], [], [], set()):
+                result.add_edge(entry_point, child)
+    if len(result) == 0:
+        if not {
+            "class_declaration",
+            "enum_declaration",
+            "interface_declaration",
+        }.intersection({node.type for node in ast.children}):
+            start_point, end_point = __parse_position_range(ast)
+            entry_point = Statement(
+                StatementType.function,
+                start_point=start_point,
+                end_point=end_point,
+                affected_by=set(),
+                name="",
+                ast_node_type="method_declaration")
+            result.add_node(entry_point)
+            result.add_entry_point(entry_point)
+            entry_points = [entry_point]
+            break_statements = []
+            continue_statements = []
+            variable_names = set()
+            for node in ast.children:
+                for child in __parse(
+                        source_code_bytes,
+                        node,
+                        result,
+                        entry_points,
+                        break_statements=break_statements,
+                        continue_statements=continue_statements,
+                        variable_names=variable_names):
+                    result.add_edge(entry_point, child)
+        else:
+            __parse(source_code_bytes, ast, result, [], [], [], set())
     return result
 
 
