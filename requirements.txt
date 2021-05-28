@@ -1,3 +1,4 @@
 tree_sitter
 gitmodules
 networkx
+flake8==3.9.2

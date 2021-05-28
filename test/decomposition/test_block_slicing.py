@@ -8,9 +8,6 @@ from unittest import TestCase
 
 from program_slicing.decomposition import slicing
 from program_slicing.decomposition.block_slicing import determine_unique_blocks, get_opportunities_list
-from program_slicing.graph.parse import LANG_JAVA
-from program_slicing.graph.statement import Statement, StatementType
-from program_slicing.graph.manager import ProgramGraphsManager
 
 is_slicing_criterion = slicing.__is_slicing_criterion
 obtain_variable_statements = slicing.__obtain_variable_statements
@@ -38,7 +35,7 @@ class SlicingTestCase(TestCase):
 
         while_block = '''
         while (null != (line = input.readLine()) && maxLines > 0) {
-                maxLines--;   
+                maxLines--;
             }'''
         blocks = determine_unique_blocks(while_block)
         self.assertEqual(len(blocks), 2)
@@ -69,7 +66,7 @@ class SlicingTestCase(TestCase):
             int t = 12;
             fImage= loadImage("logo.gif");
             MediaTracker tracker= new MediaTracker(this);
-            
+
             try {
                 tracker.waitForAll();
                 System.out.println(1);
@@ -77,7 +74,7 @@ class SlicingTestCase(TestCase):
                 int i = 0;
                 ++i;
             }
-            
+
             for (int i = 0; i < 10; ++i) {
                 foo();
                 while(b < 10) {
@@ -89,12 +86,12 @@ class SlicingTestCase(TestCase):
                         System.out.println(i);
                     }
                 }
-                
+
             }
             ArrayList<String> strs = new ArrayList<>();
             for (String s: strs)
                 System.out.println(s);
-            
+
             while(b < 10)
                 System.out.println(s);
             return t;'''
