@@ -2,7 +2,8 @@
 Set of methods for source code decomposition.
 ___
 ## Installation
-1. ```git clone --recurse-submodules git@github.com:acheshkov/program_slicing.git```
+
+1. ```$ git clone --recurse-submodules git@github.com:acheshkov/program_slicing.git```
 
 2. ```$ pip3 install -r program_slicing/requirements.txt```
 
@@ -33,7 +34,7 @@ complete computation slice</a>
 <a href="https://en.wikipedia.org/wiki/Method">of methods</a>).
 
 ```bash
-$ python main.py slice [-h]
+$ python cli.py slice [-h]
                        [-o OUTPUT]
                        source
 ```
@@ -53,19 +54,19 @@ It uses stdout if not specified
 
 Examples:
 ```bash
-$ python main.py slice MyProjectPath
+$ python cli.py slice MyProjectPath
 ```
 
 ```bash
-$ python main.py slice MyFile.java
+$ python cli.py slice MyFile.java
 ```
 
 ```bash
-$ python main.py slice MyProjectPath --output MyResultPath
+$ python cli.py slice MyProjectPath --output MyResultPath
 ```
 
 ```bash
-$ python main.py slice MyFile.java --output MyResultPath
+$ python cli.py slice MyFile.java --output MyResultPath
 ```
 
 ___
