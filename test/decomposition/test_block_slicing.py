@@ -38,7 +38,7 @@ class SlicingTestCase(TestCase):
         while_block = '''
         while (null != (line = input.readLine()) && maxLines > 0) {
                 maxLines--;
-            }'''
+        }'''
         blocks = determine_unique_blocks(while_block)
         self.assertEqual(len(blocks), 2)
 
