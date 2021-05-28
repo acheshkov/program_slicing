@@ -3,7 +3,6 @@ from itertools import combinations_with_replacement
 from typing import Tuple, Iterator, List, Dict
 
 import tree_sitter
-from sortedcontainers import SortedSet
 from tree_sitter import Node
 
 from program_slicing.graph.parse import cdg_java
