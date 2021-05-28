@@ -1,8 +1,9 @@
 import itertools
 from itertools import combinations_with_replacement
-from typing import Tuple, Iterator, List, Dict
+from typing import Tuple, Iterator, List, Dict, Set
 
 import tree_sitter
+from sortedcontainers import SortedSet
 from tree_sitter import Node
 
 from program_slicing.graph.parse import cdg_java
@@ -24,7 +25,7 @@ def get_function_nodes(root: tree_sitter.Node) -> Iterator[tree_sitter.Node]:
             yield ast
 
 
-def get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_sitter.Node, int]]:
+def get_block_nodes_per_level(root: tree_sitter.Node, source_code_bytes: bytes, function_name: str) -> Iterator[Tuple[tree_sitter.Node, int]]:
     for ast, level in traverse_ast(root):
         # get blocks for cycles, etc.
         body_node = ast.child_by_field_name("body")
@@ -32,12 +33,16 @@ def get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_sit
         consequence_node = ast.child_by_field_name("consequence")
         # get blocks for else statement
         alternative_node = ast.child_by_field_name("alternative")
+
         if body_node is not None:
             yield body_node, level
         elif consequence_node is not None:
             yield consequence_node, level
         elif alternative_node is not None:
             yield alternative_node, level
+        elif ast.type == "finally_clause":
+            if len(ast.children) > 1:
+                yield ast.children[1], level
 
 
 def get_opportunities_list(source_code: str) -> List[Tuple[int, int]]:
@@ -47,7 +52,7 @@ def get_opportunities_list(source_code: str) -> List[Tuple[int, int]]:
     statements_combinations_by_block_id = generate_all_possible_opportunities(statements_by_block_id)
     ranges = count_block_bounds(statements_combinations_by_block_id)
     # we subtract  since we added class and method to the block of the passed code
-    return [(x[0] - 1, x[1] - 1) for x in sorted(itertools.chain(*ranges))]
+    return list(SortedSet(list(itertools.chain(*ranges))))
 
 
 def count_block_bounds(statements_combinations_by_block_id):
@@ -64,7 +69,7 @@ def count_block_bounds(statements_combinations_by_block_id):
                 if end_point is None or statement.end_point[0] > end_point[0] or (
                         statement.end_point[0] == end_point[0] and statement.end_point[1] > end_point[1]):
                     end_point = statement.end_point
-            ranges.append((start_point[0], end_point[0]))
+            ranges.append((start_point[0] + 1, end_point[0] + 1))
         ranges_by_block_id[block_id] = ranges
 
     return [list(x) for x in ranges_by_block_id.values()]
@@ -80,11 +85,13 @@ def generate_all_possible_opportunities(statements_by_block_id: Dict[int, List[t
     return statements_combinations_by_block_id
 
 
-def find_first_function(root: tree_sitter.Node) -> Iterator[tree_sitter.Node]:
+def find_first_function(source_code_bytes: bytes, root: tree_sitter.Node, name: str) -> Iterator[tree_sitter.Node]:
     for ast, level in traverse_ast(root):
         if ast.type == "method_declaration":
-            yield ast
-            break
+            found_name = parse_node_name(source_code_bytes, ast.child_by_field_name("name"))
+            if name == found_name:
+                yield ast
+                break
 
 
 def determine_unique_blocks(source_code: str) -> Dict[int, List[tree_sitter.Node]]:
@@ -94,8 +101,8 @@ def determine_unique_blocks(source_code: str) -> Dict[int, List[tree_sitter.Node
     source_code_bytes = bytes(surrounded_code, "utf8")
     ast = tree_sitter_parsers.java().parse(source_code_bytes).root_node
 
-    function = next(find_first_function(ast))
-    for block_node, level in get_block_nodes_per_level(function):
+    function = next(find_first_function(source_code_bytes, ast, 'function'))
+    for block_node, level in get_block_nodes_per_level(function, source_code_bytes, 'function'):
         named_node = block_node.children[0]
         named_node = named_node if named_node.is_named else named_node.next_named_sibling
         statements_by_block_id[counter] = []
@@ -108,4 +115,4 @@ def determine_unique_blocks(source_code: str) -> Dict[int, List[tree_sitter.Node
 
 
 def surround_with_class_and_method(code: str):
-    return f'class Foo {{ public void function() {{\n{code}\n}} }}'
+    return f'class Foo {{ public void function() {{{code}}} }}'
