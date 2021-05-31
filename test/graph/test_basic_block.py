@@ -15,31 +15,31 @@ class BasicBlockTestCase(TestCase):
     def test_constructor(self):
         a = BasicBlock()
         self.assertEqual([], a.get_statements())
-        statement_a = Statement(StatementType.object, (0, 0), (0, 1))
-        statement_b = Statement(StatementType.object, (1, 1), (1, 2))
+        statement_a = Statement(StatementType.UNKNOWN, (0, 0), (0, 1))
+        statement_b = Statement(StatementType.UNKNOWN, (1, 1), (1, 2))
         a = BasicBlock(statements=[statement_a, statement_b])
         self.assertEqual([statement_a, statement_b], a.get_statements())
 
     def test_is_empty(self):
         b = BasicBlock()
         self.assertTrue(b.is_empty())
-        b = BasicBlock(statements=[Statement(StatementType.object, (0, 0), (0, 1))])
+        b = BasicBlock(statements=[Statement(StatementType.UNKNOWN, (0, 0), (0, 1))])
         self.assertFalse(b.is_empty())
 
     def test_append(self):
         a = BasicBlock()
         self.assertEqual([], a.get_statements())
-        statement_a = Statement(StatementType.object, (0, 0), (0, 1))
+        statement_a = Statement(StatementType.UNKNOWN, (0, 0), (0, 1))
         a.append(statement_a)
         self.assertEqual([statement_a], a.get_statements())
-        statement_b = Statement(StatementType.object, (0, 0), (0, 1))
+        statement_b = Statement(StatementType.UNKNOWN, (0, 0), (0, 1))
         a.append(statement_b)
         self.assertEqual([statement_a, statement_b], a.get_statements())
 
     def test_get_root(self):
         a = BasicBlock()
         self.assertIsNone(a.get_root())
-        statement_a = Statement(StatementType.object, (0, 0), (0, 1))
-        statement_b = Statement(StatementType.object, (1, 1), (1, 2))
+        statement_a = Statement(StatementType.UNKNOWN, (0, 0), (0, 1))
+        statement_b = Statement(StatementType.UNKNOWN, (1, 1), (1, 2))
         a = BasicBlock(statements=[statement_a, statement_b])
         self.assertEqual(statement_a, a.get_root())
