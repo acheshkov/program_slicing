@@ -525,9 +525,11 @@ def parse(source_code: str) -> ControlDependenceGraph:
     source_code_bytes = bytes(source_code, "utf8")
     ast = parser.parse(source_code_bytes).root_node
     result = ControlDependenceGraph()
-    if not __parse_undeclared_class(source_code_bytes, ast, result):
-        if not __parse_undeclared_method(source_code_bytes, ast, result):
-            __parse(source_code_bytes, ast, result, [], [], [], set())
+    if __parse_undeclared_class(source_code_bytes, ast, result):
+        return result
+    if __parse_undeclared_method(source_code_bytes, ast, result):
+        return result
+    __parse(source_code_bytes, ast, result, [], [], [], set())
     return result
 
 
