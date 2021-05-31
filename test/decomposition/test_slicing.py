@@ -55,9 +55,9 @@ class SlicingTestCase(TestCase):
         self.assertEqual(2, len(res))
 
     def test_is_slicing_criterion(self):
-        a = Statement(StatementType.assignment, (1, 1), (1, 2), name="a")
-        b = Statement(StatementType.variable, (2, 2), (2, 3), name="b")
-        c = Statement(StatementType.variable, (3, 3), (3, 4), name="a")
+        a = Statement(StatementType.ASSIGNMENT, (1, 1), (1, 2), name="a")
+        b = Statement(StatementType.VARIABLE, (2, 2), (2, 3), name="b")
+        c = Statement(StatementType.VARIABLE, (3, 3), (3, 4), name="a")
         self.assertFalse(is_slicing_criterion(a, a))
         self.assertFalse(is_slicing_criterion(a, b))
         self.assertTrue(is_slicing_criterion(a, c))

@@ -28,9 +28,9 @@ class CodeLinesSlicerTestCase(TestCase):
     @staticmethod
     def __get_code_lines_slicer_0():
         code_lines_slicer = CodeLinesSlicer(CodeLinesSlicerTestCase.__get_source_code_0().split("\n"))
-        function_body = Statement(StatementType.statements, (2, 24), (7, 13))
-        variable_a = Statement(StatementType.variable, (3, 16), (3, 26))
-        variable_b = Statement(StatementType.variable, (4, 16), (4, 27))
+        function_body = Statement(StatementType.SCOPE, (2, 24), (7, 13))
+        variable_a = Statement(StatementType.VARIABLE, (3, 16), (3, 26))
+        variable_b = Statement(StatementType.VARIABLE, (4, 16), (4, 27))
         code_lines_slicer.add_statement(function_body)
         code_lines_slicer.add_statement(variable_a)
         code_lines_slicer.add_statement(variable_b)
