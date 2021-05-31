@@ -307,14 +307,14 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: StatementType.function
+            0: StatementType.FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(9, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: StatementType.statements,
-            3: StatementType.variable,
-            8: StatementType.exit
+            0: StatementType.SCOPE,
+            3: StatementType.VARIABLE,
+            8: StatementType.EXIT
         })
 
     def test_parse_without_function(self):
@@ -327,52 +327,11 @@ class CDGJavaTestCase(TestCase):
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
-            0: StatementType.function
+            0: StatementType.FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
         self.assertEqual(8, len(function_children))
         self.__check_cdg_children(function_children, {
-            2: StatementType.variable,
-            7: StatementType.exit
-        })
-
-    def test_parse_without_class(self):
-        source_code = """
-            public static int main(int arg) {
-                int n = 10 + arg;
-                return n;
-            }
-            """
-        cdg = cdg_java.parse(source_code)
-        self.assertEqual(10, len(cdg.nodes))
-        entry_points = [entry_point for entry_point in cdg.entry_points]
-        self.assertEqual(1, len(entry_points))
-        self.__check_cdg_children(entry_points, {
-            0: StatementType.function
-        })
-        function_children = [child for child in cdg.successors(entry_points[0])]
-        self.assertEqual(9, len(function_children))
-        self.__check_cdg_children(function_children, {
-            0: StatementType.statements,
-            3: StatementType.variable,
-            8: StatementType.exit
-        })
-
-    def test_parse_without_function(self):
-        source_code = """
-            int n = 10 + arg;
-            return n;
-            """
-        cdg = cdg_java.parse(source_code)
-        self.assertEqual(9, len(cdg.nodes))
-        entry_points = [entry_point for entry_point in cdg.entry_points]
-        self.assertEqual(1, len(entry_points))
-        self.__check_cdg_children(entry_points, {
-            0: StatementType.function
-        })
-        function_children = [child for child in cdg.successors(entry_points[0])]
-        self.assertEqual(8, len(function_children))
-        self.__check_cdg_children(function_children, {
-            2: StatementType.variable,
-            7: StatementType.exit
+            2: StatementType.VARIABLE,
+            7: StatementType.EXIT
         })

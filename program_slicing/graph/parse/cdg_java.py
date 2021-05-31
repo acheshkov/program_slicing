@@ -584,7 +584,7 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             declaration = node.prev_named_sibling
             start_point, end_point = __parse_position_range(scope)
             entry_point = Statement(
-                StatementType.function,
+                StatementType.FUNCTION,
                 start_point=start_point,
                 end_point=end_point,
                 affected_by=set(),
@@ -605,7 +605,7 @@ def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlD
     }.intersection({node.type for node in ast.children}):
         start_point, end_point = __parse_position_range(ast)
         entry_point = Statement(
-            StatementType.function,
+            StatementType.FUNCTION,
             start_point=start_point,
             end_point=end_point,
             affected_by=set(),
