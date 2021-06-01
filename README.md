@@ -35,8 +35,8 @@ complete computation slice</a>
 
 ```bash
 $ python cli.py slice [-h]
-                       [-o OUTPUT]
-                       source
+                      [-o OUTPUT]
+                      source
 ```
 
 Positional arguments:
