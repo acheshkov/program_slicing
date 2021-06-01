@@ -8,12 +8,9 @@ from typing import List, Tuple, Set, Callable, Optional
 
 from tree_sitter import Node
 
-from program_slicing.graph.parse import tree_sitter_parsers
+from program_slicing.graph.parse import tree_sitter_ast_java
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.statement import Statement, StatementType
-
-
-parser = tree_sitter_parsers.java()
 
 
 def __handle_statement(
@@ -520,10 +517,10 @@ def parse(source_code: str) -> ControlDependenceGraph:
     """
     Parse the source code string into a Control Dependence Graph.
     :param source_code: the string that should to be parsed.
-    :return: Control Dependence Graph
+    :return: Control Dependence Graph.
     """
     source_code_bytes = bytes(source_code, "utf8")
-    ast = parser.parse(source_code_bytes).root_node
+    ast = tree_sitter_ast_java.parse(source_code).root_node
     result = ControlDependenceGraph()
     if __parse_undeclared_class(source_code_bytes, ast, result):
         return result

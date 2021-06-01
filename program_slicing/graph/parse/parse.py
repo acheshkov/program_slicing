@@ -4,6 +4,9 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
+from tree_sitter import Tree
+
+from program_slicing.graph.parse import tree_sitter_ast_java
 from program_slicing.graph.parse import cdg_java
 from program_slicing.graph.parse import cfg_java
 from program_slicing.graph.parse import ddg_java
@@ -16,9 +19,20 @@ from program_slicing.graph.pdg import ProgramDependenceGraph
 LANG_JAVA = ".java"
 
 
+def tree_sitter_ast(source_code: str, lang: str) -> Tree:
+    """
+    Parse the source code in a specified format into a Tree Sitter AST.
+    :param source_code: string with the source code in it.
+    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
+    :return: Tree Sitter AST.
+    """
+    if lang == LANG_JAVA:
+        return tree_sitter_ast_java.parse(source_code)
+
+
 def control_flow_graph(source_code: str, lang: str) -> ControlFlowGraph:
     """
-    Parse the source code in a specified format into a Control Flow Graph .
+    Parse the source code in a specified format into a Control Flow Graph.
     :param source_code: string with the source code in it.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :return: Control Flow Graph.
