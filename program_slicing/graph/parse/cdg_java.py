@@ -127,7 +127,8 @@ def __handle_if(
             variable_names=variable_names)
         for child in alternative:
             cdg.add_edge(statement, child)
-
+        if consequence and alternative:
+            alternative[0].start_point = consequence[0].end_point
     return siblings, entry_points + alternative_entry_points
 
 
@@ -309,7 +310,7 @@ def __handle_for_each(
         start_point, _ = __parse_position_range(modifiers_ast)
     _, end_point = __parse_position_range(name_ast)
     variable = Statement(
-        StatementType.variable,
+        StatementType.VARIABLE,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
@@ -403,6 +404,31 @@ def __handle_assignment(
     return siblings, entry_points
 
 
+def __handle_update(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    entry_points = []
+    expression_ast = ast.children[0]
+    expression_ast = expression_ast if expression_ast.next_named_sibling is None else expression_ast.next_named_sibling
+    siblings = __parse(
+        source_code_bytes,
+        expression_ast,
+        cdg,
+        entry_points,
+        break_statements=break_statements,
+        continue_statements=continue_statements,
+        variable_names=variable_names)
+    siblings.append(statement)
+    __route_control_flow(entry_points, statement, cdg)
+    entry_points = [statement]
+    return siblings, entry_points
+
+
 def __handle_continue(
         statement: Statement,
         source_code_bytes,
@@ -454,37 +480,39 @@ def __handle_return(
 
 statement_type_and_handler_map = {
     "variable_declarator":
-        (StatementType.variable, __handle_variable),
+        (StatementType.VARIABLE, __handle_variable),
     "method_declaration":
-        (StatementType.function, __handle_method_declaration),
+        (StatementType.FUNCTION, __handle_method_declaration),
     "if_statement":
-        (StatementType.branch, __handle_if),
+        (StatementType.BRANCH, __handle_if),
     "try_statement":
-        (StatementType.branch, __handle_try),
+        (StatementType.BRANCH, __handle_try),
     "try_with_resources_statement":
-        (StatementType.branch, __handle_try),
+        (StatementType.BRANCH, __handle_try),
     "catch_clause":
-        (StatementType.branch, __handle_catch),
+        (StatementType.BRANCH, __handle_catch),
     "catch_formal_parameter":
-        (StatementType.variable, __handle_variable),
+        (StatementType.VARIABLE, __handle_variable),
     "while_statement":
-        (StatementType.loop, __handle_for),
+        (StatementType.LOOP, __handle_for),
     "for_statement":
-        (StatementType.loop, __handle_for),
+        (StatementType.LOOP, __handle_for),
     "enhanced_for_statement":
-        (StatementType.loop, __handle_for_each),
+        (StatementType.LOOP, __handle_for_each),
     "assignment_expression":
-        (StatementType.assignment, __handle_assignment),
+        (StatementType.ASSIGNMENT, __handle_assignment),
+    "update_expression":
+        (StatementType.ASSIGNMENT, __handle_update),
     "method_invocation":
-        (StatementType.call, __handle_statement),
+        (StatementType.CALL, __handle_statement),
     "block":
-        (StatementType.statements, __handle_statement),
+        (StatementType.SCOPE, __handle_statement),
     "continue_statement":
-        (StatementType.goto, __handle_continue),
+        (StatementType.GOTO, __handle_continue),
     "break_statement":
-        (StatementType.goto, __handle_break),
+        (StatementType.GOTO, __handle_break),
     "return_statement":
-        (StatementType.exit, __handle_return)
+        (StatementType.EXIT, __handle_return)
 }
 
 
@@ -495,9 +523,13 @@ def parse(source_code: str) -> ControlDependenceGraph:
     :return: Control Dependence Graph
     """
     source_code_bytes = bytes(source_code, "utf8")
-    ast = parser.parse(source_code_bytes)
+    ast = parser.parse(source_code_bytes).root_node
     result = ControlDependenceGraph()
-    __parse(source_code_bytes, ast.root_node, result, [], [], [], set())
+    if __parse_undeclared_class(source_code_bytes, ast, result):
+        return result
+    if __parse_undeclared_method(source_code_bytes, ast, result):
+        return result
+    __parse(source_code_bytes, ast, result, [], [], [], set())
     return result
 
 
@@ -541,8 +573,67 @@ def __parse(
     return siblings
 
 
+def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDependenceGraph) -> bool:
+    result = False
+    for node in ast.children:
+        if node.type == "ERROR" and \
+                node.next_named_sibling.type == "block" and \
+                node.prev_named_sibling.type == "local_variable_declaration":
+            result = True
+            scope = node.next_named_sibling
+            declaration = node.prev_named_sibling
+            start_point, end_point = __parse_position_range(scope)
+            entry_point = Statement(
+                StatementType.FUNCTION,
+                start_point=start_point,
+                end_point=end_point,
+                affected_by=set(),
+                name=__parse_statement_name(source_code_bytes, declaration.children[-1]),
+                ast_node_type="method_declaration")
+            cdg.add_node(entry_point)
+            cdg.add_entry_point(entry_point)
+            for child in __parse(source_code_bytes, scope, cdg, [entry_point], [], [], set()):
+                cdg.add_edge(entry_point, child)
+    return result
+
+
+def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlDependenceGraph) -> bool:
+    if not {
+        "class_declaration",
+        "enum_declaration",
+        "interface_declaration",
+    }.intersection({node.type for node in ast.children}):
+        start_point, end_point = __parse_position_range(ast)
+        entry_point = Statement(
+            StatementType.FUNCTION,
+            start_point=start_point,
+            end_point=end_point,
+            affected_by=set(),
+            name="",
+            ast_node_type="method_declaration")
+        cdg.add_node(entry_point)
+        cdg.add_entry_point(entry_point)
+        entry_points = [entry_point]
+        break_statements = []
+        continue_statements = []
+        variable_names = set()
+        for node in ast.children:
+            for child in __parse(
+                    source_code_bytes,
+                    node,
+                    cdg,
+                    entry_points,
+                    break_statements=break_statements,
+                    continue_statements=continue_statements,
+                    variable_names=variable_names):
+                cdg.add_edge(entry_point, child)
+        return True
+    else:
+        return False
+
+
 def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callable]:
-    return statement_type_and_handler_map.get(ast.type, (StatementType.object, __handle_statement))
+    return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_statement))
 
 
 def __parse_position_range(ast: Node) -> Tuple[Tuple[int, int], Tuple[int, int]]:
@@ -554,6 +645,10 @@ def __parse_statement_name(source_code_bytes: bytes, ast: Node) -> Optional[str]
         return __parse_statement_name(source_code_bytes, ast.child_by_field_name("name"))
     elif ast.type == "assignment_expression":
         return __parse_statement_name(source_code_bytes, ast.child_by_field_name("left"))
+    elif ast.type == "update_expression":
+        expr_ast = ast.children[0]
+        expr_ast = expr_ast if expr_ast.next_named_sibling is None else expr_ast.next_named_sibling
+        return __parse_statement_name(source_code_bytes, expr_ast)
     elif ast.type == "catch_formal_parameter":
         return __parse_statement_name(source_code_bytes, ast.child_by_field_name("name"))
     elif ast.start_point[0] == ast.end_point[0]:
@@ -574,11 +669,13 @@ def __parse_affected_by_recursive(
         variable_names: Set[str],
         affected_by: Set[str]) -> None:
     body = ast.child_by_field_name("body")
+    consequence = ast.child_by_field_name("consequence")
+    alternative = ast.child_by_field_name("alternative")
     name = __parse_statement_name(source_code_bytes, ast)
     if name in variable_names:
         affected_by.add(name)
     for child in ast.children:
-        if child.type == "block" or child == body:
+        if child.type == "block" or child == body or child == consequence or child == alternative:
             continue
         __parse_affected_by_recursive(source_code_bytes, child, variable_names, affected_by)
 

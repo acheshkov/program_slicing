@@ -9,16 +9,16 @@ from enum import Enum
 
 
 class StatementType(Enum):
-    function = "FUNCTION"
-    variable = "VARIABLE"
-    assignment = "ASSIGNMENT"
-    call = "CALL"
-    statements = "STATEMENTS"
-    branch = "BRANCH"
-    loop = "LOOP"
-    goto = "GOTO"
-    object = "OBJECT"
-    exit = "EXIT"
+    FUNCTION = "FUNCTION"
+    VARIABLE = "VARIABLE"
+    ASSIGNMENT = "ASSIGNMENT"
+    CALL = "CALL"
+    SCOPE = "SCOPE"
+    BRANCH = "BRANCH"
+    LOOP = "LOOP"
+    GOTO = "GOTO"
+    UNKNOWN = "UNKNOWN"
+    EXIT = "EXIT"
 
 
 StatementLineNumber = int
