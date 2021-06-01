@@ -58,7 +58,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     """
     Decompose the specified source code and return all the decomposition variants.
     :param source_code: source code that should be decomposed.
-    :param lang: source code format like '.java' or '.xml'.
+    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :return: generator of decomposed source code versions in a string format.
     """
     for function_statement, variable_statement, slices in get_complete_computation_slices(source_code, lang):
@@ -74,7 +74,7 @@ def get_complete_computation_slices(
     For each function and variable in a specified source code generate list of slices.
     Slice is a list of position ranges.
     :param source_code: source code that should be decomposed.
-    :param lang: source code format like '.java' or '.xml'.
+    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :return: generator of the function Statement, variable Statement and a corresponding list of slices
     (CodeLinesSlicer)
     """

@@ -303,7 +303,7 @@ class CDGJavaTestCase(TestCase):
             }
             """
         cdg = cdg_java.parse(source_code)
-        self.assertEqual(13, len(cdg.nodes))
+        self.assertEqual(10, len(cdg.nodes))
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
@@ -323,16 +323,15 @@ class CDGJavaTestCase(TestCase):
             return n;
             """
         cdg = cdg_java.parse(source_code)
-        self.assertEqual(13, len(cdg.nodes))
+        self.assertEqual(9, len(cdg.nodes))
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
             0: StatementType.FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
-        self.assertEqual(9, len(function_children))
+        self.assertEqual(8, len(function_children))
         self.__check_cdg_children(function_children, {
-            0: StatementType.SCOPE,
-            3: StatementType.VARIABLE,
-            8: StatementType.EXIT
+            2: StatementType.VARIABLE,
+            7: StatementType.EXIT
         })

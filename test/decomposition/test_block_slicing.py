@@ -6,17 +6,15 @@ __date__ = '2021/03/22'
 
 from unittest import TestCase
 
-from program_slicing.decomposition import slicing
-from program_slicing.decomposition.block_slicing import determine_unique_blocks, get_opportunities_list
-
-is_slicing_criterion = slicing.__is_slicing_criterion
-obtain_variable_statements = slicing.__obtain_variable_statements
-obtain_seed_statements = slicing.__obtain_seed_statements
-obtain_slicing_criteria = slicing.__obtain_slicing_criteria
-obtain_common_boundary_blocks = slicing.__obtain_common_boundary_blocks
+from program_slicing.decomposition import block_slicing
+from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.graph.parse import LANG_JAVA
 
 
-class SlicingTestCase(TestCase):
+determine_unique_blocks = block_slicing.__determine_unique_blocks
+
+
+class BlockSlicingTestCase(TestCase):
 
     def test_identify_unique_block_with_if(self):
         if_statement = '''
@@ -24,47 +22,47 @@ class SlicingTestCase(TestCase):
             return Collections.emptySet();
         }
         '''
-        blocks = determine_unique_blocks(if_statement)
-        self.assertEqual(len(blocks), 2)
+        blocks = determine_unique_blocks(if_statement, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_for_each(self):
         for_each_block = '''
         for (LaunchConfiguration config: workspace.getLaunchConfigurations()) { int i = 0;}
         '''
-        blocks = determine_unique_blocks(for_each_block)
-        self.assertEqual(len(blocks), 2)
+        blocks = determine_unique_blocks(for_each_block, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_while(self):
         while_block = '''
         while (null != (line = input.readLine()) && maxLines > 0) {
                 maxLines--;
         }'''
-        blocks = determine_unique_blocks(while_block)
-        self.assertEqual(len(blocks), 2)
+        blocks = determine_unique_blocks(while_block, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_sync(self):
         sync_block = '''
         synchronized (getLock(cache)) {
            url = cache.toURI().toURL();
         }'''
-        blocks = determine_unique_blocks(sync_block)
-        self.assertEqual(len(blocks), 2)
+        blocks = determine_unique_blocks(sync_block, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_for(self):
         for_cycle_block = '''
         for (int i = 0; i < 10; ++i) {
             foo();
         }'''
-        blocks = determine_unique_blocks(for_cycle_block)
-        self.assertEqual(len(blocks), 2)
+        blocks = determine_unique_blocks(for_cycle_block, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_without_brackets(self):
         block_without_brackets = '''
         for (int i = 0; i < 10; ++i)
             foo();
         '''
-        blocks = determine_unique_blocks(block_without_brackets)
-        self.assertEqual(len(blocks), 2)
+        blocks = determine_unique_blocks(block_without_brackets, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
 
     def test_identify_unique_blocks_with_try(self):
         block_without_try = '''
@@ -77,10 +75,10 @@ class SlicingTestCase(TestCase):
                 int j = 0;
             }
         '''
-        blocks = determine_unique_blocks(block_without_try)
-        self.assertEqual(len(blocks), 4)
+        blocks = determine_unique_blocks(block_without_try, LANG_JAVA)
+        self.assertEqual(4, len(blocks))
 
-    def test_identify_unique_blocks_with_anonymous_classn(self):
+    def test_identify_unique_blocks_with_anonymous_class(self):
         block_without_try = '''
         HelloWorld englishGreeting = new EnglishGreeting();
 
@@ -94,15 +92,15 @@ class SlicingTestCase(TestCase):
             }
         };
         '''
-        blocks = determine_unique_blocks(block_without_try)
-        self.assertEqual(len(blocks), 3)
+        blocks = determine_unique_blocks(block_without_try, LANG_JAVA)
+        self.assertEqual(3, len(blocks))
 
     def test_identify_unique_blocks_with_lambda(self):
         block_without_lambda = '''
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
-        blocks = determine_unique_blocks(block_without_lambda)
-        self.assertEqual(len(blocks), 2)
+        blocks = determine_unique_blocks(block_without_lambda, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
 
     def test_opportunities_ranges(self):
         code = '''
@@ -174,5 +172,5 @@ class SlicingTestCase(TestCase):
             ((37, 16), (37, 52)), ((41, 8), (41, 51)), ((41, 8), (43, 34)), ((41, 8), (46, 34)), ((41, 8), (47, 17)),
             ((42, 8), (43, 34)), ((42, 8), (46, 34)), ((42, 8), (47, 17)), ((43, 12), (43, 33)), ((45, 8), (46, 34)),
             ((45, 8), (47, 17)), ((46, 12), (46, 33)), ((47, 8), (47, 17))]
-        found_opportunities = get_opportunities_list(code)
+        found_opportunities = get_block_slices(code, LANG_JAVA)
         self.assertEqual(expected_opportunities, found_opportunities)
