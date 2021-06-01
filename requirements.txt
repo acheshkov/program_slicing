@@ -1,5 +1,4 @@
 tree_sitter
 gitmodules
 networkx
-sortedcontainers==2.4.0
 flake8==3.9.2
