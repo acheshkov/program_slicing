@@ -13,6 +13,6 @@ def parse(source_code: str) -> DataDependenceGraph:
     """
     Parse the source code string into a Data Dependence Graph.
     :param source_code: the string that should to be parsed.
-    :return: Data Dependence Graph
+    :return: Data Dependence Graph.
     """
     return convert.cdg.to_ddg(cdg_java.parse(source_code))

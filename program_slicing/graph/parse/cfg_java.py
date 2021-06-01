@@ -13,6 +13,6 @@ def parse(source_code: str) -> ControlFlowGraph:
     """
     Parse the source code string into a Control Flow Graph.
     :param source_code: the string that should to be parsed.
-    :return: Control Flow Graph
+    :return: Control Flow Graph.
     """
     return convert.cdg.to_cfg(cdg_java.parse(source_code))

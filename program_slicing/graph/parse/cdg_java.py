@@ -8,12 +8,9 @@ from typing import List, Tuple, Set, Callable, Optional
 
 from tree_sitter import Node
 
-from program_slicing.graph.parse import tree_sitter_parsers
+from program_slicing.graph.parse import tree_sitter_ast_java
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.statement import Statement, StatementType
-
-
-parser = tree_sitter_parsers.java()
 
 
 def __handle_statement(
@@ -520,15 +517,11 @@ def parse(source_code: str) -> ControlDependenceGraph:
     """
     Parse the source code string into a Control Dependence Graph.
     :param source_code: the string that should to be parsed.
-    :return: Control Dependence Graph
+    :return: Control Dependence Graph.
     """
     source_code_bytes = bytes(source_code, "utf8")
-    ast = parser.parse(source_code_bytes).root_node
+    ast = tree_sitter_ast_java.parse(source_code).root_node
     result = ControlDependenceGraph()
-    if __parse_undeclared_class(source_code_bytes, ast, result):
-        return result
-    if __parse_undeclared_method(source_code_bytes, ast, result):
-        return result
     __parse(source_code_bytes, ast, result, [], [], [], set())
     return result
 
@@ -571,65 +564,6 @@ def __parse(
     for exit_point in exit_points:
         entry_points.append(exit_point)
     return siblings
-
-
-def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDependenceGraph) -> bool:
-    result = False
-    for node in ast.children:
-        if node.type == "ERROR" and \
-                node.next_named_sibling.type == "block" and \
-                node.prev_named_sibling.type == "local_variable_declaration":
-            result = True
-            scope = node.next_named_sibling
-            declaration = node.prev_named_sibling
-            start_point, end_point = __parse_position_range(scope)
-            entry_point = Statement(
-                StatementType.function,
-                start_point=start_point,
-                end_point=end_point,
-                affected_by=set(),
-                name=__parse_statement_name(source_code_bytes, declaration.children[-1]),
-                ast_node_type="method_declaration")
-            cdg.add_node(entry_point)
-            cdg.add_entry_point(entry_point)
-            for child in __parse(source_code_bytes, scope, cdg, [entry_point], [], [], set()):
-                cdg.add_edge(entry_point, child)
-    return result
-
-
-def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlDependenceGraph) -> bool:
-    if not {
-        "class_declaration",
-        "enum_declaration",
-        "interface_declaration",
-    }.intersection({node.type for node in ast.children}):
-        start_point, end_point = __parse_position_range(ast)
-        entry_point = Statement(
-            StatementType.function,
-            start_point=start_point,
-            end_point=end_point,
-            affected_by=set(),
-            name="",
-            ast_node_type="method_declaration")
-        cdg.add_node(entry_point)
-        cdg.add_entry_point(entry_point)
-        entry_points = [entry_point]
-        break_statements = []
-        continue_statements = []
-        variable_names = set()
-        for node in ast.children:
-            for child in __parse(
-                    source_code_bytes,
-                    node,
-                    cdg,
-                    entry_points,
-                    break_statements=break_statements,
-                    continue_statements=continue_statements,
-                    variable_names=variable_names):
-                cdg.add_edge(entry_point, child)
-        return True
-    else:
-        return False
 
 
 def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callable]:
