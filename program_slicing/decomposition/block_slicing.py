@@ -1,3 +1,9 @@
+__licence__ = 'MIT'
+__author__ = 'lyriccoder'
+__credits__ = ['lyriccoder, kuyaki']
+__maintainer__ = 'lyriccoder'
+__date__ = '2021/05/20'
+
 import itertools
 from itertools import combinations_with_replacement
 from typing import Tuple, Iterator, List, Dict, Optional, Any

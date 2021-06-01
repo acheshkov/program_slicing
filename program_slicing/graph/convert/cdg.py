@@ -103,7 +103,6 @@ def __process_loop(
         prev_block: BasicBlock) -> None:
     old_block: BasicBlock = block[child]
     index = old_block.get_statements().index(child)
-
     if index == 0:
         if prev_block is not None:
             cfg.add_edge(prev_block, old_block)
