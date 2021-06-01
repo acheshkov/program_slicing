@@ -2,11 +2,10 @@
 Set of methods for source code decomposition.
 ___
 ## Installation
-1. Clone this repo.
 
-2. ```$ git submodule update --recursive --init```
+1. ```$ git clone --recurse-submodules git@github.com:acheshkov/program_slicing.git```
 
-3. ```$ pip install -r requirements.txt```
+2. ```$ pip3 install ./program_slicing```
 
 You should have access to global network to use pip.
 Python 3.9 with corresponding C compiler is required.
@@ -35,7 +34,7 @@ complete computation slice</a>
 <a href="https://en.wikipedia.org/wiki/Method">of methods</a>).
 
 ```bash
-$ python main.py slice [-h]
+$ python cli.py slice [-h]
                        [-o OUTPUT]
                        source
 ```
@@ -55,19 +54,19 @@ It uses stdout if not specified
 
 Examples:
 ```bash
-$ python main.py slice MyProjectPath
+$ python cli.py slice MyProjectPath
 ```
 
 ```bash
-$ python main.py slice MyFile.java
+$ python cli.py slice MyFile.java
 ```
 
 ```bash
-$ python main.py slice MyProjectPath --output MyResultPath
+$ python cli.py slice MyProjectPath --output MyResultPath
 ```
 
 ```bash
-$ python main.py slice MyFile.java --output MyResultPath
+$ python cli.py slice MyFile.java --output MyResultPath
 ```
 
 ___

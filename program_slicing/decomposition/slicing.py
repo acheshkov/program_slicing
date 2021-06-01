@@ -5,7 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/17'
 
 import os
-from typing import Set, Dict, List, Generator
+from typing import Set, Dict, List, Tuple, Generator
 
 import networkx
 
@@ -15,6 +15,7 @@ from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph.statement import Statement, StatementType
+from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -60,20 +61,46 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     :param lang: source code format like '.java' or '.xml'.
     :return: generator of decomposed source code versions in a string format.
     """
+    for function_statement, variable_statement, slices in get_complete_computation_slices(source_code, lang):
+        for i, program_slice in enumerate(slices):
+            yield "\033[33m\nSlice #" + str(i + 1) + " for variable '" + variable_statement.name + \
+                  "':\033[00m\n" + program_slice.get_slice_code()
+
+
+def get_complete_computation_slices(
+        source_code: str,
+        lang: str) -> Generator[Tuple[Statement, Statement, List[CodeLinesSlicer]], None, None]:
+    """
+    For each function and variable in a specified source code generate list of slices.
+    Slice is a list of position ranges.
+    :param source_code: source code that should be decomposed.
+    :param lang: source code format like '.java' or '.xml'.
+    :return: generator of the function Statement, variable Statement and a corresponding list of slices
+    (CodeLinesSlicer)
+    """
+    code_lines = str(source_code).split("\n")
     manager = ProgramGraphsManager(source_code, lang)
     cdg = manager.cdg
     function_statements = cdg.get_entry_points()
     for function_statement in function_statements:
         slicing_criteria = __obtain_slicing_criteria(cdg, function_statement)
         for variable_statement, seed_statements in slicing_criteria.items():
-            common_boundary_blocks = __obtain_common_boundary_blocks(manager, seed_statements)
-            yield str((variable_statement, common_boundary_blocks))
+            complete_computation_slices = __obtain_complete_computation_slices(manager, seed_statements)
+            code_lines_slicers = []
+            for complete_computation_slice in complete_computation_slices.values():
+                if not complete_computation_slice:
+                    continue
+                code_lines_slicer = CodeLinesSlicer(code_lines)
+                for statement in complete_computation_slice:
+                    code_lines_slicer.add_statement(statement)
+                code_lines_slicers.append(code_lines_slicer)
+            yield function_statement, variable_statement, code_lines_slicers
 
 
 def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:
     return {
         statement for statement in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if statement.statement_type == StatementType.variable
+        if statement.statement_type == StatementType.VARIABLE
     }
 
 
@@ -107,14 +134,60 @@ def __obtain_common_boundary_blocks(
     return result
 
 
-def __obtain_backward_slice(manager: ProgramGraphsManager, slicing_criterion, boundary_block):
-    pass
+def __obtain_backward_slice(
+        manager: ProgramGraphsManager,
+        seed_statement: Statement,
+        boundary_block: BasicBlock) -> Set[Statement]:
+    region = manager.get_reach_blocks(boundary_block)
+    result = set()
+    __obtain_backward_slice_recursive(manager, seed_statement, region, result)
+    return result
+
+
+def __obtain_backward_slice_recursive(
+        manager: ProgramGraphsManager,
+        root: Statement,
+        region: Set[BasicBlock],
+        result: Set[Statement]):
+    if root in result:
+        return
+    basic_block = manager.get_basic_block(root)
+    if basic_block not in region:
+        return
+    result.add(root)
+    for statement in basic_block.get_statements():
+        if statement.start_point[0] >= root.start_point[0] and statement.end_point[0] <= root.end_point[0]:
+            result.add(statement)
+            if statement in manager.ddg:
+                for predecessor in manager.ddg.predecessors(statement):
+                    __obtain_backward_slice_recursive(manager, predecessor, region, result)
+        elif statement.start_point[0] <= root.start_point[0] and statement.end_point[0] >= root.end_point[0] and (
+                statement.statement_type == StatementType.UNKNOWN or
+                statement.statement_type == StatementType.SCOPE):
+            result.add(statement)
+    if root in manager.pdg:
+        for statement in manager.pdg.predecessors(root):
+            __obtain_backward_slice_recursive(manager, statement, region, result)
+
+
+def __obtain_complete_computation_slices(
+        manager: ProgramGraphsManager,
+        seed_statements: Set[Statement]) -> Dict[BasicBlock, Set[Statement]]:
+    boundary_blocks = __obtain_common_boundary_blocks(manager, seed_statements)
+    complete_computation_slice = {}
+    for boundary_block in boundary_blocks:
+        backward_slice = set()
+        for seed_statement in seed_statements:
+            backward_slice.update(__obtain_backward_slice(manager, seed_statement, boundary_block))
+        complete_computation_slice[boundary_block] = backward_slice
+    return complete_computation_slice
 
 
 def __is_slicing_criterion(assignment_statement: Statement, variable_statement: Statement) -> bool:
     return \
-        assignment_statement.statement_type == StatementType.assignment and \
-        variable_statement.statement_type == StatementType.variable and \
+        (assignment_statement.statement_type == StatementType.VARIABLE or
+         assignment_statement.statement_type == StatementType.ASSIGNMENT) and \
+        variable_statement.statement_type == StatementType.VARIABLE and \
         variable_statement.name == assignment_statement.name
 
 
