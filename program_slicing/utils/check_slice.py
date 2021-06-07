@@ -7,7 +7,7 @@ __date__ = '2021/06/03'
 from typing import Union, List, Tuple
 
 from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
-from program_slicing.graph.statement import Statement
+from program_slicing.graph.statement import Statement, StatementLineNumber, StatementColumnNumber
 
 
 class CheckSlice:
@@ -16,13 +16,17 @@ class CheckSlice:
             data: Union[
                 CodeLinesSlicer,
                 List[Statement],
-                List[Tuple[Tuple[int, int], Tuple[int, int]]]
+                List[Tuple[
+                    Tuple[StatementLineNumber, StatementColumnNumber],
+                    Tuple[StatementLineNumber, StatementColumnNumber]]]
             ]):
         self.__check = True
         self.data: Union[
             CodeLinesSlicer,
             List[Statement],
-            List[Tuple[Tuple[int, int], Tuple[int, int]]]
+            List[Tuple[
+                Tuple[StatementLineNumber, StatementColumnNumber],
+                Tuple[StatementLineNumber, StatementColumnNumber]]]
         ] = data
 
     def __bool__(self):
@@ -63,6 +67,8 @@ def check_slice(
             Tuple[Statement, Statement, CodeLinesSlicer],
             Tuple[Statement, Statement, List[Statement]],
             List[Statement],
-            List[Tuple[Tuple[int, int], Tuple[int, int]]]
+            List[Tuple[
+                Tuple[StatementLineNumber, StatementColumnNumber],
+                Tuple[StatementLineNumber, StatementColumnNumber]]]
         ]) -> CheckSlice:
     return CheckSlice(data)

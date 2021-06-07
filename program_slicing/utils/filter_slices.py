@@ -6,7 +6,7 @@ __date__ = '2021/06/01'
 
 from typing import Iterable, Iterator, List, Tuple, Union, Optional
 
-from program_slicing.graph.statement import Statement
+from program_slicing.graph.statement import Statement, StatementLineNumber, StatementColumnNumber
 from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
 from program_slicing.utils.check_slice import CheckSlice
 
@@ -19,14 +19,18 @@ class FilterSlices:
                 Tuple[Statement, Statement, CodeLinesSlicer],
                 Tuple[Statement, Statement, List[Statement]],
                 List[Statement],
-                List[Tuple[Tuple[int, int], Tuple[int, int]]]
+                List[Tuple[
+                    Tuple[StatementLineNumber, StatementColumnNumber],
+                    Tuple[StatementLineNumber, StatementColumnNumber]]]
             ]]):
         self.data: Iterator[Union[
             CodeLinesSlicer,
             Tuple[Statement, Statement, CodeLinesSlicer],
             Tuple[Statement, Statement, List[Statement]],
             List[Statement],
-            List[Tuple[Tuple[int, int], Tuple[int, int]]]
+            List[Tuple[
+                Tuple[StatementLineNumber, StatementColumnNumber],
+                Tuple[StatementLineNumber, StatementColumnNumber]]]
         ]] = data.__iter__()
         self.min_amount_of_lines: Optional[int] = None
         self.max_amount_of_lines: Optional[int] = None
@@ -60,6 +64,8 @@ def filter_slices(
             Tuple[Statement, Statement, CodeLinesSlicer],
             Tuple[Statement, Statement, List[Statement]],
             List[Statement],
-            List[Tuple[Tuple[int, int], Tuple[int, int]]]
+            List[Tuple[
+                Tuple[StatementLineNumber, StatementColumnNumber],
+                Tuple[StatementLineNumber, StatementColumnNumber]]]
         ]]) -> FilterSlices:
     return FilterSlices(data)
