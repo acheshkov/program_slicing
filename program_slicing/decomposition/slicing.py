@@ -16,7 +16,7 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
-from program_slicing import program_slice
+from program_slicing import utils
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:
@@ -63,7 +63,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     :return: generator of decomposed source code versions in a string format.
     """
     for function_statement, variable_statement, cc_slice in \
-            program_slice.filter_slices(get_complete_computation_slices(source_code, lang))\
+            utils.filter_slices(get_complete_computation_slices(source_code, lang))\
             .by_min_amount_of_lines(5)\
             .by_max_amount_of_lines(15):
         yield "\033[33m\nSlice" + \

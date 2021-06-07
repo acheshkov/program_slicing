@@ -8,7 +8,7 @@ from typing import Iterable, Iterator, List, Tuple, Union, Optional
 
 from program_slicing.graph.statement import Statement
 from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
-from program_slicing.program_slice.check_slice import CheckSlice
+from program_slicing.utils.check_slice import CheckSlice
 
 
 class FilterSlices:
