@@ -12,6 +12,7 @@ from program_slicing.utils.check_slice import CheckSlice
 
 
 class FilterSlices:
+
     def __init__(
             self,
             data: Iterable[Union[
@@ -39,10 +40,20 @@ class FilterSlices:
         return (data_obj for data_obj in self.data if self.__check(data_obj))
 
     def by_min_amount_of_lines(self, min_amount_of_lines: int) -> 'FilterSlices':
+        """
+        Add or change limits on minimal amount of lines in slices that should pass the filter.
+        :param min_amount_of_lines: minimal acceptable amount of lines.
+        :return: an original filter object.
+        """
         self.min_amount_of_lines = min_amount_of_lines
         return self
 
     def by_max_amount_of_lines(self, max_amount_of_lines: int) -> 'FilterSlices':
+        """
+        Add or change limits on maximal amount of lines in slices that should pass the filter.
+        :param max_amount_of_lines: maximal acceptable amount of lines.
+        :return: an original filter object.
+        """
         self.max_amount_of_lines = max_amount_of_lines
         return self
 
@@ -68,4 +79,16 @@ def filter_slices(
                 Tuple[StatementLineNumber, StatementColumnNumber],
                 Tuple[StatementLineNumber, StatementColumnNumber]]]
         ]]) -> FilterSlices:
+    """
+    Filter an iterable object of slices. Slices may be provided by one of the next structures:
+     1. CodeLinesSlicer - object that offer to get_slice_lines (list of strings that are presented in the slice).
+     2. List of Statements that are presented in the slice.
+     3. List of ranges. Each range is a tuple of start and end points. Points are tuples of line and column numbers.
+     4. Tuple of function statement, variable statement and CodeLinesSlicer.
+        This structure will be processed in the same way as a single CodeLinesSlicer.
+     5. Tuple of function Statement, variable Statement and a list of Statements.
+        This structure will be processed in the same way as a single list of Statements.
+    :param data: an iterable object of slices.
+    :return: an iterable object of filtered slices.
+    """
     return FilterSlices(data)
