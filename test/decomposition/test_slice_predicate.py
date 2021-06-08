@@ -50,23 +50,6 @@ class CheckSliceTestCase(TestCase):
             slicer.add_statement(statement)
         return slicer
 
-    def test_ranges(self):
-        self.assertTrue(
-            check_slice(
-                CheckSliceTestCase.__get_ranges_0(),
-                min_amount_of_lines=6,
-                max_amount_of_lines=6))
-        self.assertFalse(
-            check_slice(
-                CheckSliceTestCase.__get_ranges_0(),
-                min_amount_of_lines=7,
-                max_amount_of_lines=7))
-        self.assertFalse(
-            check_slice(
-                CheckSliceTestCase.__get_ranges_0(),
-                min_amount_of_lines=5,
-                max_amount_of_lines=5))
-
     def test_statements(self):
         self.assertTrue(
             check_slice(
@@ -81,22 +64,5 @@ class CheckSliceTestCase(TestCase):
         self.assertFalse(
             check_slice(
                 CheckSliceTestCase.__get_statements_0(),
-                min_amount_of_lines=5,
-                max_amount_of_lines=5))
-
-    def test_slicer(self):
-        self.assertTrue(
-            check_slice(
-                CheckSliceTestCase.__get_slicer_0(),
-                min_amount_of_lines=6,
-                max_amount_of_lines=6))
-        self.assertFalse(
-            check_slice(
-                CheckSliceTestCase.__get_slicer_0(),
-                min_amount_of_lines=7,
-                max_amount_of_lines=7))
-        self.assertFalse(
-            check_slice(
-                CheckSliceTestCase.__get_slicer_0(),
                 min_amount_of_lines=5,
                 max_amount_of_lines=5))

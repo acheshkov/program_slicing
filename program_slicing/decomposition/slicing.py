@@ -62,12 +62,11 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :return: generator of decomposed source code versions in a string format.
     """
-    slices = get_complete_computation_slices(source_code, lang)
     slice_predicate = SlicePredicate(
         min_amount_of_lines=5,
         max_amount_of_lines=15)
-    filtered_slices = filter(slice_predicate, slices)
-    for function_statement, variable_statement, cc_slice in filtered_slices:
+    slices = get_complete_computation_slices(source_code, lang, slice_predicate)
+    for function_statement, variable_statement, cc_slice in slices:
         yield "\033[33m\nSlice" + \
               ((" of " + function_statement.name) if function_statement.name is not None else "") + \
               " for variable '" + variable_statement.name + \
@@ -76,18 +75,19 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
 
 def get_complete_computation_slices(
         source_code: str,
-        lang: str) -> Generator[Tuple[Statement, Statement, CodeLinesSlicer], None, None]:
+        lang: str,
+        slice_predicate: SlicePredicate = None) -> Generator[Tuple[Statement, Statement, CodeLinesSlicer], None, None]:
     """
     For each function and variable in a specified source code generate list of slices.
     Slice is a list of position ranges.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
-    :return: generator of the function Statement, variable Statement and a corresponding list of slices
-    (CodeLinesSlicer)
+    :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
+    :return: generator of the function Statement, variable Statement and one of corresponding slices (CodeLinesSlicer)
     """
     code_lines = str(source_code).split("\n")
-    for function_statement, variable_statement, complete_computation_slice in \
-            get_complete_computation_slices_statements(source_code, lang):
+    slices = get_complete_computation_slices_statements(source_code, lang, slice_predicate)
+    for function_statement, variable_statement, complete_computation_slice in slices:
         code_lines_slicer = CodeLinesSlicer(code_lines)
         for statement in complete_computation_slice:
             code_lines_slicer.add_statement(statement)
@@ -96,12 +96,14 @@ def get_complete_computation_slices(
 
 def get_complete_computation_slices_statements(
         source_code: str,
-        lang: str) -> Generator[Tuple[Statement, Statement, List[Statement]], None, None]:
+        lang: str,
+        slice_predicate: SlicePredicate = None) -> Generator[Tuple[Statement, Statement, List[Statement]], None, None]:
     """
     For each function and variable in a specified source code generate list of slices.
     Slice is a list of Statements.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
+    :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :return: generator of the function Statement, variable Statement and a corresponding list of slices
     (Statements)
     """
@@ -116,7 +118,7 @@ def get_complete_computation_slices_statements(
             if variable_basic_block is None:
                 continue
             complete_computation_slice = complete_computation_slices.get(variable_basic_block, [])
-            if complete_computation_slice:
+            if complete_computation_slice and (slice_predicate is None or slice_predicate(complete_computation_slice)):
                 yield function_statement, variable_statement, complete_computation_slice
 
 
