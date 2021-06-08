@@ -47,7 +47,7 @@ class FilterSlices:
         return self
 
     def __check(self, data_obj) -> bool:
-        if type(data_obj) is tuple:
+        if type(data_obj) is tuple and len(data_obj) == 3:
             data_obj = data_obj[2]
         check = CheckSlice(data_obj)
         if self.min_amount_of_lines is not None:
