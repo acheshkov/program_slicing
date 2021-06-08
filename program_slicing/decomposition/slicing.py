@@ -62,10 +62,11 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :return: generator of decomposed source code versions in a string format.
     """
-    for function_statement, variable_statement, cc_slice in \
-            utils.filter_slices(get_complete_computation_slices(source_code, lang))\
-            .by_min_amount_of_lines(5)\
-            .by_max_amount_of_lines(15):
+    slices = get_complete_computation_slices(source_code, lang)
+    filtered_slices = utils.filter_slices(slices)\
+        .by_min_amount_of_lines(5)\
+        .by_max_amount_of_lines(15)
+    for function_statement, variable_statement, cc_slice in filtered_slices:
         yield "\033[33m\nSlice" + \
               ((" of " + function_statement.name) if function_statement.name is not None else "") + \
               " for variable '" + variable_statement.name + \
