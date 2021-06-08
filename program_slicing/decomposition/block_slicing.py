@@ -89,11 +89,11 @@ def __get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_s
         alternative_node = ast.child_by_field_name("alternative")
         if body_node is not None:
             yield body_node, level
-        elif consequence_node is not None:
+        if consequence_node is not None:
             yield consequence_node, level
-        elif alternative_node is not None:
+        if alternative_node is not None:
             yield alternative_node, level
-        elif ast.type == "finally_clause":
+        if ast.type == "finally_clause":
             if len(ast.children) > 1:
                 yield ast.children[1], level
         elif ast.type == "program":
