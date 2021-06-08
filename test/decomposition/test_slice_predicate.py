@@ -7,9 +7,9 @@ __date__ = '2021/06/07'
 from unittest import TestCase
 from typing import List, Tuple
 
-from program_slicing import utils
 from program_slicing.graph.statement import Statement, StatementType, StatementLineNumber, StatementColumnNumber
 from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
+from program_slicing.decomposition import check_slice
 
 
 class CheckSliceTestCase(TestCase):
@@ -52,33 +52,51 @@ class CheckSliceTestCase(TestCase):
 
     def test_ranges(self):
         self.assertTrue(
-            utils.check_slice(
-                CheckSliceTestCase.__get_ranges_0()).by_min_amount_of_lines(6).by_max_amount_of_lines(6))
+            check_slice(
+                CheckSliceTestCase.__get_ranges_0(),
+                min_amount_of_lines=6,
+                max_amount_of_lines=6))
         self.assertFalse(
-            utils.check_slice(
-                CheckSliceTestCase.__get_ranges_0()).by_min_amount_of_lines(7).by_max_amount_of_lines(7))
+            check_slice(
+                CheckSliceTestCase.__get_ranges_0(),
+                min_amount_of_lines=7,
+                max_amount_of_lines=7))
         self.assertFalse(
-            utils.check_slice(
-                CheckSliceTestCase.__get_ranges_0()).by_min_amount_of_lines(5).by_max_amount_of_lines(5))
+            check_slice(
+                CheckSliceTestCase.__get_ranges_0(),
+                min_amount_of_lines=5,
+                max_amount_of_lines=5))
 
     def test_statements(self):
         self.assertTrue(
-            utils.check_slice(
-                CheckSliceTestCase.__get_statements_0()).by_min_amount_of_lines(6).by_max_amount_of_lines(6))
+            check_slice(
+                CheckSliceTestCase.__get_statements_0(),
+                min_amount_of_lines=6,
+                max_amount_of_lines=6))
         self.assertFalse(
-            utils.check_slice(
-                CheckSliceTestCase.__get_statements_0()).by_min_amount_of_lines(7).by_max_amount_of_lines(7))
+            check_slice(
+                CheckSliceTestCase.__get_statements_0(),
+                min_amount_of_lines=7,
+                max_amount_of_lines=7))
         self.assertFalse(
-            utils.check_slice(
-                CheckSliceTestCase.__get_statements_0()).by_min_amount_of_lines(5).by_max_amount_of_lines(5))
+            check_slice(
+                CheckSliceTestCase.__get_statements_0(),
+                min_amount_of_lines=5,
+                max_amount_of_lines=5))
 
     def test_slicer(self):
         self.assertTrue(
-            utils.check_slice(
-                CheckSliceTestCase.__get_slicer_0()).by_min_amount_of_lines(6).by_max_amount_of_lines(6))
+            check_slice(
+                CheckSliceTestCase.__get_slicer_0(),
+                min_amount_of_lines=6,
+                max_amount_of_lines=6))
         self.assertFalse(
-            utils.check_slice(
-                CheckSliceTestCase.__get_slicer_0()).by_min_amount_of_lines(7).by_max_amount_of_lines(7))
+            check_slice(
+                CheckSliceTestCase.__get_slicer_0(),
+                min_amount_of_lines=7,
+                max_amount_of_lines=7))
         self.assertFalse(
-            utils.check_slice(
-                CheckSliceTestCase.__get_slicer_0()).by_min_amount_of_lines(5).by_max_amount_of_lines(5))
+            check_slice(
+                CheckSliceTestCase.__get_slicer_0(),
+                min_amount_of_lines=5,
+                max_amount_of_lines=5))
