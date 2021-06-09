@@ -174,3 +174,55 @@ class BlockSlicingTestCase(TestCase):
             ((45, 8), (47, 17)), ((46, 12), (46, 33)), ((47, 8), (47, 17))]
         found_opportunities = get_block_slices(code, LANG_JAVA)
         self.assertEqual(expected_opportunities, found_opportunities)
+
+    def test_else_blocks(self):
+        code = '''
+		generateMethodInfoHeaderForClinit();
+		this.contentsOffset -= 2;
+		int attributeOffset = this.contentsOffset;
+		this.contentsOffset += 2;
+		int attributeNumber = 0;
+		int codeAttributeOffset = this.contentsOffset;
+		generateCodeAttributeHeader();
+		this.codeStream.resetForProblemClinit(this);
+		String problemString = "" ;
+		int problemLine = 0;
+		if (problems != null) {
+			int max = problems.length;
+			StringBuffer buffer = new StringBuffer(25);
+			int count = 0;
+			for (int i = 0; i < max; i++) {
+				CategorizedProblem problem = problems[i];
+				if ((problem != null) && (problem.isError())) {
+					buffer.append("\t"  +problem.getMessage() + "\n" );
+					count++;
+					if (problemLine == 0) {
+						problemLine = problem.getSourceLineNumber();
+					}
+					else {
+						problemLine = problem.getSourceLineNumber();
+					}
+					problems[i] = null;
+				}
+			}
+			if (count > 1) {
+				buffer.insert(0, Messages.compilation_unresolvedProblems);
+			} else {
+				buffer.insert(0, Messages.compilation_unresolvedProblem);
+			}
+			problemString = buffer.toString();
+		}
+		this.codeStream.generateCodeAttributeForProblemMethod(problemString);
+		attributeNumber++;
+		completeCodeAttributeForClinit(
+			codeAttributeOffset,
+			problemLine);
+		if (this.contentsOffset + 2 >= this.contents.length) {
+			resizeContents(2);
+		}
+		this.contents[attributeOffset++] = (byte) (attributeNumber >> 8);
+		this.contents[attributeOffset] = (byte) attributeNumber;
+		'''
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(code, LANG_JAVA)}
+        self.assertEqual((25, 25) in found_opportunities, True)
+        self.assertEqual((33, 33) in found_opportunities, True)
