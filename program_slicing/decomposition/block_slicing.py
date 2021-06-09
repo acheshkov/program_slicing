@@ -15,6 +15,7 @@ from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import tree_sitter_ast, LANG_JAVA
 from program_slicing.graph.statement import StatementLineNumber, StatementColumnNumber
 
+
 def filter_wrong_statements(source_code: str, lang: str):
     new_code = f'class FakeClass {{ {{ {source_code} }} }}'
     manager = ProgramGraphsManager(new_code, LANG_JAVA)
@@ -89,11 +90,11 @@ def __get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_s
         alternative_node = ast.child_by_field_name("alternative")
         if body_node is not None:
             yield body_node, level
-        if consequence_node is not None:
+        elif consequence_node is not None:
             yield consequence_node, level
-        if alternative_node is not None:
-            yield alternative_node, level
-        if ast.type == "finally_clause":
+            if alternative_node is not None:
+                yield alternative_node, level
+        elif ast.type == "finally_clause":
             if len(ast.children) > 1:
                 yield ast.children[1], level
         elif ast.type == "program":
