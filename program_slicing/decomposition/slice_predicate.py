@@ -25,7 +25,7 @@ class SlicePredicate:
 
     def __call__(self, program_slice: Iterable[Statement]):
         if program_slice is None:
-            return False
+            raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
         for checker in self.__checkers:
             if not checker():
