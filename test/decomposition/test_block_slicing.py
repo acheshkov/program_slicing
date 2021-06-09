@@ -102,6 +102,40 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(block_without_lambda, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
+    def test_identify_unique_block_with_break(self):
+        while_block = '''
+        for (String s: strings) {
+             a();
+             b();
+             if (true) { break;}
+        }
+        while (i < 3 ) {
+             a();
+             b();
+             outer_loop:
+             for (;;) {
+                if (true) {
+                    if(true) {
+                       break outer_loop;
+                    }
+                 }
+            }
+        }
+        '''
+        blocks = determine_unique_blocks(while_block, LANG_JAVA)
+        self.assertEqual(2, len(blocks))
+
+    def test_identify_unique_block_with_continue(self):
+        while_block = '''
+        for (String s: strings) {
+             a();
+             b();
+             if (true) { continue;}
+        }
+        '''
+        blocks = determine_unique_blocks(while_block, LANG_JAVA)
+        self.assertEqual(1, len(blocks))
+
     def test_opportunities_ranges(self):
         code = '''
         int t = 12;
@@ -165,8 +199,8 @@ class BlockSlicingTestCase(TestCase):
             ((12, 12), (13, 16)), ((13, 12), (13, 16)), ((16, 8), (28, 9)), ((16, 8), (29, 59)), ((16, 8), (39, 10)),
             ((16, 8), (41, 51)), ((16, 8), (43, 34)), ((16, 8), (46, 34)), ((16, 8), (47, 17)), ((17, 12), (17, 18)),
             ((17, 12), (26, 13)), ((18, 12), (26, 13)), ((19, 16), (25, 17)), ((20, 20), (20, 42)),
-            ((20, 20), (21, 42)),
-            ((21, 20), (21, 42)), ((29, 8), (29, 59)), ((29, 8), (39, 10)), ((29, 8), (41, 51)), ((29, 8), (43, 34)),
+            ((20, 20), (21, 42)), ((21, 20), (21, 42)), ((24, 20), (24, 42)), ((29, 8), (29, 59)),
+            ((29, 8), (39, 10)), ((29, 8), (41, 51)), ((29, 8), (43, 34)),
             ((29, 8), (46, 34)), ((29, 8), (47, 17)), ((31, 8), (39, 10)), ((31, 8), (41, 51)), ((31, 8), (43, 34)),
             ((31, 8), (46, 34)), ((31, 8), (47, 17)), ((33, 16), (33, 46)), ((36, 16), (36, 31)), ((36, 16), (37, 52)),
             ((37, 16), (37, 52)), ((41, 8), (41, 51)), ((41, 8), (43, 34)), ((41, 8), (46, 34)), ((41, 8), (47, 17)),
@@ -177,52 +211,34 @@ class BlockSlicingTestCase(TestCase):
 
     def test_else_blocks(self):
         code = '''
-		generateMethodInfoHeaderForClinit();
-		this.contentsOffset -= 2;
-		int attributeOffset = this.contentsOffset;
-		this.contentsOffset += 2;
-		int attributeNumber = 0;
-		int codeAttributeOffset = this.contentsOffset;
-		generateCodeAttributeHeader();
-		this.codeStream.resetForProblemClinit(this);
-		String problemString = "" ;
-		int problemLine = 0;
-		if (problems != null) {
-			int max = problems.length;
-			StringBuffer buffer = new StringBuffer(25);
-			int count = 0;
-			for (int i = 0; i < max; i++) {
-				CategorizedProblem problem = problems[i];
-				if ((problem != null) && (problem.isError())) {
-					buffer.append("\t"  +problem.getMessage() + "\n" );
-					count++;
-					if (problemLine == 0) {
-						problemLine = problem.getSourceLineNumber();
-					}
-					else {
-						problemLine = problem.getSourceLineNumber();
-					}
-					problems[i] = null;
-				}
-			}
-			if (count > 1) {
-				buffer.insert(0, Messages.compilation_unresolvedProblems);
-			} else {
-				buffer.insert(0, Messages.compilation_unresolvedProblem);
-			}
-			problemString = buffer.toString();
-		}
-		this.codeStream.generateCodeAttributeForProblemMethod(problemString);
-		attributeNumber++;
-		completeCodeAttributeForClinit(
-			codeAttributeOffset,
-			problemLine);
-		if (this.contentsOffset + 2 >= this.contents.length) {
-			resizeContents(2);
-		}
-		this.contents[attributeOffset++] = (byte) (attributeNumber >> 8);
-		this.contents[attributeOffset] = (byte) attributeNumber;
-		'''
+        if (problems != null) {
+            int max = problems.length;
+            StringBuffer buffer = new StringBuffer(25);
+            int count = 0;
+            for (int i = 0; i < max; i++) {
+                CategorizedProblem problem = problems[i];
+                if ((problem != null) && (problem.isError())) {
+                    buffer.append("\t"  +problem.getMessage() + "\n" );
+                    count++;
+                    if (problemLine == 0) {
+                        problemLine = problem.getSourceLineNumber();
+                    }
+                    else {
+                        problemLine = problem.getSourceLineNumber();
+                    }
+                    problems[i] = null;
+                }
+            }
+            if (count > 1) {
+                buffer.insert(0, Messages.compilation_unresolvedProblems);
+            } else {
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+            }
+            problemString = buffer.toString();
+        }
+        '''
         found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(code, LANG_JAVA)}
-        self.assertEqual((25, 25) in found_opportunities, True)
-        self.assertEqual((33, 33) in found_opportunities, True)
+        self.assertTrue((12, 12) in found_opportunities, True)
+        self.assertTrue((15, 15) in found_opportunities, True)
+        self.assertTrue((21, 21) in found_opportunities, True)
+        self.assertTrue((23, 23) in found_opportunities, True)

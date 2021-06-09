@@ -4,11 +4,12 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
-from typing import List, Tuple, Set, Callable, Optional
+from typing import List, Tuple, Set, Callable
 
 from tree_sitter import Node
 
 from program_slicing.graph.parse import tree_sitter_ast_java
+from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.statement import Statement, StatementType
 
@@ -46,7 +47,7 @@ def __handle_variable(
         break_statements: List[Statement],
         continue_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
-    variable_names.add(__parse_statement_name(source_code_bytes, ast))
+    variable_names.add(tree_sitter_parsers.node_name(source_code_bytes, ast))
     return __handle_statement(
         statement,
         source_code_bytes,
@@ -311,7 +312,7 @@ def __handle_for_each(
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
-        name=__parse_statement_name(source_code_bytes, name_ast),
+        name=tree_sitter_parsers.node_name(source_code_bytes, name_ast),
         ast_node_type="enhanced_for_variable_declarator")
     cdg.add_node(variable)
     siblings = [variable]
@@ -551,7 +552,7 @@ def __parse(
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, ast, variable_names),
-        name=__parse_statement_name(source_code_bytes, ast),
+        name=tree_sitter_parsers.node_name(source_code_bytes, ast),
         ast_node_type=ast.type)
     cdg.add_node(statement)
     siblings, exit_points = statement_handler(
@@ -585,7 +586,7 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
                 start_point=start_point,
                 end_point=end_point,
                 affected_by=set(),
-                name=__parse_statement_name(source_code_bytes, declaration.children[-1]),
+                name=tree_sitter_parsers.node_name(source_code_bytes, declaration.children[-1]),
                 ast_node_type="method_declaration")
             cdg.add_node(entry_point)
             cdg.add_entry_point(entry_point)
@@ -637,22 +638,6 @@ def __parse_position_range(ast: Node) -> Tuple[Tuple[int, int], Tuple[int, int]]
     return ast.start_point, ast.end_point
 
 
-def __parse_statement_name(source_code_bytes: bytes, ast: Node) -> Optional[str]:
-    if ast.type == "variable_declarator":
-        return __parse_statement_name(source_code_bytes, ast.child_by_field_name("name"))
-    elif ast.type == "assignment_expression":
-        return __parse_statement_name(source_code_bytes, ast.child_by_field_name("left"))
-    elif ast.type == "update_expression":
-        expr_ast = ast.children[0]
-        expr_ast = expr_ast if expr_ast.next_named_sibling is None else expr_ast.next_named_sibling
-        return __parse_statement_name(source_code_bytes, expr_ast)
-    elif ast.type == "catch_formal_parameter":
-        return __parse_statement_name(source_code_bytes, ast.child_by_field_name("name"))
-    elif ast.start_point[0] == ast.end_point[0]:
-        return source_code_bytes[ast.start_byte: ast.end_byte].decode("utf8")
-    return None
-
-
 def __parse_affected_by(source_code_bytes: bytes, ast: Node, variable_names: Set[str]) -> Set[str]:
     #  TODO: this approach is ineffective, we can use list of sibling Statements with previously counted results.
     affected_by: Set[str] = set()
@@ -668,7 +653,7 @@ def __parse_affected_by_recursive(
     body = ast.child_by_field_name("body")
     consequence = ast.child_by_field_name("consequence")
     alternative = ast.child_by_field_name("alternative")
-    name = __parse_statement_name(source_code_bytes, ast)
+    name = tree_sitter_parsers.node_name(source_code_bytes, ast)
     if name in variable_names:
         affected_by.add(name)
     for child in ast.children:
