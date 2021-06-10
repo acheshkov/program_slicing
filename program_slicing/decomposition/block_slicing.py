@@ -12,16 +12,22 @@ import tree_sitter
 from tree_sitter import Node
 
 from program_slicing.graph.parse import tree_sitter_ast
+from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.statement import StatementLineNumber, StatementColumnNumber
 
 
-def get_block_slices(source_code: str, lang: str) -> List[Tuple[StatementLineNumber, StatementColumnNumber]]:
+def get_block_slices(source_code: str, lang: str) -> \
+        List[Tuple[
+            Tuple[StatementLineNumber, StatementColumnNumber],
+            Tuple[StatementLineNumber, StatementColumnNumber]
+        ]]:
     """
     Return opportunities list.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :return: list of tuples where first item is start point, last item is end point.
     """
+    # filter_wrong_statements(source_code, lang)
     statements_by_block_id: Dict[int, List[tree_sitter.Node]] = __determine_unique_blocks(source_code, lang)
     if not statements_by_block_id:
         return []
@@ -41,7 +47,13 @@ def __determine_unique_blocks(source_code: str, lang: str) -> Dict[int, List[tre
     counter = 0
     statements_by_block_id: Dict[int, List[tree_sitter.Node]] = {}
     ast = tree_sitter_ast(source_code, lang).root_node
-    for block_node, level in __get_block_nodes_per_level(ast):
+    source_code_bytes = bytes(source_code, "utf-8")
+    block_nodes_and_levels = (
+        (block_node, level)
+        for block_node, level in __get_block_nodes_per_level(ast)
+        if not __ast_contains_outer_goto(source_code_bytes, block_node)
+    )
+    for block_node, level in block_nodes_and_levels:
         named_node = block_node.children[0]
         named_node = named_node if named_node.is_named else named_node.next_named_sibling
         statements_by_block_id[counter] = []
@@ -83,8 +95,8 @@ def __get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_s
             yield body_node, level
         elif consequence_node is not None:
             yield consequence_node, level
-        elif alternative_node is not None:
-            yield alternative_node, level
+            if alternative_node is not None:
+                yield alternative_node, level
         elif ast.type == "finally_clause":
             if len(ast.children) > 1:
                 yield ast.children[1], level
@@ -96,6 +108,38 @@ def __get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_s
             }.intersection({node.type for node in ast.children}):
                 continue
             yield ast, level
+
+
+def __ast_contains_outer_goto(source_code_bytes: bytes, ast: Node, hooks: Dict[str, int] = None) -> bool:
+    if hooks is None:
+        hooks = {}
+    ast_name = tree_sitter_parsers.node_name(source_code_bytes, ast)
+    ast_name = 0 if ast_name is None else ast_name
+    ast_is_goto = \
+        ast.type == "break_statement" or \
+        ast.type == "continue_statement"
+    ast_is_hook = \
+        ast.type == "labeled_statement" or \
+        ast.type == "for_statement" or \
+        ast.type == "enhanced_for_statement" or \
+        ast.type == "while_statement"
+    if ast_is_goto:
+        if ast_name not in hooks:
+            return True
+    elif ast_is_hook:
+        val = hooks.get(ast_name, 0)
+        hooks[ast_name] = val + 1
+    if ast.children:
+        for child in ast.children:
+            if __ast_contains_outer_goto(source_code_bytes, child, hooks):
+                return True
+    if ast_is_hook:
+        val = hooks.get(ast_name, None)
+        if val <= 1:
+            del hooks[ast_name]
+        else:
+            hooks[ast_name] = val - 1
+    return False
 
 
 def __generate_all_possible_opportunities(
