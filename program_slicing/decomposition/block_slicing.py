@@ -11,17 +11,9 @@ from typing import Tuple, Iterator, List, Dict, Optional, Any
 import tree_sitter
 from tree_sitter import Node
 
-from program_slicing.graph.manager import ProgramGraphsManager
-from program_slicing.graph.parse import tree_sitter_ast, LANG_JAVA
+from program_slicing.graph.parse import tree_sitter_ast
 from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.statement import StatementLineNumber, StatementColumnNumber
-
-
-def filter_wrong_statements(source_code: str, lang: str):
-    new_code = f'class FakeClass {{ {{ {source_code} }} }}'
-    manager = ProgramGraphsManager(new_code, LANG_JAVA)
-    ddg = manager.get_data_dependence_graph()
-    [x for x in ddg]
 
 
 def get_block_slices(source_code: str, lang: str) -> \
