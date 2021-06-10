@@ -22,6 +22,7 @@ class CodeLinesSlicer:
         self.code_lines: List[str] = code_lines
         self.minimum_column: Optional[StatementColumnNumber] = None
         self.start_point: Optional[Tuple[StatementLineNumber, StatementColumnNumber]] = None
+        self.start_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.end_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
 
     def add_statement(self, statement: Statement) -> None:
@@ -63,12 +64,18 @@ class CodeLinesSlicer:
         last_range_line = last_line if range_type == RangeType.FULL else min(last_line, first_line + 1)
         for line_number in range(start_point[0], last_range_line):
             self.end_points[line_number] = len(self.code_lines[line_number])
+            current_line_start_point = self.__get_start_point_of_line(line_number)
+            if current_line_start_point < self.minimum_column:
+                self.start_points[line_number] = current_line_start_point
         if range_type == RangeType.BEGINNING and last_range_line > first_line:
             return
         if last_line not in self.end_points:
             self.end_points[last_line] = end_point[1]
         else:
             self.end_points[last_line] = max(end_point[1], self.end_points[last_line])
+        last_line_start_point = self.__get_start_point_of_line(last_line)
+        if last_line_start_point < self.minimum_column:
+            self.start_points[last_line] = last_line_start_point
 
     def get_slice_code(self) -> str:
         """
@@ -96,9 +103,16 @@ class CodeLinesSlicer:
         """
         ranges = []
         for line_number in sorted(self.end_points.keys()):
-            start_column = self.start_point[1] if line_number == self.start_point[0] else self.minimum_column
+            start_column = self.start_point[1] if line_number == self.start_point[0] else (
+                min(self.minimum_column, self.start_points[line_number]) if line_number in self.start_points else
+                self.minimum_column)
             end_column = self.end_points[line_number]
             ranges.append((
                 (line_number, min(start_column, end_column)),
                 (line_number, end_column)))
         return ranges
+
+    def __get_start_point_of_line(self, line_number: StatementLineNumber) -> StatementColumnNumber:
+        for i, character in enumerate(self.code_lines[line_number]):
+            if character != " " and character != "\t":
+                return i
