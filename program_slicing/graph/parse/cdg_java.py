@@ -67,7 +67,6 @@ def __handle_method_declaration(
         continue_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     cdg.add_entry_point(statement)
-    siblings = [statement]
     entry_points = [statement]
     children = __parse(
         source_code_bytes,
@@ -77,9 +76,10 @@ def __handle_method_declaration(
         break_statements=break_statements,
         continue_statements=continue_statements,
         variable_names=variable_names)
+    children.append(__add_exit_point(cdg, statement, entry_points))
     for child in children:
         cdg.add_edge(statement, child)
-    return siblings, entry_points
+    return [], []
 
 
 def __handle_if(
@@ -510,7 +510,7 @@ statement_type_and_handler_map = {
     "break_statement":
         (StatementType.GOTO, __handle_break),
     "return_statement":
-        (StatementType.EXIT, __handle_return)
+        (StatementType.GOTO, __handle_return)
 }
 
 
@@ -565,9 +565,9 @@ def __parse(
         variable_names=variable_names)
     if siblings:
         __route_control_flow(entry_points, siblings[0], cdg)
-    entry_points.clear()
-    for exit_point in exit_points:
-        entry_points.append(exit_point)
+        entry_points.clear()
+        for exit_point in exit_points:
+            entry_points.append(exit_point)
     return siblings
 
 
@@ -575,6 +575,8 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
     result = False
     for node in ast.children:
         if node.type == "ERROR" and \
+                node.next_named_sibling is not None and \
+                node.prev_named_sibling is not None and \
                 node.next_named_sibling.type == "block" and \
                 node.prev_named_sibling.type == "local_variable_declaration":
             result = True
@@ -590,8 +592,11 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
                 ast_node_type="method_declaration")
             cdg.add_node(entry_point)
             cdg.add_entry_point(entry_point)
-            for child in __parse(source_code_bytes, scope, cdg, [entry_point], [], [], set()):
+            entry_points = [entry_point]
+            for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], set()):
                 cdg.add_edge(entry_point, child)
+            exit_point = __add_exit_point(cdg, entry_point, entry_points)
+            cdg.add_edge(entry_point, exit_point)
     return result
 
 
@@ -625,6 +630,8 @@ def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlD
                     continue_statements=continue_statements,
                     variable_names=variable_names):
                 cdg.add_edge(entry_point, child)
+        exit_point = __add_exit_point(cdg, entry_point, entry_points)
+        cdg.add_edge(entry_point, exit_point)
         return True
     else:
         return False
@@ -660,6 +667,23 @@ def __parse_affected_by_recursive(
         if child.type == "block" or child == body or child == consequence or child == alternative:
             continue
         __parse_affected_by_recursive(source_code_bytes, child, variable_names, affected_by)
+
+
+def __add_exit_point(cdg: ControlDependenceGraph, statement: Statement, entry_points: List[Statement]) -> Statement:
+    affected_by = set()
+    for exit_point in entry_points:
+        if exit_point.statement_type == StatementType.GOTO:
+            affected_by.update(exit_point.affected_by)
+    exit_point = Statement(
+        StatementType.EXIT,
+        start_point=statement.start_point,
+        end_point=statement.end_point,
+        affected_by=affected_by,
+        name=None,
+        ast_node_type="exit_point")
+    cdg.add_node(exit_point)
+    __route_control_flow(entry_points, exit_point, cdg)
+    return exit_point
 
 
 def __route_control_flow(
