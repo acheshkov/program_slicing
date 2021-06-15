@@ -12,6 +12,7 @@ from program_slicing.graph.parse import cdg_java
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph import convert
+from program_slicing.graph.statement import StatementType
 
 
 class CDGTestCase(TestCase):
@@ -124,6 +125,7 @@ class CDGTestCase(TestCase):
         pdg.add_edges_from([("loop", i) for i in range(8, 11)])
         pdg.add_edges_from([("if (i < 4)", i) for i in range(11, 20)])
         pdg.add_edges_from([("if (i > 6)", i) for i in range(20, 36)])
+        pdg.add_edge(0, 40)
         return pdg
 
     @staticmethod
@@ -173,7 +175,7 @@ class CDGTestCase(TestCase):
             ("Exception e", "MyException e"),
             ("MyException e", "catch (MyException e)"),
         ])
-        ddg.add_nodes_from(range(25))
+        ddg.add_nodes_from(range(26))
         return ddg
 
     @staticmethod
@@ -191,6 +193,62 @@ class CDGTestCase(TestCase):
         pdg.add_edges_from([(1, i) for i in range(19, 22)])
         pdg.add_edges_from([(19, i) for i in range(22, 25)])
         pdg.add_edges_from([("catch (MyException e)", i) for i in range(25, 26)])
+        pdg.add_edge(0, 30)
+        return pdg
+
+    @staticmethod
+    def __get_cdg_2():
+        source_code = """
+        final FlipNode flipNode = (FlipNode) node;
+        context.getVariableCompiler().retrieveLocalVariable(flipNode.getIndex(), flipNode.getDepth());
+        if (flipNode.isExclusive()) {
+            context.performBooleanBranch(new BranchCallback() {
+                public void branch(BodyCompiler context) {
+                }
+            }, new BranchCallback() {
+                public void branch(BodyCompiler context) {
+                }
+            });
+        }
+        """
+        return cdg_java.parse(source_code)
+
+    @staticmethod
+    def __get_cfg_2():
+        cfg = ControlFlowGraph()
+        cfg.add_edge("1_3_beginning", "3_10_block")
+        cfg.add_edge("1_3_beginning", "11_11_ending")
+        cfg.add_edge("3_10_block", "11_11_ending")
+        cfg.add_node("5_6_block")
+        cfg.add_node("8_9_block")
+        return cfg
+
+    @staticmethod
+    def __get_ddg_2():
+        ddg = DataDependenceGraph()
+        ddg.add_edges_from([
+            ("flipNode", "context...;"),
+            ("flipNode", "context"),
+            ("flipNode", "(flipNode.getIndex(), flipNode.getDepth())"),
+            ("flipNode", "flipNode.getIndex()"),
+            ("flipNode", "flipNode.getDepth()"),
+            ("flipNode", "flipNode.getIndex"),
+            ("flipNode", "flipNode.getDepth"),
+            ("flipNode", "if (flipNode.isExclusive())"),
+            ("flipNode", "(flipNode.isExclusive())"),
+            ("flipNode", "flipNode.isExclusive()"),
+            ("flipNode", "flipNode.isExclusive")
+        ])
+        ddg.add_nodes_from(range(30))
+        return ddg
+
+    @staticmethod
+    def __get_pdg_2():
+        pdg = CDGTestCase.__get_cdg_2()
+        variable_statement = [statement for statement in pdg if statement.statement_type == StatementType.VARIABLE][0]
+        for statement in pdg:
+            if statement.statement_type != StatementType.VARIABLE and variable_statement.name in statement.affected_by:
+                pdg.add_edge(variable_statement, statement)
         return pdg
 
     def test_convert_cdg_to_cfg_isomorphic(self):
@@ -200,6 +258,9 @@ class CDGTestCase(TestCase):
         cdg = self.__get_cdg_1()
         cfg = self.__get_cfg_1()
         self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
+        cdg = self.__get_cdg_2()
+        cfg = self.__get_cfg_2()
+        self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
 
     def test_convert_cdg_to_ddg_isomorphic(self):
         cdg = self.__get_cdg_0()
@@ -208,6 +269,9 @@ class CDGTestCase(TestCase):
         cdg = self.__get_cdg_1()
         ddg = self.__get_ddg_1()
         self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
+        cdg = self.__get_cdg_2()
+        ddg = self.__get_ddg_2()
+        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
 
     def test_convert_cdg_to_pdg_isomorphic(self):
         cdg = self.__get_cdg_0()
@@ -215,4 +279,7 @@ class CDGTestCase(TestCase):
         self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
         cdg = self.__get_cdg_1()
         pdg = self.__get_pdg_1()
+        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
+        cdg = self.__get_cdg_2()
+        pdg = self.__get_pdg_2()
         self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
