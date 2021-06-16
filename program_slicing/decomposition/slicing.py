@@ -5,7 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/17'
 
 import os
-from typing import Set, Dict, List, Tuple, Generator
+from typing import Set, Dict, List, Tuple, Iterator
 
 import networkx
 
@@ -55,7 +55,7 @@ def decompose_file(file_path: str, work_dir: str = None, prefix: str = None) -> 
         writer.save_file(result_path, result)
 
 
-def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
+def decompose_code(source_code: str, lang: str) -> Iterator[str]:
     """
     Decompose the specified source code and return all the decomposition variants.
     :param source_code: source code that should be decomposed.
@@ -76,7 +76,7 @@ def decompose_code(source_code: str, lang: str) -> Generator[str, None, None]:
 def get_complete_computation_slices(
         source_code: str,
         lang: str,
-        slice_predicate: SlicePredicate = None) -> Generator[Tuple[Statement, Statement, CodeLinesSlicer], None, None]:
+        slice_predicate: SlicePredicate = None) -> Iterator[Tuple[Statement, Statement, CodeLinesSlicer]]:
     """
     For each function and variable in a specified source code generate list of slices.
     Slice is a list of position ranges.
@@ -97,7 +97,7 @@ def get_complete_computation_slices(
 def get_complete_computation_slices_statements(
         source_code: str,
         lang: str,
-        slice_predicate: SlicePredicate = None) -> Generator[Tuple[Statement, Statement, List[Statement]], None, None]:
+        slice_predicate: SlicePredicate = None) -> Iterator[Tuple[Statement, Statement, List[Statement]]]:
     """
     For each function and variable in a specified source code generate list of slices.
     Slice is a list of Statements.
