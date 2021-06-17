@@ -52,12 +52,12 @@ class ProgramSliceTestCase(TestCase):
 
     @staticmethod
     def __get_program_slice_1():
-        code_lines_slicer = ProgramSlice(ProgramSliceTestCase.__get_source_code_1().split("\n"))
+        program_slice = ProgramSlice(ProgramSliceTestCase.__get_source_code_1().split("\n"))
         function_body = Statement(StatementType.SCOPE, (2, 24), (7, 13))
         variable_s = Statement(StatementType.UNKNOWN, (3, 16), (6, 28))
-        code_lines_slicer.add_statement(function_body)
-        code_lines_slicer.add_statement(variable_s)
-        return code_lines_slicer
+        program_slice.add_statement(function_body)
+        program_slice.add_statement(variable_s)
+        return program_slice
 
     def test_get_ranges(self):
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
@@ -77,15 +77,15 @@ class ProgramSliceTestCase(TestCase):
             ((7, 12), (7, 13))], program_slice.ranges)
 
     def test_get_slice(self):
-        program_slice = CodeLinesSlicerTestCase.__get_code_lines_slicer_0()
+        program_slice = ProgramSliceTestCase.__get_program_slice_0()
         self.assertEqual(
             "{\n"
             "    int a = 0;\n"
             "    int b = 10;\n"
             "    a = b;\n"
             "}",
-            program_slice.get_slice_code())
-        program_slice = CodeLinesSlicerTestCase.__get_code_lines_slicer_1()
+            program_slice.code)
+        program_slice = ProgramSliceTestCase.__get_program_slice_1()
         self.assertEqual(
             "{\n"
             "    String s = \"line1\" +\n"
@@ -93,4 +93,4 @@ class ProgramSliceTestCase(TestCase):
             "        \"line3\" +\n"
             "\"very very very long line4\";\n"
             "}",
-            program_slice.get_slice_code())
+            program_slice.code)
