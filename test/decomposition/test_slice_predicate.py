@@ -8,7 +8,7 @@ from unittest import TestCase
 from typing import List, Tuple
 
 from program_slicing.graph.statement import Statement, StatementType, StatementLineNumber, StatementColumnNumber
-from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
+from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition import check_slice
 
 
@@ -34,8 +34,8 @@ class CheckSliceTestCase(TestCase):
         ]
 
     @staticmethod
-    def __get_slicer_0() -> CodeLinesSlicer:
-        slicer = CodeLinesSlicer("""
+    def __get_slice_0() -> ProgramSlice:
+        slicer = ProgramSlice("""
         int a = 0;
         int b = 0;
         int c = 0;

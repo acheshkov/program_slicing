@@ -25,7 +25,7 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     """
     cfg = ControlFlowGraph()
     block: Dict[Statement, BasicBlock] = {}
-    for root in cdg.get_entry_points():
+    for root in cdg.entry_points:
         __to_cfg(root, cdg=cdg, cfg=cfg, block=block)
     return cfg
 
@@ -59,7 +59,7 @@ def to_pdg(cdg: ControlDependenceGraph) -> ProgramDependenceGraph:
         if node in ddg:
             for ddg_successor in ddg.successors(node):
                 pdg.add_edge(node, ddg_successor)
-    for entry_point in cdg.get_entry_points():
+    for entry_point in cdg.entry_points:
         pdg.add_entry_point(entry_point)
     return pdg
 
@@ -102,7 +102,7 @@ def __process_loop(
         block: Dict[Statement, BasicBlock],
         prev_block: BasicBlock) -> None:
     old_block: BasicBlock = block[child]
-    index = old_block.get_statements().index(child)
+    index = old_block.statements.index(child)
     if index == 0:
         if prev_block is not None:
             cfg.add_edge(prev_block, old_block)

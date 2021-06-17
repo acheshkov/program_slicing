@@ -33,6 +33,6 @@ class PDGJavaTestCase(TestCase):
         }
         """
         pdg = parse(source_code)
-        roots = pdg.get_entry_points()
+        roots = pdg.entry_points
         self.assertIsNotNone(roots)
         self.assertEqual(1, len(roots))

@@ -15,11 +15,16 @@ class ControlDependenceGraph(networkx.DiGraph):
 
     def __init__(self):
         super().__init__()
-        self.entry_points: Set[Statement] = set()
-        self.control_flow: Dict[Statement, List[Statement]] = {}
+        self.__entry_points: Set[Statement] = set()
+        self.__control_flow: Dict[Statement, List[Statement]] = {}
 
-    def get_entry_points(self) -> Set[Statement]:
-        return self.entry_points
+    @property
+    def control_flow(self) -> Dict[Statement, List[Statement]]:
+        return self.__control_flow
+
+    @property
+    def entry_points(self) -> Set[Statement]:
+        return self.__entry_points
 
     def add_entry_point(self, root: Statement) -> None:
-        self.entry_points.add(root)
+        self.__entry_points.add(root)

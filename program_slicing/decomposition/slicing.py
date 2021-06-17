@@ -15,7 +15,7 @@ from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph.statement import Statement, StatementType
-from program_slicing.decomposition.code_lines_slicer import CodeLinesSlicer
+from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 
 
@@ -70,13 +70,13 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
         yield "\033[33m\nSlice" + \
               ((" of " + function_statement.name) if function_statement.name is not None else "") + \
               " for variable '" + variable_statement.name + \
-              "':\033[00m\n" + cc_slice.get_slice_code()
+              "':\033[00m\n" + cc_slice.code
 
 
 def get_complete_computation_slices(
         source_code: str,
         lang: str,
-        slice_predicate: SlicePredicate = None) -> Iterator[Tuple[Statement, Statement, CodeLinesSlicer]]:
+        slice_predicate: SlicePredicate = None) -> Iterator[Tuple[Statement, Statement, ProgramSlice]]:
     """
     For each function and variable in a specified source code generate list of slices.
     Slice is a list of position ranges.
@@ -88,10 +88,8 @@ def get_complete_computation_slices(
     code_lines = str(source_code).split("\n")
     slices = get_complete_computation_slices_statements(source_code, lang, slice_predicate)
     for function_statement, variable_statement, complete_computation_slice in slices:
-        code_lines_slicer = CodeLinesSlicer(code_lines)
-        for statement in complete_computation_slice:
-            code_lines_slicer.add_statement(statement)
-        yield function_statement, variable_statement, code_lines_slicer
+        program_slice = ProgramSlice(code_lines).from_statements(complete_computation_slice)
+        yield function_statement, variable_statement, program_slice
 
 
 def get_complete_computation_slices_statements(
@@ -108,8 +106,8 @@ def get_complete_computation_slices_statements(
     (Statements)
     """
     manager = ProgramGraphsManager(source_code, lang)
-    cdg = manager.cdg
-    function_statements = cdg.get_entry_points()
+    cdg = manager.get_control_dependence_graph()
+    function_statements = cdg.entry_points
     for function_statement in function_statements:
         slicing_criteria = __obtain_slicing_criteria(cdg, function_statement)
         for variable_statement, seed_statements in slicing_criteria.items():
@@ -180,18 +178,18 @@ def __obtain_backward_slice_recursive(
     if basic_block not in region:
         return
     result.add(root)
-    for statement in basic_block.get_statements():
+    for statement in basic_block:
         if statement.start_point[0] >= root.start_point[0] and statement.end_point[0] <= root.end_point[0]:
             result.add(statement)
-            if statement in manager.ddg:
-                for predecessor in manager.ddg.predecessors(statement):
+            if statement in manager.get_data_dependence_graph():
+                for predecessor in manager.get_data_dependence_graph().predecessors(statement):
                     __obtain_backward_slice_recursive(manager, predecessor, region, result)
         elif statement.start_point[0] <= root.start_point[0] and statement.end_point[0] >= root.end_point[0] and (
                 statement.statement_type == StatementType.UNKNOWN or
                 statement.statement_type == StatementType.SCOPE):
             result.add(statement)
-    if root in manager.pdg:
-        for statement in manager.pdg.predecessors(root):
+    if root in manager.get_program_dependence_graph():
+        for statement in manager.get_program_dependence_graph().predecessors(root):
             __obtain_backward_slice_recursive(manager, statement, region, result)
 
 
