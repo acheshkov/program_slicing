@@ -53,16 +53,16 @@ class CheckSliceTestCase(TestCase):
     def test_statements(self):
         self.assertTrue(
             check_slice(
-                CheckSliceTestCase.__get_statements_0(),
+                CheckSliceTestCase.__get_slice_0(),
                 min_amount_of_lines=6,
                 max_amount_of_lines=6))
         self.assertFalse(
             check_slice(
-                CheckSliceTestCase.__get_statements_0(),
+                CheckSliceTestCase.__get_slice_0(),
                 min_amount_of_lines=7,
                 max_amount_of_lines=7))
         self.assertFalse(
             check_slice(
-                CheckSliceTestCase.__get_statements_0(),
+                CheckSliceTestCase.__get_slice_0(),
                 min_amount_of_lines=5,
                 max_amount_of_lines=5))

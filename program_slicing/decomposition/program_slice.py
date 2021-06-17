@@ -45,7 +45,7 @@ class ProgramSlice:
         Get source code for the current slice.
         :return: string with the corresponding source code.
         """
-        if self.__lines is None:
+        if self.__code is None:
             self.__code = "\n".join(self.lines)
         return self.__code
 

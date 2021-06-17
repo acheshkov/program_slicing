@@ -78,33 +78,14 @@ def get_complete_computation_slices(
         lang: str,
         slice_predicate: SlicePredicate = None) -> Iterator[Tuple[Statement, Statement, ProgramSlice]]:
     """
-    For each function and variable in a specified source code generate list of slices.
-    Slice is a list of position ranges.
-    :param source_code: source code that should be decomposed.
-    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
-    :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
-    :return: generator of the function Statement, variable Statement and one of corresponding slices (CodeLinesSlicer)
-    """
-    code_lines = str(source_code).split("\n")
-    slices = get_complete_computation_slices_statements(source_code, lang, slice_predicate)
-    for function_statement, variable_statement, complete_computation_slice in slices:
-        program_slice = ProgramSlice(code_lines).from_statements(complete_computation_slice)
-        yield function_statement, variable_statement, program_slice
-
-
-def get_complete_computation_slices_statements(
-        source_code: str,
-        lang: str,
-        slice_predicate: SlicePredicate = None) -> Iterator[Tuple[Statement, Statement, List[Statement]]]:
-    """
-    For each function and variable in a specified source code generate list of slices.
-    Slice is a list of Statements.
+    For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :return: generator of the function Statement, variable Statement and a corresponding list of slices
     (Statements)
     """
+    code_lines = str(source_code).split("\n")
     manager = ProgramGraphsManager(source_code, lang)
     cdg = manager.get_control_dependence_graph()
     function_statements = cdg.entry_points
@@ -116,8 +97,10 @@ def get_complete_computation_slices_statements(
             if variable_basic_block is None:
                 continue
             complete_computation_slice = complete_computation_slices.get(variable_basic_block, [])
-            if complete_computation_slice and (slice_predicate is None or slice_predicate(complete_computation_slice)):
-                yield function_statement, variable_statement, complete_computation_slice
+            if complete_computation_slice:
+                program_slice = ProgramSlice(code_lines).from_statements(complete_computation_slice)
+                if slice_predicate is None or slice_predicate(program_slice):
+                    yield function_statement, variable_statement, program_slice
 
 
 def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:
