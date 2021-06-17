@@ -33,6 +33,6 @@ class CFGJavaTestCase(TestCase):
         }
         """
         cfg = parse(source_code)
-        roots = cfg.get_entry_points()
+        roots = cfg.entry_points
         self.assertIsNotNone(roots)
         self.assertEqual(1, len(roots))

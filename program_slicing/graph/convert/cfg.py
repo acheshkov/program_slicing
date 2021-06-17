@@ -36,9 +36,9 @@ def to_ddg(cfg: ControlFlowGraph) -> DataDependenceGraph:
     ddg = DataDependenceGraph()
     visited: Dict[BasicBlock, Dict[str, Set[Statement]]] = {}
     variables: Dict[str, Set[Statement]] = {}
-    for root in cfg.get_entry_points():
+    for root in cfg.entry_points:
         __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
-        ddg.add_entry_point(root.get_root())
+        ddg.add_entry_point(root.root)
     return ddg
 
 
@@ -68,7 +68,7 @@ def __to_ddg(
     variables_passed: Dict[str, Set[Statement]] = {
         variable: variable_set for variable, variable_set in variables_entered.items()
     }
-    for statement in root.get_statements():
+    for statement in root:
         ddg.add_node(statement)
         for affecting_variable_name in statement.affected_by:
             if affecting_variable_name in variables_passed:

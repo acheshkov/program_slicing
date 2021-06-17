@@ -15,10 +15,11 @@ class ProgramDependenceGraph(networkx.DiGraph):
 
     def __init__(self):
         super().__init__()
-        self.entry_points: Set[Statement] = set()
+        self.__entry_points: Set[Statement] = set()
 
-    def get_entry_points(self) -> Set[Statement]:
-        return self.entry_points
+    @property
+    def entry_points(self) -> Set[Statement]:
+        return self.__entry_points
 
     def add_entry_point(self, root: Statement) -> None:
-        self.entry_points.add(root)
+        self.__entry_points.add(root)

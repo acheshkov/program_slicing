@@ -125,8 +125,6 @@ def __handle_if(
             variable_names=variable_names)
         for child in alternative:
             cdg.add_edge(statement, child)
-        if consequence and alternative:
-            alternative[0].start_point = consequence[0].end_point
     return siblings, entry_points + alternative_entry_points
 
 

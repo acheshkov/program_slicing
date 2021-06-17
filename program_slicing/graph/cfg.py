@@ -15,11 +15,16 @@ class ControlFlowGraph(networkx.DiGraph):
 
     def __init__(self):
         super().__init__()
-        self.entry_points: Set[BasicBlock] = set()
-        self.forward_dominance: Dict[BasicBlock, List[BasicBlock]]
+        self.__entry_points: Set[BasicBlock] = set()
+        self.__forward_dominance: Dict[BasicBlock, List[BasicBlock]] = {}
 
-    def get_entry_points(self) -> Set[BasicBlock]:
-        return self.entry_points
+    @property
+    def forward_dominance(self) -> Dict[BasicBlock, List[BasicBlock]]:
+        return self.__forward_dominance
+
+    @property
+    def entry_points(self) -> Set[BasicBlock]:
+        return self.__entry_points
 
     def add_entry_point(self, root: BasicBlock) -> None:
-        self.entry_points.add(root)
+        self.__entry_points.add(root)

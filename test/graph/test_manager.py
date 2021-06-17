@@ -44,13 +44,15 @@ class ManagerTestCase(TestCase):
 
     def test_basic_blocks(self):
         mgr = self.__get_manager_0()
-        blocks = [block for block in mgr.cfg]
+        blocks = [block for block in mgr.get_control_flow_graph()]
         self.assertEqual(9, len(blocks))
-        self.assertEqual(9, len(set(mgr.basic_block.values())))
+        for block in blocks:
+            for statement in block:
+                self.assertEqual(block, mgr.get_basic_block(statement))
 
     def test_dom(self):
         mgr = self.__get_manager_0()
-        cfg = mgr.cfg
+        cfg = mgr.get_control_flow_graph()
         self.assertEqual(1, len(cfg.entry_points))
         block_with_n = [entry_point for entry_point in cfg.entry_points][0]
         block_with_for = [child for child in cfg.successors(block_with_n)][0]
@@ -100,7 +102,7 @@ class ManagerTestCase(TestCase):
 
     def test_reach(self):
         mgr = self.__get_manager_0()
-        cfg = mgr.cfg
+        cfg = mgr.get_control_flow_graph()
         self.assertEqual(1, len(cfg.entry_points))
         block_with_n = [entry_point for entry_point in cfg.entry_points][0]
         block_with_for = [child for child in cfg.successors(block_with_n)][0]
@@ -169,7 +171,7 @@ class ManagerTestCase(TestCase):
 
     def test_boundary_blocks(self):
         mgr = self.__get_manager_0()
-        cfg = mgr.cfg
+        cfg = mgr.get_control_flow_graph()
         self.assertEqual(1, len(cfg.entry_points))
         block_with_n = [entry_point for entry_point in cfg.entry_points][0]
         block_with_for = [child for child in cfg.successors(block_with_n)][0]
