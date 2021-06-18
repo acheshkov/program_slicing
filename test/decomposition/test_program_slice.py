@@ -62,35 +62,29 @@ class ProgramSliceTestCase(TestCase):
     def test_get_ranges(self):
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
         self.assertEqual([
-            ((2, 24), (2, 25)),
-            ((3, 12), (3, 26)),
-            ((4, 12), (4, 27)),
-            ((5, 12), (5, 22)),
-            ((7, 12), (7, 13))], program_slice.ranges)
+            ((3, 16), (3, 26)),
+            ((4, 16), (4, 27)),
+            ((5, 16), (5, 22))], program_slice.ranges)
         program_slice = ProgramSliceTestCase.__get_program_slice_1()
         self.assertEqual([
-            ((2, 24), (2, 25)),
-            ((3, 12), (3, 36)),
+            ((3, 16), (3, 36)),
             ((4, 0), (4, 9)),
-            ((5, 12), (5, 29)),
-            ((6, 0), (6, 28)),
-            ((7, 12), (7, 13))], program_slice.ranges)
+            ((5, 16), (5, 29)),
+            ((6, 0), (6, 28))], program_slice.ranges)
 
     def test_get_slice(self):
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
         self.assertEqual(
-            "{\n"
-            "    int a = 0;\n"
-            "    int b = 10;\n"
-            "    a = b;\n"
-            "}",
+            "int a = 0;\n"
+            "int b = 10;\n"
+            "a = b;"
+            ,
             program_slice.code)
         program_slice = ProgramSliceTestCase.__get_program_slice_1()
         self.assertEqual(
-            "{\n"
-            "    String s = \"line1\" +\n"
+            "String s = \"line1\" +\n"
             "\"line2\" +\n"
-            "        \"line3\" +\n"
-            "\"very very very long line4\";\n"
-            "}",
+            "    \"line3\" +\n"
+            "\"very very very long line4\";"
+            ,
             program_slice.code)
