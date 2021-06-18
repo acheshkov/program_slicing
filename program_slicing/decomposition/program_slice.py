@@ -25,10 +25,10 @@ class ProgramSlice:
         self.__end_point: Optional[Tuple[StatementLineNumber, StatementColumnNumber]] = None
         self.__start_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.__end_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
+        self.__external_scope: Optional[Statement] = None
         self.__code = None
         self.__lines = None
         self.__ranges = None
-        self.__external_scope = None
 
     def __str__(self):
         return self.code
