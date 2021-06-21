@@ -22,8 +22,10 @@ class ProgramSlice:
         self.__source_lines: List[str] = __source_lines
         self.__minimum_column: Optional[StatementColumnNumber] = None
         self.__start_point: Optional[Tuple[StatementLineNumber, StatementColumnNumber]] = None
+        self.__end_point: Optional[Tuple[StatementLineNumber, StatementColumnNumber]] = None
         self.__start_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.__end_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
+        self.__external_scope: Optional[Statement] = None
         self.__code = None
         self.__lines = None
         self.__ranges = None
@@ -119,7 +121,19 @@ class ProgramSlice:
             RangeType.BOUNDS if statement.statement_type == StatementType.SCOPE else \
             RangeType.FULL if statement.statement_type == StatementType.UNKNOWN else \
             RangeType.BEGINNING
-        self.add_range(statement.start_point, statement.end_point, range_type)
+        start_point = statement.start_point
+        end_point = statement.end_point
+        if self.__external_scope is not None:
+            if ProgramSlice.__start_point_out_of_bounds(start_point, self.__external_scope.start_point) or \
+                    ProgramSlice.__end_point_out_of_bounds(end_point, self.__external_scope.end_point):
+                self.add_range(self.__external_scope.start_point, self.__external_scope.end_point, RangeType.BOUNDS)
+                self.__external_scope = None
+        if statement.statement_type == StatementType.SCOPE and \
+                ProgramSlice.__start_point_out_of_bounds(statement.start_point, self.__start_point) and \
+                ProgramSlice.__end_point_out_of_bounds(statement.end_point, self.__end_point):
+            self.__external_scope = statement
+        else:
+            self.add_range(statement.start_point, statement.end_point, range_type)
 
     def add_range(
             self,
@@ -137,16 +151,11 @@ class ProgramSlice:
         self.__code = None
         self.__ranges = None
         self.__lines = None
-        if self.__minimum_column is None:
-            self.__minimum_column = max(0, min(start_point[1], end_point[1] - 1))
-        elif start_point[1] < self.__minimum_column:
-            self.__minimum_column = start_point[1]
-        elif end_point[1] < self.__minimum_column:
-            self.__minimum_column = max(0, end_point[1] - 1)
-        if self.__start_point is None or \
-                start_point[0] < self.__start_point[0] or \
-                (start_point[0] == self.__start_point[0] and start_point[1] < self.__start_point[1]):
+        self.__update_minimal_column(start_point, end_point)
+        if ProgramSlice.__start_point_out_of_bounds(start_point, self.__start_point):
             self.__start_point = start_point
+        if ProgramSlice.__end_point_out_of_bounds(end_point, self.__end_point):
+            self.__end_point = end_point
         first_line = start_point[0]
         last_line = end_point[0]
         last_range_line = last_line if range_type == RangeType.FULL else min(last_line, first_line + 1)
@@ -169,3 +178,32 @@ class ProgramSlice:
         for i, character in enumerate(self.__source_lines[line_number]):
             if character != " " and character != "\t":
                 return i
+
+    @staticmethod
+    def __start_point_out_of_bounds(
+            start_point: Tuple[StatementLineNumber, StatementColumnNumber],
+            scope_start_point: Tuple[StatementLineNumber, StatementColumnNumber]) -> bool:
+        return \
+            scope_start_point is None or \
+            start_point[0] < scope_start_point[0] or \
+            start_point[0] == scope_start_point[0] and start_point[1] <= scope_start_point[1]
+
+    @staticmethod
+    def __end_point_out_of_bounds(
+            end_point: Tuple[StatementLineNumber, StatementColumnNumber],
+            scope_end_point: Tuple[StatementLineNumber, StatementColumnNumber]) -> bool:
+        return \
+            scope_end_point is None or \
+            end_point[0] > scope_end_point[0] or \
+            end_point[0] == scope_end_point[0] and end_point[1] >= scope_end_point[1]
+
+    def __update_minimal_column(
+            self,
+            start_point: Tuple[StatementLineNumber, StatementColumnNumber],
+            end_point: Tuple[StatementLineNumber, StatementColumnNumber]) -> None:
+        if self.__minimum_column is None:
+            self.__minimum_column = max(0, min(start_point[1], end_point[1] - 1))
+        elif start_point[1] < self.__minimum_column:
+            self.__minimum_column = start_point[1]
+        elif end_point[1] < self.__minimum_column:
+            self.__minimum_column = max(0, end_point[1] - 1)
