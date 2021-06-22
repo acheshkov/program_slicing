@@ -169,6 +169,7 @@ def __obtain_backward_slice_recursive(
                     __obtain_backward_slice_recursive(manager, predecessor, region, result)
         elif statement.start_point[0] <= root.start_point[0] and statement.end_point[0] >= root.end_point[0] and (
                 statement.statement_type == StatementType.UNKNOWN or
+                statement.statement_type == StatementType.GOTO or
                 statement.statement_type == StatementType.SCOPE):
             result.add(statement)
     if root in manager.get_program_dependence_graph():

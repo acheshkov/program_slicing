@@ -52,9 +52,9 @@ class CDGTestCase(TestCase):
             ("4_5_first_if", "9_9_second_if"),
             ("5_7_print_and_continue", "4_4_update_i"),
             ("9_9_second_if", "9_11_print_and_break"),
-            ("9_9_second_if", "14_14_last_print"),
+            ("9_9_second_if", "13_14_last_print"),
             ("9_11_print_and_break", "16_16_return"),
-            ("14_14_last_print", "4_4_update_i"),
+            ("13_14_last_print", "4_4_update_i"),
             ("4_4_update_i", "4_4_for_condition"),
         ])
         return cfg
@@ -95,7 +95,7 @@ class CDGTestCase(TestCase):
             ("int n = 10", "return n"),
             ("int n = 10", "n from return n")
         ])
-        ddg.add_nodes_from(range(35))
+        ddg.add_nodes_from(range(36))
         return ddg
 
     @staticmethod
@@ -120,11 +120,11 @@ class CDGTestCase(TestCase):
         pdg.add_edge("loop", "if (i > 6)")
         pdg.add_edge("loop", "i += 1")
         pdg.add_edge("loop", "i from i += 1")
-        pdg.add_nodes_from(range(35, 39))
+        pdg.add_nodes_from(range(36, 40))
         pdg.add_edges_from([(0, i) for i in range(1, 8)])
         pdg.add_edges_from([("loop", i) for i in range(8, 11)])
         pdg.add_edges_from([("if (i < 4)", i) for i in range(11, 20)])
-        pdg.add_edges_from([("if (i > 6)", i) for i in range(20, 36)])
+        pdg.add_edges_from([("if (i > 6)", i) for i in range(20, 37)])
         pdg.add_edge(0, 40)
         return pdg
 

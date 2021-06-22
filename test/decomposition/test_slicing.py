@@ -68,6 +68,49 @@ class SlicingTestCase(TestCase):
         self.assertFalse(is_slicing_criterion(c, b))
         self.assertTrue(is_slicing_criterion(c, c))
 
+    def test_get_complete_computation_slices(self):
+        source_code = """
+        int n = 0;
+        int a = 10;
+        int b = 10;
+        if (n < 10)
+            b = n;
+        else
+            a = n;
+        n = a + b;
+        return a;
+        """
+        slices = slicing.get_complete_computation_slices(source_code, LANG_JAVA)
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "int n = 0;\n"
+                    "int a = 10;\n"
+                    "if (n < 10)\n"
+                    "else\n"
+                    "    a = n;",
+                    program_slice.code)
+            elif variable_statement.name == "b":
+                self.assertEqual(
+                    "int n = 0;\n"
+                    "int b = 10;\n"
+                    "if (n < 10)\n"
+                    "    b = n;",
+                    program_slice.code)
+            elif variable_statement.name == "n":
+                self.assertEqual(
+                    "int n = 0;\n"
+                    "int a = 10;\n"
+                    "int b = 10;\n"
+                    "if (n < 10)\n"
+                    "    b = n;\n"
+                    "else\n"
+                    "    a = n;\n"
+                    "n = a + b;",
+                    program_slice.code)
+            else:
+                self.assertTrue(False)
+
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         self.assertEqual(2, len(variable_statements))
