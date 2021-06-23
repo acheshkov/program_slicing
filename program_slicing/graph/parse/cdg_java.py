@@ -115,6 +115,15 @@ def __handle_if(
     alternative_ast = ast.child_by_field_name("alternative")
     alternative_entry_points = [statement]
     if alternative_ast is not None:
+        else_statement = Statement(
+            StatementType.GOTO,
+            start_point=alternative_ast.prev_sibling.start_point,
+            end_point=alternative_ast.end_point,
+            affected_by=set(),
+            ast_node_type="else")
+        cdg.add_edge(statement, else_statement)
+        __route_control_flow(alternative_entry_points, else_statement, cdg)
+        alternative_entry_points = [else_statement]
         alternative = __parse(
             source_code_bytes,
             alternative_ast,

@@ -7,6 +7,7 @@ __date__ = '2021/03/22'
 from unittest import TestCase
 
 from program_slicing.decomposition import slicing
+from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.manager import ProgramGraphsManager
@@ -67,6 +68,52 @@ class SlicingTestCase(TestCase):
         self.assertFalse(is_slicing_criterion(c, a))
         self.assertFalse(is_slicing_criterion(c, b))
         self.assertTrue(is_slicing_criterion(c, c))
+
+    def test_get_complete_computation_slices(self):
+        source_code = """
+        int n = 0;
+        int a = 10;
+        int b = 10;
+        if (n < 10)
+            b = n;
+        else
+            a = n;
+        n = a + b;
+        return a;
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA,
+            SlicePredicate(lang_to_check_parsing=LANG_JAVA))
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "int n = 0;\n"
+                    "int a = 10;\n"
+                    "if (n < 10) {}\n"
+                    "else\n"
+                    "    a = n;",
+                    program_slice.code)
+            elif variable_statement.name == "b":
+                self.assertEqual(
+                    "int n = 0;\n"
+                    "int b = 10;\n"
+                    "if (n < 10)\n"
+                    "    b = n;",
+                    program_slice.code)
+            elif variable_statement.name == "n":
+                self.assertEqual(
+                    "int n = 0;\n"
+                    "int a = 10;\n"
+                    "int b = 10;\n"
+                    "if (n < 10)\n"
+                    "    b = n;\n"
+                    "else\n"
+                    "    a = n;\n"
+                    "n = a + b;",
+                    program_slice.code)
+            else:
+                self.assertTrue(False)
 
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()

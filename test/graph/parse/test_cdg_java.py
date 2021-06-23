@@ -300,7 +300,7 @@ class CDGJavaTestCase(TestCase):
         }
         """
         cdg = cdg_java.parse(source_code)
-        self.assertEqual(59, len(cdg.nodes))
+        self.assertEqual(60, len(cdg.nodes))
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
@@ -332,12 +332,13 @@ class CDGJavaTestCase(TestCase):
             8: StatementType.GOTO
         })
         branch_2_children = [child for child in cdg.successors(loop_children[10])]
-        self.assertEqual(16, len(branch_2_children))
+        self.assertEqual(17, len(branch_2_children))
         self.__check_cdg_children(branch_1_children, {
             0: StatementType.SCOPE,
             2: StatementType.CALL,
             8: StatementType.GOTO,
-            10: StatementType.CALL
+            9: StatementType.GOTO,
+            11: StatementType.CALL
         })
 
     def test_parse_without_class(self):
