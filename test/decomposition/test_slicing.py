@@ -81,7 +81,10 @@ class SlicingTestCase(TestCase):
         n = a + b;
         return a;
         """
-        slices = slicing.get_complete_computation_slices(source_code, LANG_JAVA, SlicePredicate(lang=LANG_JAVA))
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA,
+            SlicePredicate(lang_to_check_parsing=LANG_JAVA))
         for function_statement, variable_statement, program_slice in slices:
             if variable_statement.name == "a":
                 self.assertEqual(
