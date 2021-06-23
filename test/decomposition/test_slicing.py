@@ -7,6 +7,7 @@ __date__ = '2021/03/22'
 from unittest import TestCase
 
 from program_slicing.decomposition import slicing
+from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.manager import ProgramGraphsManager
@@ -80,13 +81,13 @@ class SlicingTestCase(TestCase):
         n = a + b;
         return a;
         """
-        slices = slicing.get_complete_computation_slices(source_code, LANG_JAVA)
+        slices = slicing.get_complete_computation_slices(source_code, LANG_JAVA, SlicePredicate(lang=LANG_JAVA))
         for function_statement, variable_statement, program_slice in slices:
             if variable_statement.name == "a":
                 self.assertEqual(
                     "int n = 0;\n"
                     "int a = 10;\n"
-                    "if (n < 10)\n"
+                    "if (n < 10) {}\n"
                     "else\n"
                     "    a = n;",
                     program_slice.code)
