@@ -65,6 +65,10 @@ class SlicePredicate:
             if node.type == "ERROR":
                 return False
             elif node.type == "type_identifier":
+                # code "else a = 0;" in tree sitter java parser doesn't create an ERROR node,
+                # it wrongly parse 'else' as a type_identifier,
+                # that's why we need this additional check;
+                # this code may be removed if tree sitter will fix this issue
                 if node_name(code_bytes, node) == "else":
                     return False
         return True
