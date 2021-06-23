@@ -22,7 +22,7 @@ class SlicePredicate:
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
-            self.__check_parsing_in_lang
+            self.__check_parsing
         ]
         self.__program_slice = None
 
@@ -49,7 +49,7 @@ class SlicePredicate:
             return False
         return True
 
-    def __check_parsing_in_lang(self) -> bool:
+    def __check_parsing(self) -> bool:
         if self.__lang_to_check_parsing is None:
             return True
         code_bytes = bytes(self.__program_slice.code, "utf-8")
