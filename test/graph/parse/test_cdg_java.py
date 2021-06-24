@@ -421,3 +421,27 @@ class CDGJavaTestCase(TestCase):
                 })
             else:
                 self.assertFalse(True)
+
+    def test_parse_constructor(self):
+        source_code = """
+        class MyClass {
+            int a;
+            MyClass() {
+                this.a = 0;
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        self.assertEqual(15, len(cdg.nodes))
+        entry_points = [entry_point for entry_point in cdg.entry_points]
+        self.assertEqual(1, len(entry_points))
+        self.__check_cdg_children(entry_points, {
+            0: StatementType.FUNCTION
+        })
+        function_children = [child for child in cdg.successors(entry_points[0])]
+        self.assertEqual(8, len(function_children))
+        self.__check_cdg_children(function_children, {
+            0: StatementType.SCOPE,
+            6: StatementType.ASSIGNMENT,
+            7: StatementType.EXIT
+        })
