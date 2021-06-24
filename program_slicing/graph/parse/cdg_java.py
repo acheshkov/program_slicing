@@ -12,6 +12,7 @@ from program_slicing.graph.parse import tree_sitter_ast_java
 from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.statement import Statement, StatementType
+from program_slicing.graph.point import Point
 
 
 def __handle_statement(
@@ -115,12 +116,14 @@ def __handle_if(
     alternative_ast = ast.child_by_field_name("alternative")
     alternative_entry_points = [statement]
     if alternative_ast is not None:
+        else_ast = alternative_ast.prev_sibling
+        start_point, end_point = __parse_position_range(else_ast)
         else_statement = Statement(
             StatementType.GOTO,
-            start_point=alternative_ast.prev_sibling.start_point,
-            end_point=alternative_ast.end_point,
+            start_point=start_point,
+            end_point=end_point,
             affected_by=set(),
-            ast_node_type="else")
+            ast_node_type=else_ast.type)
         cdg.add_edge(statement, else_statement)
         __route_control_flow(alternative_entry_points, else_statement, cdg)
         alternative_entry_points = [else_statement]
@@ -652,8 +655,8 @@ def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callab
     return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_statement))
 
 
-def __parse_position_range(ast: Node) -> Tuple[Tuple[int, int], Tuple[int, int]]:
-    return ast.start_point, ast.end_point
+def __parse_position_range(ast: Node) -> Tuple[Point, Point]:
+    return Point(ast.start_point[0], ast.start_point[1]), Point(ast.end_point[0], ast.end_point[1])
 
 
 def __parse_affected_by(source_code_bytes: bytes, ast: Node, variable_names: Set[str]) -> Set[str]:

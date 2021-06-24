@@ -162,15 +162,22 @@ def __obtain_backward_slice_recursive(
         return
     result.add(root)
     for statement in basic_block:
-        if statement.start_point[0] >= root.start_point[0] and statement.end_point[0] <= root.end_point[0]:
+        statement_is_necessary_goto = False
+        if statement.statement_type == StatementType.GOTO:
+            for controller in manager.get_control_dependence_graph().predecessors(statement):
+                if manager.get_basic_block(controller) in region:
+                    statement_is_necessary_goto = True
+                    break
+        if statement_is_necessary_goto or \
+                statement.start_point <= root.start_point and statement.end_point >= root.end_point and (
+                statement.statement_type == StatementType.UNKNOWN or
+                statement.statement_type == StatementType.GOTO or
+                statement.statement_type == StatementType.SCOPE):
             result.add(statement)
             if statement in manager.get_data_dependence_graph():
                 for predecessor in manager.get_data_dependence_graph().predecessors(statement):
                     __obtain_backward_slice_recursive(manager, predecessor, region, result)
-        elif statement.start_point[0] <= root.start_point[0] and statement.end_point[0] >= root.end_point[0] and (
-                statement.statement_type == StatementType.UNKNOWN or
-                statement.statement_type == StatementType.GOTO or
-                statement.statement_type == StatementType.SCOPE):
+        elif statement.start_point >= root.start_point and statement.end_point <= root.end_point:
             result.add(statement)
     if root in manager.get_program_dependence_graph():
         for statement in manager.get_program_dependence_graph().predecessors(root):

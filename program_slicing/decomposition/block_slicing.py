@@ -13,13 +13,13 @@ from tree_sitter import Node
 
 from program_slicing.graph.parse import tree_sitter_ast
 from program_slicing.graph.parse import tree_sitter_parsers
-from program_slicing.graph.statement import StatementLineNumber, StatementColumnNumber
+from program_slicing.graph.point import Point
 
 
 def get_block_slices(source_code: str, lang: str) -> \
         List[Tuple[
-            Tuple[StatementLineNumber, StatementColumnNumber],
-            Tuple[StatementLineNumber, StatementColumnNumber]
+            Point,
+            Point
         ]]:
     """
     Return opportunities list.
@@ -171,11 +171,9 @@ def __count_block_bounds(statements_combinations_by_block_id) -> List[List[Tuple
             start_point = None
             end_point = None
             for statement in statements_combination:
-                if start_point is None or statement.start_point[0] < start_point[0] or (
-                        statement.start_point[0] == start_point[0] and statement.start_point[1] < start_point[1]):
+                if start_point is None or statement.start_point < start_point:
                     start_point = statement.start_point
-                if end_point is None or statement.end_point[0] > end_point[0] or (
-                        statement.end_point[0] == end_point[0] and statement.end_point[1] > end_point[1]):
+                if end_point is None or statement.end_point > end_point:
                     end_point = statement.end_point
             ranges.append((start_point, end_point))
         ranges_by_block_id[block_id] = ranges

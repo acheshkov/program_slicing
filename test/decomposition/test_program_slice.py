@@ -8,6 +8,7 @@ from unittest import TestCase
 
 from program_slicing.decomposition.program_slice import ProgramSlice, RangeType
 from program_slicing.graph.statement import Statement, StatementType
+from program_slicing.graph.point import Point
 
 
 class ProgramSliceTestCase(TestCase):
@@ -28,13 +29,13 @@ class ProgramSliceTestCase(TestCase):
     @staticmethod
     def __get_program_slice_0():
         program_slice = ProgramSlice(ProgramSliceTestCase.__get_source_code_0().split("\n"))
-        function_body = Statement(StatementType.SCOPE, (2, 24), (7, 13))
-        variable_a = Statement(StatementType.VARIABLE, (3, 16), (3, 26))
-        variable_b = Statement(StatementType.VARIABLE, (4, 16), (4, 27))
+        function_body = Statement(StatementType.SCOPE, Point(2, 24), Point(7, 13))
+        variable_a = Statement(StatementType.VARIABLE, Point(3, 16), Point(3, 26))
+        variable_b = Statement(StatementType.VARIABLE, Point(4, 16), Point(4, 27))
         program_slice.add_statement(function_body)
         program_slice.add_statement(variable_a)
         program_slice.add_statement(variable_b)
-        program_slice.add_range((5, 16), (5, 22), RangeType.FULL)
+        program_slice.add_range(Point(5, 16), Point(5, 22), RangeType.FULL)
         return program_slice
 
     @staticmethod
@@ -53,8 +54,8 @@ class ProgramSliceTestCase(TestCase):
     @staticmethod
     def __get_program_slice_1():
         program_slice = ProgramSlice(ProgramSliceTestCase.__get_source_code_1().split("\n"))
-        function_body = Statement(StatementType.SCOPE, (2, 24), (7, 13))
-        variable_s = Statement(StatementType.UNKNOWN, (3, 16), (6, 28))
+        function_body = Statement(StatementType.SCOPE, Point(2, 24), Point(7, 13))
+        variable_s = Statement(StatementType.UNKNOWN, Point(3, 16), Point(6, 28))
         program_slice.add_statement(function_body)
         program_slice.add_statement(variable_s)
         return program_slice
@@ -62,15 +63,15 @@ class ProgramSliceTestCase(TestCase):
     def test_get_ranges(self):
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
         self.assertEqual([
-            ((3, 16), (3, 26)),
-            ((4, 16), (4, 27)),
-            ((5, 16), (5, 22))], program_slice.ranges)
+            (Point(3, 16), Point(3, 26)),
+            (Point(4, 16), Point(4, 27)),
+            (Point(5, 16), Point(5, 22))], program_slice.ranges)
         program_slice = ProgramSliceTestCase.__get_program_slice_1()
         self.assertEqual([
-            ((3, 16), (3, 36)),
-            ((4, 0), (4, 9)),
-            ((5, 16), (5, 29)),
-            ((6, 0), (6, 28))], program_slice.ranges)
+            (Point(3, 16), Point(3, 36)),
+            (Point(4, 0), Point(4, 9)),
+            (Point(5, 16), Point(5, 29)),
+            (Point(6, 0), Point(6, 28))], program_slice.ranges)
 
     def test_get_slice(self):
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
