@@ -124,13 +124,13 @@ class ProgramSlice:
         start_point = statement.start_point
         end_point = statement.end_point
         if self.__external_scope is not None:
-            if ProgramSlice.__start_point_out_of_bounds(start_point, self.__external_scope.start_point) or \
-                    ProgramSlice.__end_point_out_of_bounds(end_point, self.__external_scope.end_point):
+            if not (ProgramSlice.__start_point_out_of_bounds(self.__external_scope.start_point, start_point) and
+                    ProgramSlice.__end_point_out_of_bounds(self.__external_scope.end_point, end_point)):
                 self.add_range(self.__external_scope.start_point, self.__external_scope.end_point, RangeType.BOUNDS)
                 self.__external_scope = None
         if statement.statement_type == StatementType.SCOPE and \
-                ProgramSlice.__start_point_out_of_bounds(statement.start_point, self.__start_point) and \
-                ProgramSlice.__end_point_out_of_bounds(statement.end_point, self.__end_point):
+                ProgramSlice.__start_point_out_of_bounds(start_point, self.__start_point) and \
+                ProgramSlice.__end_point_out_of_bounds(end_point, self.__end_point):
             self.__external_scope = statement
         else:
             self.add_range(statement.start_point, statement.end_point, range_type)

@@ -68,7 +68,7 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
     slices = get_complete_computation_slices(source_code, lang, slice_predicate)
     for function_statement, variable_statement, cc_slice in slices:
         yield "\033[33m\nSlice" + \
-              ((" of " + function_statement.name) if function_statement.name is not None else "") + \
+              ((" of " + function_statement.name) if function_statement.name else "") + \
               " for variable '" + variable_statement.name + \
               "':\033[00m\n" + cc_slice.code
 

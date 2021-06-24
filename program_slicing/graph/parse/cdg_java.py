@@ -488,6 +488,8 @@ statement_type_and_handler_map = {
         (StatementType.VARIABLE, __handle_variable),
     "method_declaration":
         (StatementType.FUNCTION, __handle_method_declaration),
+    "constructor_declaration":
+        (StatementType.FUNCTION, __handle_method_declaration),
     "if_statement":
         (StatementType.BRANCH, __handle_if),
     "try_statement":
@@ -511,6 +513,8 @@ statement_type_and_handler_map = {
     "method_invocation":
         (StatementType.CALL, __handle_statement),
     "block":
+        (StatementType.SCOPE, __handle_statement),
+    "constructor_body":
         (StatementType.SCOPE, __handle_statement),
     "continue_statement":
         (StatementType.GOTO, __handle_continue),
