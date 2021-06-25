@@ -7,7 +7,8 @@ __date__ = '2021/06/07'
 from unittest import TestCase
 from typing import List, Tuple
 
-from program_slicing.graph.statement import Statement, StatementType, StatementLineNumber, StatementColumnNumber
+from program_slicing.graph.statement import Statement, StatementType
+from program_slicing.graph.point import Point
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition import check_slice
 
@@ -15,14 +16,12 @@ from program_slicing.decomposition import check_slice
 class CheckSliceTestCase(TestCase):
 
     @staticmethod
-    def __get_ranges_0() -> List[Tuple[
-            Tuple[StatementLineNumber, StatementColumnNumber],
-            Tuple[StatementLineNumber, StatementColumnNumber]]]:
+    def __get_ranges_0() -> List[Tuple[Point, Point]]:
         return [
-            ((1, 0), (1, 2)),
-            ((2, 0), (5, 1)),
-            ((7, 0), (7, 2)),
-            ((3, 0), (3, 2))
+            (Point(1, 0), Point(1, 2)),
+            (Point(2, 0), Point(5, 1)),
+            (Point(7, 0), Point(7, 2)),
+            (Point(3, 0), Point(3, 2))
         ]
 
     @staticmethod

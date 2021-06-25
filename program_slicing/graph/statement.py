@@ -7,6 +7,8 @@ __date__ = '2021/03/23'
 from typing import Tuple, Optional, Set
 from enum import Enum
 
+from program_slicing.graph.point import Point
+
 
 class StatementType(Enum):
     FUNCTION = "FUNCTION"
@@ -21,8 +23,6 @@ class StatementType(Enum):
     EXIT = "EXIT"
 
 
-StatementLineNumber = int
-StatementColumnNumber = int
 VariableName = str
 
 
@@ -31,14 +31,14 @@ class Statement:
     def __init__(
             self,
             statement_type: StatementType,
-            start_point: Tuple[StatementLineNumber, StatementColumnNumber],
-            end_point: Tuple[StatementLineNumber, StatementColumnNumber],
+            start_point: Point,
+            end_point: Point,
             affected_by: Set[VariableName] = None,
             name: Optional[VariableName] = None,
             ast_node_type: str = None):
         self.__statement_type: StatementType = statement_type
-        self.__start_point: Tuple[StatementLineNumber, StatementColumnNumber] = start_point
-        self.__end_point: Tuple[StatementLineNumber, StatementColumnNumber] = end_point
+        self.__start_point: Point = start_point
+        self.__end_point: Point = end_point
         self.__affected_by: Set[VariableName] = set() if affected_by is None else affected_by
         self.__name: Optional[VariableName] = name
         self.__ast_node_type: str = ast_node_type
@@ -48,11 +48,11 @@ class Statement:
         return self.__statement_type
 
     @property
-    def start_point(self) -> Tuple[StatementLineNumber, StatementColumnNumber]:
+    def start_point(self) -> Point:
         return self.__start_point
 
     @property
-    def end_point(self) -> Tuple[StatementLineNumber, StatementColumnNumber]:
+    def end_point(self) -> Point:
         return self.__end_point
 
     @property
