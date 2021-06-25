@@ -12,7 +12,7 @@ class Point:
         self.__column_number: int = column_number
 
     def __repr__(self) -> str:
-        return self.__str__()
+        return "Point{}".format(self)
 
     def __str__(self) -> str:
         return "({}, {})".format(self.__line_number, self.__column_number)

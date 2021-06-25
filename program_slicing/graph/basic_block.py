@@ -17,6 +17,12 @@ class BasicBlock:
     def __iter__(self):
         return self.__statements.__iter__()
 
+    def __repr__(self) -> str:
+        return "BasicBlock{}".format(self)
+
+    def __str__(self) -> str:
+        return str(self.__statements)
+
     @property
     def statements(self) -> List[Statement]:
         return self.__statements

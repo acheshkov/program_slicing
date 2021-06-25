@@ -78,14 +78,37 @@ class ProgramSliceTestCase(TestCase):
         self.assertEqual(
             "int a = 0;\n"
             "int b = 10;\n"
-            "a = b;"
-            ,
+            "a = b;",
             program_slice.code)
         program_slice = ProgramSliceTestCase.__get_program_slice_1()
         self.assertEqual(
             "String s = \"line1\" +\n"
             "\"line2\" +\n"
             "    \"line3\" +\n"
-            "\"very very very long line4\";"
-            ,
+            "\"very very very long line4\";",
             program_slice.code)
+
+    def test_repr(self):
+        program_slice = ProgramSliceTestCase.__get_program_slice_0()
+        self.assertEqual(
+            "int a = 0;\n"
+            "int b = 10;\n"
+            "a = b;",
+            str(program_slice))
+        self.assertEqual(
+            "ProgramSlice("
+            "ranges=["
+            "(Point(3, 16), Point(3, 26)), "
+            "(Point(4, 16), Point(4, 27)), "
+            "(Point(5, 16), Point(5, 22))], "
+            "source_lines=['', "
+            "'        class A {', "
+            "'            void main() {', "
+            "'                int a = 0;', "
+            "'                int b = 10;', "
+            "'                a = b;', "
+            "'                b += a;', "
+            "'            }', "
+            "'        }', "
+            "'        '])",
+            repr(program_slice))
