@@ -162,17 +162,7 @@ def __obtain_backward_slice_recursive(
         return
     result.add(root)
     for statement in basic_block:
-        statement_is_necessary_goto = False
-        if statement.statement_type == StatementType.GOTO:
-            for controller in manager.get_control_dependence_graph().predecessors(statement):
-                if manager.get_basic_block(controller) in region:
-                    statement_is_necessary_goto = True
-                    break
-        if statement_is_necessary_goto or \
-                statement.start_point <= root.start_point and statement.end_point >= root.end_point and (
-                statement.statement_type == StatementType.UNKNOWN or
-                statement.statement_type == StatementType.GOTO or
-                statement.statement_type == StatementType.SCOPE):
+        if __is_necessary_goto(statement, manager, region) or __is_linear_container(statement, root):
             result.add(statement)
             if statement in manager.get_data_dependence_graph():
                 for predecessor in manager.get_data_dependence_graph().predecessors(statement):
@@ -203,6 +193,24 @@ def __is_slicing_criterion(assignment_statement: Statement, variable_statement: 
          assignment_statement.statement_type == StatementType.ASSIGNMENT) and \
         variable_statement.statement_type == StatementType.VARIABLE and \
         variable_statement.name == assignment_statement.name
+
+
+def __is_necessary_goto(statement: Statement, manager: ProgramGraphsManager, region: Set[BasicBlock]) -> bool:
+    statement_is_necessary_goto = False
+    if statement.statement_type == StatementType.GOTO:
+        for controller in manager.get_control_dependence_graph().predecessors(statement):
+            if manager.get_basic_block(controller) in region:
+                statement_is_necessary_goto = True
+                break
+    return statement_is_necessary_goto
+
+
+def __is_linear_container(container: Statement, statement: Statement) -> bool:
+    return \
+        container.start_point <= statement.start_point and container.end_point >= statement.end_point and \
+        (container.statement_type == StatementType.UNKNOWN or
+         container.statement_type == StatementType.GOTO or
+         container.statement_type == StatementType.SCOPE)
 
 
 def __get_applicable_formats() -> List[str]:
