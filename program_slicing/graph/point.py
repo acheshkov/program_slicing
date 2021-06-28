@@ -7,7 +7,7 @@ __date__ = '2021/06/24'
 
 class Point:
 
-    def __init__(self, line_number: int, column_number: int):
+    def __init__(self, line_number: int, column_number: int) -> None:
         self.__line_number: int = line_number
         self.__column_number: int = column_number
 

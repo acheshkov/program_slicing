@@ -20,7 +20,7 @@ from program_slicing.graph import convert
 
 class ProgramGraphsManager:
 
-    def __init__(self, source_code: str = None, lang: str = None):
+    def __init__(self, source_code: str = None, lang: str = None) -> None:
         self.__cdg: ControlDependenceGraph = ControlDependenceGraph()
         self.__cfg: ControlFlowGraph = ControlFlowGraph()
         self.__ddg: DataDependenceGraph = DataDependenceGraph()
@@ -32,25 +32,25 @@ class ProgramGraphsManager:
             self.init_by_source_code(source_code=source_code, lang=lang)
 
     @classmethod
-    def from_control_dependence_graph(cls, graph: ControlDependenceGraph):
+    def from_control_dependence_graph(cls, graph: ControlDependenceGraph) -> 'ProgramGraphsManager':
         result = cls()
         result.init_by_control_dependence_graph(graph)
         return result
 
     @classmethod
-    def from_control_flow_graph(cls, graph: ControlFlowGraph):
+    def from_control_flow_graph(cls, graph: ControlFlowGraph) -> 'ProgramGraphsManager':
         result = cls()
         result.init_by_control_flow_graph(graph)
         return result
 
     @classmethod
-    def from_data_dependence_graph(cls, graph: DataDependenceGraph):
+    def from_data_dependence_graph(cls, graph: DataDependenceGraph) -> 'ProgramGraphsManager':
         result = cls()
         result.init_by_data_dependence_graph(graph)
         return result
 
     @classmethod
-    def from_program_dependence_graph(cls, graph: ProgramDependenceGraph):
+    def from_program_dependence_graph(cls, graph: ProgramDependenceGraph) -> 'ProgramGraphsManager':
         result = cls()
         result.init_by_program_dependence_graph(graph)
         return result

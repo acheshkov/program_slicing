@@ -23,7 +23,7 @@ StatementColumnNumber = int
 
 class ProgramSlice:
 
-    def __init__(self, source_lines: List[str]):
+    def __init__(self, source_lines: List[str]) -> None:
         self.__source_lines: List[str] = source_lines
         self.__minimum_column: Optional[StatementLineNumber] = None
         self.__start_point: Optional[Point] = None
@@ -35,10 +35,10 @@ class ProgramSlice:
         self.__lines = None
         self.__ranges = None
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.code
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return "ProgramSlice(ranges={ranges}, source_lines={source_lines})".format(
             ranges=self.__ranges,
             source_lines=self.__source_lines)

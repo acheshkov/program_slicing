@@ -16,7 +16,7 @@ determine_unique_blocks = block_slicing.__determine_unique_blocks
 
 class BlockSlicingTestCase(TestCase):
 
-    def test_identify_unique_block_with_if(self):
+    def test_identify_unique_block_with_if(self) -> None:
         if_statement = '''
         if (workspace == null) {
             return Collections.emptySet();
@@ -25,14 +25,14 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(if_statement, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_block_with_for_each(self):
+    def test_identify_unique_block_with_for_each(self) -> None:
         for_each_block = '''
         for (LaunchConfiguration config: workspace.getLaunchConfigurations()) { int i = 0;}
         '''
         blocks = determine_unique_blocks(for_each_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_block_with_while(self):
+    def test_identify_unique_block_with_while(self) -> None:
         while_block = '''
         while (null != (line = input.readLine()) && maxLines > 0) {
                 maxLines--;
@@ -40,7 +40,7 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(while_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_block_with_sync(self):
+    def test_identify_unique_block_with_sync(self) -> None:
         sync_block = '''
         synchronized (getLock(cache)) {
            url = cache.toURI().toURL();
@@ -48,7 +48,7 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(sync_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_block_with_for(self):
+    def test_identify_unique_block_with_for(self) -> None:
         for_cycle_block = '''
         for (int i = 0; i < 10; ++i) {
             foo();
@@ -56,7 +56,7 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(for_cycle_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_block_without_brackets(self):
+    def test_identify_unique_block_without_brackets(self) -> None:
         block_without_brackets = '''
         for (int i = 0; i < 10; ++i)
             foo();
@@ -64,7 +64,7 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(block_without_brackets, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_blocks_with_try(self):
+    def test_identify_unique_blocks_with_try(self) -> None:
         block_without_try = '''
             try {
                 tracker.waitForAll();
@@ -78,7 +78,7 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(block_without_try, LANG_JAVA)
         self.assertEqual(4, len(blocks))
 
-    def test_identify_unique_blocks_with_anonymous_class(self):
+    def test_identify_unique_blocks_with_anonymous_class(self) -> None:
         block_without_try = '''
         HelloWorld englishGreeting = new EnglishGreeting();
 
@@ -95,14 +95,14 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(block_without_try, LANG_JAVA)
         self.assertEqual(3, len(blocks))
 
-    def test_identify_unique_blocks_with_lambda(self):
+    def test_identify_unique_blocks_with_lambda(self) -> None:
         block_without_lambda = '''
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
         blocks = determine_unique_blocks(block_without_lambda, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_block_with_break(self):
+    def test_identify_unique_block_with_break(self) -> None:
         while_block = '''
         for (String s: strings) {
              a();
@@ -125,7 +125,7 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(while_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
-    def test_identify_unique_block_with_continue(self):
+    def test_identify_unique_block_with_continue(self) -> None:
         while_block = '''
         for (String s: strings) {
              a();
@@ -136,7 +136,7 @@ class BlockSlicingTestCase(TestCase):
         blocks = determine_unique_blocks(while_block, LANG_JAVA)
         self.assertEqual(1, len(blocks))
 
-    def test_opportunities_ranges(self):
+    def test_opportunities_ranges(self) -> None:
         code = '''
         int t = 12;
         fImage= loadImage("logo.gif");
@@ -209,7 +209,7 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = get_block_slices(code, LANG_JAVA)
         self.assertEqual(expected_opportunities, found_opportunities)
 
-    def test_else_blocks(self):
+    def test_else_blocks(self) -> None:
         code = '''
         if (problems != null) {
             int max = problems.length;

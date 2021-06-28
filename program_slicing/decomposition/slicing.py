@@ -154,7 +154,7 @@ def __obtain_backward_slice_recursive(
         manager: ProgramGraphsManager,
         root: Statement,
         region: Set[BasicBlock],
-        result: Set[Statement]):
+        result: Set[Statement]) -> None:
     if root in result:
         return
     basic_block = manager.get_basic_block(root)

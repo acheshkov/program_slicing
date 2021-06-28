@@ -49,7 +49,7 @@ class CheckSliceTestCase(TestCase):
             slicer.add_statement(statement)
         return slicer
 
-    def test_statements(self):
+    def test_statements(self) -> None:
         self.assertTrue(
             check_slice(
                 CheckSliceTestCase.__get_slice_0(),

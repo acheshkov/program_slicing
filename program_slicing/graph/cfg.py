@@ -13,7 +13,7 @@ from program_slicing.graph.basic_block import BasicBlock
 
 class ControlFlowGraph(networkx.DiGraph):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__entry_points: Set[BasicBlock] = set()
         self.__forward_dominance: Dict[BasicBlock, List[BasicBlock]] = {}

@@ -13,7 +13,7 @@ from program_slicing.graph.statement import Statement
 
 class DataDependenceGraph(networkx.DiGraph):
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__()
         self.__entry_points: Set[Statement] = set()
 
