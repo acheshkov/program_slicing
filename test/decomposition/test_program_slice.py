@@ -14,7 +14,7 @@ from program_slicing.graph.point import Point
 class ProgramSliceTestCase(TestCase):
 
     @staticmethod
-    def __get_source_code_0():
+    def __get_source_code_0() -> str:
         return """
         class A {
             void main() {
@@ -27,7 +27,7 @@ class ProgramSliceTestCase(TestCase):
         """
 
     @staticmethod
-    def __get_program_slice_0():
+    def __get_program_slice_0() -> ProgramSlice:
         program_slice = ProgramSlice(ProgramSliceTestCase.__get_source_code_0().split("\n"))
         function_body = Statement(StatementType.SCOPE, Point(2, 24), Point(7, 13))
         variable_a = Statement(StatementType.VARIABLE, Point(3, 16), Point(3, 26))
@@ -39,7 +39,7 @@ class ProgramSliceTestCase(TestCase):
         return program_slice
 
     @staticmethod
-    def __get_source_code_1():
+    def __get_source_code_1() -> str:
         return """
         class A {
             void main() {
@@ -52,7 +52,7 @@ class ProgramSliceTestCase(TestCase):
         """
 
     @staticmethod
-    def __get_program_slice_1():
+    def __get_program_slice_1() -> ProgramSlice:
         program_slice = ProgramSlice(ProgramSliceTestCase.__get_source_code_1().split("\n"))
         function_body = Statement(StatementType.SCOPE, Point(2, 24), Point(7, 13))
         variable_s = Statement(StatementType.UNKNOWN, Point(3, 16), Point(6, 28))
@@ -60,7 +60,7 @@ class ProgramSliceTestCase(TestCase):
         program_slice.add_statement(variable_s)
         return program_slice
 
-    def test_get_ranges(self):
+    def test_get_ranges(self) -> None:
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
         self.assertEqual([
             (Point(3, 16), Point(3, 26)),
@@ -73,7 +73,7 @@ class ProgramSliceTestCase(TestCase):
             (Point(5, 16), Point(5, 29)),
             (Point(6, 0), Point(6, 28))], program_slice.ranges)
 
-    def test_get_slice(self):
+    def test_get_slice(self) -> None:
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
         self.assertEqual(
             "int a = 0;\n"
@@ -88,7 +88,7 @@ class ProgramSliceTestCase(TestCase):
             "\"very very very long line4\";",
             program_slice.code)
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         program_slice = ProgramSliceTestCase.__get_program_slice_0()
         self.assertEqual(
             "int a = 0;\n"

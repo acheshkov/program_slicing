@@ -11,12 +11,12 @@ from program_slicing.graph.point import Point
 
 class PointCase(TestCase):
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         a = Point(10, 20)
         self.assertEqual("(10, 20)", str(a))
         self.assertEqual("Point(10, 20)", repr(a))
 
-    def test_operators(self):
+    def test_operators(self) -> None:
         a = Point(10, 20)
         b = Point(20, 10)
         c = Point(10, 30)

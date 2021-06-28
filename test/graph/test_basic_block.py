@@ -13,7 +13,7 @@ from program_slicing.graph.point import Point
 
 class BasicBlockTestCase(TestCase):
 
-    def test_constructor(self):
+    def test_constructor(self) -> None:
         a = BasicBlock()
         self.assertEqual([], a.statements)
         statement_a = Statement(StatementType.UNKNOWN, Point(0, 0), Point(0, 1))
@@ -21,7 +21,7 @@ class BasicBlockTestCase(TestCase):
         a = BasicBlock(statements=[statement_a, statement_b])
         self.assertEqual([statement_a, statement_b], a.statements)
 
-    def test_repr(self):
+    def test_repr(self) -> None:
         statement_a = Statement(StatementType.UNKNOWN, Point(0, 0), Point(0, 1))
         statement_b = Statement(StatementType.UNKNOWN, Point(1, 1), Point(1, 2))
         basic_block = BasicBlock(statements=[statement_a, statement_b])
@@ -56,13 +56,13 @@ class BasicBlockTestCase(TestCase):
             "start_point=(1, 1), "
             "end_point=(1, 2))]", repr(basic_block))
 
-    def test_is_empty(self):
+    def test_is_empty(self) -> None:
         b = BasicBlock()
         self.assertTrue(b.is_empty())
         b = BasicBlock(statements=[Statement(StatementType.UNKNOWN, Point(0, 0), Point(0, 1))])
         self.assertFalse(b.is_empty())
 
-    def test_append(self):
+    def test_append(self) -> None:
         a = BasicBlock()
         self.assertEqual([], a.statements)
         statement_a = Statement(StatementType.UNKNOWN, Point(0, 0), Point(0, 1))
@@ -72,7 +72,7 @@ class BasicBlockTestCase(TestCase):
         a.append(statement_b)
         self.assertEqual([statement_a, statement_b], a.statements)
 
-    def test_get_root(self):
+    def test_get_root(self) -> None:
         a = BasicBlock()
         self.assertIsNone(a.root)
         statement_a = Statement(StatementType.UNKNOWN, Point(0, 0), Point(0, 1))

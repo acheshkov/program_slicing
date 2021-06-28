@@ -11,7 +11,7 @@ from program_slicing.graph.parse.pdg_java import parse
 
 class PDGJavaTestCase(TestCase):
 
-    def test_parse(self):
+    def test_parse(self) -> None:
         source_code = """
         class A {
             public static int main() {

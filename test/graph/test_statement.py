@@ -12,7 +12,7 @@ from program_slicing.graph.point import Point
 
 class StatementTestCase(TestCase):
 
-    def test_repr_full(self):
+    def test_repr_full(self) -> None:
         statement = Statement(
             StatementType.ASSIGNMENT,
             Point(10, 20),
@@ -32,7 +32,7 @@ class StatementTestCase(TestCase):
             "start_point=(10, 20), "
             "end_point=(10, 31))", repr(statement))
 
-    def test_repr_short(self):
+    def test_repr_short(self) -> None:
         statement = Statement(
             StatementType.GOTO,
             Point(10, 20),

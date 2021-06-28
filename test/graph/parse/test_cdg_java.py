@@ -18,7 +18,7 @@ class CDGJavaTestCase(TestCase):
             statement_type = statement_type_map.get(i, StatementType.UNKNOWN)
             self.assertEqual(statement_type, child.statement_type)
 
-    def test_while(self):
+    def test_while(self) -> None:
         source_code = """
         class A {
             int main() {
@@ -47,7 +47,7 @@ class CDGJavaTestCase(TestCase):
             0: StatementType.SCOPE
         })
 
-    def test_for_each(self):
+    def test_for_each(self) -> None:
         source_code = """
         class A {
             int main(String word) {
@@ -77,7 +77,7 @@ class CDGJavaTestCase(TestCase):
             0: StatementType.SCOPE
         })
 
-    def test_for_each_modifiers(self):
+    def test_for_each_modifiers(self) -> None:
         source_code = """
         class A {
             int main(String word) {
@@ -107,7 +107,7 @@ class CDGJavaTestCase(TestCase):
             0: StatementType.SCOPE
         })
 
-    def test_try_catch(self):
+    def test_try_catch(self) -> None:
         source_code = """
         class A {
             int main(String args) {
@@ -154,7 +154,7 @@ class CDGJavaTestCase(TestCase):
             2: StatementType.CALL
         })
 
-    def test_resourced_try_multi_catch(self):
+    def test_resourced_try_multi_catch(self) -> None:
         source_code = """
         class A {
             int main(String args) {
@@ -205,7 +205,7 @@ class CDGJavaTestCase(TestCase):
             0: StatementType.SCOPE
         })
 
-    def test_update(self):
+    def test_update(self) -> None:
         source_code = """
         class A {
             int main() {
@@ -240,7 +240,7 @@ class CDGJavaTestCase(TestCase):
             5: StatementType.ASSIGNMENT
         })
 
-    def test_multiple_returns(self):
+    def test_multiple_returns(self) -> None:
         source_code = """
         class A {
             int main() {
@@ -278,7 +278,7 @@ class CDGJavaTestCase(TestCase):
             2: StatementType.GOTO
         })
 
-    def test_parse(self):
+    def test_parse(self) -> None:
         source_code = """
         class A {
             public static int main() {
@@ -341,7 +341,7 @@ class CDGJavaTestCase(TestCase):
             11: StatementType.CALL
         })
 
-    def test_parse_without_class(self):
+    def test_parse_without_class(self) -> None:
         source_code = """
         public static int main(int arg) {
             int n = 10 + arg;
@@ -364,7 +364,7 @@ class CDGJavaTestCase(TestCase):
             9: StatementType.EXIT
         })
 
-    def test_parse_without_function(self):
+    def test_parse_without_function(self) -> None:
         source_code = """
         int n = 10 + arg;
         return n;
@@ -384,7 +384,7 @@ class CDGJavaTestCase(TestCase):
             8: StatementType.EXIT
         })
 
-    def test_parse_with_inner_functions(self):
+    def test_parse_with_inner_functions(self) -> None:
         source_code = """
         class A {
             int main() {
@@ -422,7 +422,7 @@ class CDGJavaTestCase(TestCase):
             else:
                 self.assertFalse(True)
 
-    def test_parse_constructor(self):
+    def test_parse_constructor(self) -> None:
         source_code = """
         class MyClass {
             int a;

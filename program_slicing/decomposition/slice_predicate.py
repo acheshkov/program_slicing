@@ -26,7 +26,7 @@ class SlicePredicate:
         ]
         self.__program_slice = None
 
-    def __call__(self, program_slice: ProgramSlice):
+    def __call__(self, program_slice: ProgramSlice) -> bool:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice

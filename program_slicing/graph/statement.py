@@ -35,7 +35,7 @@ class Statement:
             end_point: Point,
             affected_by: Set[VariableName] = None,
             name: Optional[VariableName] = None,
-            ast_node_type: str = None):
+            ast_node_type: str = None) -> None:
         self.__statement_type: StatementType = statement_type
         self.__start_point: Point = start_point
         self.__end_point: Point = end_point
