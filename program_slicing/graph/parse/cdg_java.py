@@ -524,6 +524,8 @@ statement_type_and_handler_map = {
     "break_statement":
         (StatementType.GOTO, __handle_break),
     "return_statement":
+        (StatementType.GOTO, __handle_return),
+    "throw_statement":
         (StatementType.GOTO, __handle_return)
 }
 

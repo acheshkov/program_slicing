@@ -125,7 +125,7 @@ class SlicingTestCase(TestCase):
                 continue;
             }
             else if (a > 10)
-                break;
+                throw new Exception();
             a = 0;
             break;
         }
@@ -143,6 +143,8 @@ class SlicingTestCase(TestCase):
                 "        a++;\n"
                 "        continue;\n"
                 "    }\n"
+                "    else if (a > 10)\n"
+                "        throw new Exception();\n"
                 "    a = 0;\n"
                 "    break;\n"
                 "}",

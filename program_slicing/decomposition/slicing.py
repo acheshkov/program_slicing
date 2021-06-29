@@ -161,14 +161,15 @@ def __obtain_backward_slice_recursive(
     if basic_block not in region:
         return
     result.add(root)
-    for statement in basic_block:
-        if __is_necessary_goto(statement, manager, region) or __is_linear_container(statement, root):
-            result.add(statement)
-            if statement in manager.get_data_dependence_graph():
-                for predecessor in manager.get_data_dependence_graph().predecessors(statement):
-                    __obtain_backward_slice_recursive(manager, predecessor, region, result)
-        elif statement.start_point >= root.start_point and statement.end_point <= root.end_point:
-            result.add(statement)
+    for statement in __obtain_necessary_goto(manager, root, region):
+        __obtain_backward_slice_recursive(manager, statement, region, result)
+    for statement in __obtain_linear_containers(root, basic_block):
+        result.add(statement)
+        if statement.statement_type == StatementType.UNKNOWN and statement in manager.get_data_dependence_graph():
+            for predecessor in manager.get_data_dependence_graph().predecessors(statement):
+                __obtain_backward_slice_recursive(manager, predecessor, region, result)
+    for statement in __obtain_content(root, basic_block):
+        result.add(statement)
     if root in manager.get_program_dependence_graph():
         for statement in manager.get_program_dependence_graph().predecessors(root):
             __obtain_backward_slice_recursive(manager, statement, region, result)
@@ -185,6 +186,27 @@ def __obtain_complete_computation_slices(
             backward_slice.update(__obtain_backward_slice(manager, seed_statement, boundary_block))
         complete_computation_slice[boundary_block] = backward_slice
     return complete_computation_slice
+
+
+def __obtain_necessary_goto(
+        manager: ProgramGraphsManager,
+        root: Statement,
+        region: Set[BasicBlock]) -> Iterator[Statement]:
+    return (
+        statement for statement in networkx.descendants(manager.get_control_dependence_graph(), root)
+        if __is_necessary_goto(statement, manager, region))
+
+
+def __obtain_linear_containers(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
+    return (
+        statement for statement in basic_block
+        if __is_linear_container(statement, root))
+
+
+def __obtain_content(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
+    return (
+        statement for statement in basic_block
+        if statement.start_point >= root.start_point and statement.end_point <= root.end_point)
 
 
 def __is_slicing_criterion(assignment_statement: Statement, variable_statement: Statement) -> bool:
