@@ -4,12 +4,18 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/24'
 
+from typing import Tuple
+
 
 class Point:
 
     def __init__(self, line_number: int, column_number: int) -> None:
         self.__line_number: int = line_number
         self.__column_number: int = column_number
+
+    @classmethod
+    def from_tuple(cls, point: Tuple[int, int]) -> 'Point':
+        return cls(point[0], point[1])
 
     def __repr__(self) -> str:
         return "Point{}".format(self)

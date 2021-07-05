@@ -182,6 +182,7 @@ class ProgramSlice:
         for i, character in enumerate(self.__source_lines[line_number]):
             if character != " " and character != "\t":
                 return i
+        return len(self.__source_lines[line_number])
 
     def __update_minimal_column(
             self,

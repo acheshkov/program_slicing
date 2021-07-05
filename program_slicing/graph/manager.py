@@ -77,7 +77,7 @@ class ProgramGraphsManager:
     def get_dominated_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         if block in self.__dom_blocks:
             return self.__dom_blocks[block]
-        result = set()
+        result = {block}
         root = block.root
         if root is None:
             return result

@@ -93,7 +93,8 @@ class CDGTestCase(TestCase):
             ("i += 1", "i > 6"),
             ("i += 1", "i from i > 6"),
             ("int n = 10", "return n"),
-            ("int n = 10", "n from return n")
+            ("int n = 10", "n from return n"),
+            ("int n = 10", "exit_point")
         ])
         ddg.add_nodes_from(range(36))
         return ddg
@@ -109,6 +110,7 @@ class CDGTestCase(TestCase):
         pdg.add_edge(0, "loop")
         pdg.add_edge(0, "n from return n")
         pdg.add_edge(0, "return n")
+        pdg.add_edge(0, "exit_point")
         pdg.add_edge("loop", "loop body")
         pdg.add_edge("loop", "(i < 4)")
         pdg.add_edge("loop", "i < 4")
@@ -125,7 +127,6 @@ class CDGTestCase(TestCase):
         pdg.add_edges_from([("loop", i) for i in range(8, 11)])
         pdg.add_edges_from([("if (i < 4)", i) for i in range(11, 20)])
         pdg.add_edges_from([("if (i > 6)", i) for i in range(20, 37)])
-        pdg.add_edge(0, 40)
         return pdg
 
     @staticmethod
@@ -181,6 +182,7 @@ class CDGTestCase(TestCase):
     @staticmethod
     def __get_pdg_1():
         pdg = CDGTestCase.__get_ddg_1()
+        pdg.add_edge(0, "exit_point")
         pdg.add_edge(1, "Exception e")
         pdg.add_edge(19, "first catch body")
         pdg.add_edge(19, "e.printStackTrace();")
@@ -193,7 +195,6 @@ class CDGTestCase(TestCase):
         pdg.add_edges_from([(1, i) for i in range(19, 22)])
         pdg.add_edges_from([(19, i) for i in range(22, 25)])
         pdg.add_edges_from([("catch (MyException e)", i) for i in range(25, 26)])
-        pdg.add_edge(0, 30)
         return pdg
 
     @staticmethod
@@ -265,6 +266,7 @@ class CDGTestCase(TestCase):
     def test_convert_cdg_to_ddg_isomorphic(self):
         cdg = self.__get_cdg_0()
         ddg = self.__get_ddg_0()
+        s = convert.cdg.to_ddg(cdg)
         self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
         cdg = self.__get_cdg_1()
         ddg = self.__get_ddg_1()
