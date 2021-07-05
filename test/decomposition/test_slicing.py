@@ -126,6 +126,8 @@ class SlicingTestCase(TestCase):
             }
             else if (a > 10)
                 throw new Exception();
+            else
+                log.info("!");
             a = 0;
             break;
         }

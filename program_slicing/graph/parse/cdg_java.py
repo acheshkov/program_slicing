@@ -22,6 +22,7 @@ def __handle_statement(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     siblings = [statement]
     entry_points = [statement]
@@ -36,6 +37,7 @@ def __handle_statement(
             entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
     return siblings, entry_points
 
@@ -47,6 +49,7 @@ def __handle_variable(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     variable_names.add(tree_sitter_parsers.node_name(source_code_bytes, ast))
     return __handle_statement(
@@ -56,6 +59,7 @@ def __handle_variable(
         cdg,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
 
 
@@ -66,9 +70,11 @@ def __handle_method_declaration(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     cdg.add_entry_point(statement)
     entry_points = [statement]
+    local_exit_statements = []
     children = __parse(
         source_code_bytes,
         ast.child_by_field_name("body"),
@@ -76,8 +82,9 @@ def __handle_method_declaration(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=local_exit_statements,
         variable_names=variable_names)
-    children.append(__add_exit_point(cdg, statement, entry_points))
+    children.append(__add_exit_point(cdg, statement, entry_points + local_exit_statements))
     for child in children:
         cdg.add_edge(statement, child)
     return [], []
@@ -90,6 +97,7 @@ def __handle_if(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     entry_points = []
     siblings = __parse(
@@ -99,6 +107,7 @@ def __handle_if(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
@@ -110,6 +119,7 @@ def __handle_if(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     for child in consequence:
         cdg.add_edge(statement, child)
@@ -134,6 +144,7 @@ def __handle_if(
             alternative_entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
         for child in alternative:
             cdg.add_edge(statement, child)
@@ -147,6 +158,7 @@ def __handle_try(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     siblings = []
     entry_points = []
@@ -159,6 +171,7 @@ def __handle_try(
             entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
     body_ast = ast.child_by_field_name("body")
     siblings += __parse(
@@ -168,6 +181,7 @@ def __handle_try(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
@@ -182,6 +196,7 @@ def __handle_try(
             entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
         for child in clause:
             cdg.add_edge(statement, child)
@@ -199,6 +214,7 @@ def __handle_try(
             exit_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
     return siblings, exit_points
 
@@ -210,6 +226,7 @@ def __handle_catch(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     entry_points = []
     siblings = __parse(
@@ -219,6 +236,7 @@ def __handle_catch(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
@@ -230,6 +248,7 @@ def __handle_catch(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     for child in body:
         cdg.add_edge(statement, child)
@@ -243,6 +262,7 @@ def __handle_for(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     siblings = []
     entry_points = []
@@ -255,6 +275,7 @@ def __handle_for(
             entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
     condition = __parse(
         source_code_bytes,
@@ -263,6 +284,7 @@ def __handle_for(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings += condition
     siblings.append(statement)
@@ -277,6 +299,7 @@ def __handle_for(
         entry_points,
         break_statements=local_break_statements,
         continue_statements=local_continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     update_ast = ast.child_by_field_name("update")
     if update_ast is not None:
@@ -287,6 +310,7 @@ def __handle_for(
             entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
         body += update
         __route_control_flow(local_continue_statements, update[0], cdg)
@@ -306,6 +330,7 @@ def __handle_for_each(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     modifiers_ast = ast.children[0].next_named_sibling
     modifiers_ast = modifiers_ast if modifiers_ast.type == "modifiers" else None
@@ -335,6 +360,7 @@ def __handle_for_each(
             entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
     siblings += __parse(
         source_code_bytes,
@@ -343,6 +369,7 @@ def __handle_for_each(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings += __parse(
         source_code_bytes,
@@ -351,6 +378,7 @@ def __handle_for_each(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings += __parse(
         source_code_bytes,
@@ -359,6 +387,7 @@ def __handle_for_each(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
@@ -372,6 +401,7 @@ def __handle_for_each(
         entry_points,
         break_statements=local_break_statements,
         continue_statements=local_continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     entry_points += local_continue_statements
     __route_control_flow(entry_points, siblings[0], cdg)
@@ -388,6 +418,7 @@ def __handle_assignment(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     entry_points = []
     siblings = __parse(
@@ -397,6 +428,7 @@ def __handle_assignment(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings += __parse(
         source_code_bytes,
@@ -405,6 +437,7 @@ def __handle_assignment(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
@@ -419,6 +452,7 @@ def __handle_update(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     entry_points = []
     expression_ast = ast.children[0]
@@ -430,6 +464,7 @@ def __handle_update(
         entry_points,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
@@ -444,6 +479,7 @@ def __handle_continue(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     continue_statements.append(statement)
     return [statement], []
@@ -456,6 +492,7 @@ def __handle_break(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names=Set[str]) -> Tuple[List[Statement], List[Statement]]:
     break_statements.append(statement)
     return [statement], []
@@ -468,6 +505,7 @@ def __handle_return(
         cdg: ControlDependenceGraph,
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     if len(ast.children) > 2:
         entry_points = []
@@ -478,11 +516,13 @@ def __handle_return(
             entry_points,
             break_statements=break_statements,
             continue_statements=continue_statements,
+            exit_statements=exit_statements,
             variable_names=variable_names)
         siblings.append(statement)
         __route_control_flow(entry_points, statement, cdg)
     else:
         siblings = [statement]
+    exit_statements.append(statement)
     return siblings, []
 
 
@@ -543,7 +583,7 @@ def parse(source_code: str) -> ControlDependenceGraph:
         return result
     if __parse_undeclared_method(source_code_bytes, ast, result):
         return result
-    __parse(source_code_bytes, ast, result, [], [], [], set())
+    __parse(source_code_bytes, ast, result, [], [], [], [], set())
     return result
 
 
@@ -554,6 +594,7 @@ def __parse(
         entry_points: List[Statement],
         break_statements: List[Statement],
         continue_statements: List[Statement],
+        exit_statements: List[Statement],
         variable_names: Set[str]) -> List[Statement]:
     """
     Parse the tree_sitter ast into a Control Dependence Graph.
@@ -578,6 +619,7 @@ def __parse(
         cdg,
         break_statements=break_statements,
         continue_statements=continue_statements,
+        exit_statements=exit_statements,
         variable_names=variable_names)
     if siblings:
         __route_control_flow(entry_points, siblings[0], cdg)
@@ -609,9 +651,10 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             cdg.add_node(entry_point)
             cdg.add_entry_point(entry_point)
             entry_points = [entry_point]
-            for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], set()):
+            exit_statements = []
+            for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], exit_statements, set()):
                 cdg.add_edge(entry_point, child)
-            exit_point = __add_exit_point(cdg, entry_point, entry_points)
+            exit_point = __add_exit_point(cdg, entry_point, entry_points + exit_statements)
             cdg.add_edge(entry_point, exit_point)
     return result
 
@@ -635,6 +678,7 @@ def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlD
         entry_points = [entry_point]
         break_statements = []
         continue_statements = []
+        exit_statements = []
         variable_names = set()
         for node in ast.children:
             for child in __parse(
@@ -644,9 +688,10 @@ def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlD
                     entry_points,
                     break_statements=break_statements,
                     continue_statements=continue_statements,
+                    exit_statements=exit_statements,
                     variable_names=variable_names):
                 cdg.add_edge(entry_point, child)
-        exit_point = __add_exit_point(cdg, entry_point, entry_points)
+        exit_point = __add_exit_point(cdg, entry_point, entry_points + exit_statements)
         cdg.add_edge(entry_point, exit_point)
         return True
     else:
@@ -658,7 +703,7 @@ def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callab
 
 
 def __parse_position_range(ast: Node) -> Tuple[Point, Point]:
-    return Point(ast.start_point[0], ast.start_point[1]), Point(ast.end_point[0], ast.end_point[1])
+    return Point.from_tuple(ast.start_point), Point.from_tuple(ast.end_point)
 
 
 def __parse_affected_by(source_code_bytes: bytes, ast: Node, variable_names: Set[str]) -> Set[str]:
