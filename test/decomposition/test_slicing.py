@@ -91,7 +91,9 @@ class SlicingTestCase(TestCase):
                 self.assertEqual(
                     "int n = 0;\n"
                     "int a = 10;\n"
-                    "if (n < 10) {}\n"
+                    "int b = 10;\n"
+                    "if (n < 10)\n"
+                    "    b = n;\n"
                     "else\n"
                     "    a = n;",
                     program_slice.code)
@@ -149,6 +151,46 @@ class SlicingTestCase(TestCase):
                 "        throw new Exception();\n"
                 "    a = 0;\n"
                 "    break;\n"
+                "}",
+                program_slice.code)
+
+    def test_get_complete_computation_slices_try(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                char a;
+                try {
+                    a = args[10];
+                }
+                catch (Exception e) {
+                    e.printStackTrace();
+                }
+                catch (MyException e) {
+                }
+                finally {
+                    myFoo("a");
+                }
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA,
+            SlicePredicate(lang_to_check_parsing=LANG_JAVA))
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(1, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            self.assertEqual(
+                "char a;\n"
+                "try {\n"
+                "    a = args[10];\n"
+                "}\n"
+                "catch (Exception e) {\n"
+                "}\n"
+                "catch (MyException e) {\n"
+                "}\n"
+                "finally {\n"
+                "    myFoo(\"a\");\n"
                 "}",
                 program_slice.code)
 

@@ -71,6 +71,8 @@ def __to_ddg(
     for statement in root:
         ddg.add_node(statement)
         for affecting_variable_name in statement.affected_by:
+            if statement.statement_type == StatementType.VARIABLE and affecting_variable_name == statement.name:
+                continue
             if affecting_variable_name in variables_passed:
                 for variable_statement in variables_passed[affecting_variable_name]:
                     ddg.add_edge(variable_statement, statement)

@@ -154,8 +154,9 @@ class CDGTestCase(TestCase):
     def __get_cfg_1():
         cfg = ControlFlowGraph()
         cfg.add_edges_from([
-            ("2_5_try", "6_6_catch"),
-            ("2_5_try", "11_11_finally"),
+            ("2_3_try", "6_6_catch"),
+            ("2_3_try", "3_5_assign"),
+            ("3_5_assign", "11_11_finally"),
             ("6_6_catch", "9_9_catch"),
             ("6_6_catch", "6_8_stack_trace"),
             ("6_8_stack_trace", "11_11_finally"),
@@ -173,7 +174,6 @@ class CDGTestCase(TestCase):
             ("Exception e", "e.printStackTrace();"),
             ("Exception e", "e.printStackTrace()"),
             ("Exception e", "e from e.printStackTrace()"),
-            ("Exception e", "MyException e"),
             ("MyException e", "catch (MyException e)"),
         ])
         ddg.add_nodes_from(range(26))
@@ -181,20 +181,16 @@ class CDGTestCase(TestCase):
 
     @staticmethod
     def __get_pdg_1():
-        pdg = CDGTestCase.__get_ddg_1()
-        pdg.add_edge(0, "exit_point")
-        pdg.add_edge(1, "Exception e")
-        pdg.add_edge(19, "first catch body")
-        pdg.add_edge(19, "e.printStackTrace();")
-        pdg.add_edge(19, "e.printStackTrace()")
-        pdg.add_edge(19, "e from e.printStackTrace()")
-        pdg.add_edge(19, "MyException e")
-        pdg.add_edge(19, "catch (MyException e)")
-        pdg.add_nodes_from(range(25, 29))
-        pdg.add_edges_from([(0, i) for i in range(1, 19)])
-        pdg.add_edges_from([(1, i) for i in range(19, 22)])
-        pdg.add_edges_from([(19, i) for i in range(22, 25)])
-        pdg.add_edges_from([("catch (MyException e)", i) for i in range(25, 26)])
+        pdg = CDGTestCase.__get_cdg_1()
+        for variable_statement in pdg:
+            if variable_statement.statement_type != StatementType.VARIABLE:
+                continue
+            for statement in pdg:
+                if statement.statement_type != StatementType.VARIABLE and \
+                        variable_statement.name in statement.affected_by and \
+                        (variable_statement.start_point.line_number >= 9 and statement.start_point.line_number >= 9 or
+                         variable_statement.start_point.line_number < 9 and statement.start_point.line_number < 9):
+                    pdg.add_edge(variable_statement, statement)
         return pdg
 
     @staticmethod
@@ -266,7 +262,6 @@ class CDGTestCase(TestCase):
     def test_convert_cdg_to_ddg_isomorphic(self):
         cdg = self.__get_cdg_0()
         ddg = self.__get_ddg_0()
-        s = convert.cdg.to_ddg(cdg)
         self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
         cdg = self.__get_cdg_1()
         ddg = self.__get_ddg_1()
