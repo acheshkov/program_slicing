@@ -65,6 +65,7 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
     slice_predicate = SlicePredicate(
         min_amount_of_lines=3,
         max_amount_of_lines=45,
+        forbidden_words={"return "},
         lang_to_check_parsing=lang)
     slices = get_complete_computation_slices(source_code, lang, slice_predicate)
     for function_statement, variable_statement, cc_slice in slices:
@@ -197,24 +198,24 @@ def __obtain_necessary_goto(
     for statement in descendants:
         if __is_necessary_goto(statement, manager, descendants):
             yield statement
-    basic_block = manager.get_basic_block(root)
-    if basic_block is not None:
-        for statement in basic_block:
-            if __is_branch_container(statement, root):
-                yield statement
 
 
 def __obtain_branch_extension(
         manager: ProgramGraphsManager,
         root: Statement,
         region: Set[BasicBlock]) -> Iterator[Statement]:
-    if root.statement_type == StatementType.BRANCH:
+    if root.statement_type == StatementType.BRANCH or root.statement_type == StatementType.LOOP:
         for flow_statement in manager.get_control_dependence_graph().control_flow[root]:
             if root.start_point <= flow_statement.start_point and root.end_point >= flow_statement.end_point and \
                     flow_statement.statement_type != StatementType.GOTO:
                 yield flow_statement
     basic_block = manager.get_basic_block(root)
-    block_root = None if basic_block is None else basic_block.root
+    block_root = None
+    if basic_block is not None:
+        for statement in basic_block:
+            if __is_branch_container(statement, root):
+                yield statement
+        block_root = basic_block.root
     if block_root is not None and block_root.statement_type == StatementType.GOTO:
         cdg = manager.get_control_dependence_graph()
         for predecessor in cdg.predecessors(root):
@@ -244,7 +245,7 @@ def __obtain_extension(
 def __obtain_content(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
     return (
         statement for statement in basic_block
-        if statement.start_point >= root.start_point and statement.end_point <= root.end_point)
+        if __is_linear_container(root, statement))
 
 
 def __is_slicing_criterion(assignment_statement: Statement, variable_statement: Statement) -> bool:
@@ -266,16 +267,17 @@ def __is_necessary_goto(statement: Statement, manager: ProgramGraphsManager, sco
 def __is_linear_container(container: Statement, statement: Statement) -> bool:
     return \
         container.start_point <= statement.start_point and container.end_point >= statement.end_point and \
-        (container.statement_type == StatementType.UNKNOWN or
-         container.statement_type == StatementType.GOTO or
-         container.statement_type == StatementType.SCOPE)
+        container.statement_type != StatementType.BRANCH and \
+        container.statement_type != StatementType.LOOP and \
+        container.statement_type != StatementType.EXIT and \
+        container.statement_type != StatementType.FUNCTION and container != statement
 
 
 def __is_branch_container(container: Statement, statement: Statement) -> bool:
     return \
         container.start_point <= statement.start_point and container.end_point >= statement.end_point and \
         (container.statement_type == StatementType.BRANCH or
-         container.statement_type == StatementType.LOOP)
+         container.statement_type == StatementType.LOOP) and container != statement
 
 
 def __get_applicable_formats() -> List[str]:

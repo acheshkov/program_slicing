@@ -4,6 +4,8 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/03'
 
+from typing import Set
+
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.parse import parse
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
@@ -15,14 +17,17 @@ class SlicePredicate:
             self,
             min_amount_of_lines: int = None,
             max_amount_of_lines: int = None,
-            lang_to_check_parsing: str = None):
+            lang_to_check_parsing: str = None,
+            forbidden_words: Set[str] = None):
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
         self.__lang_to_check_parsing = lang_to_check_parsing
+        self.__forbidden_words = forbidden_words
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
-            self.__check_parsing
+            self.__check_parsing,
+            self.__check_forbidden_words,
         ]
         self.__program_slice = None
 
@@ -71,6 +76,15 @@ class SlicePredicate:
                 # this code may be removed if tree sitter will fix this issue
                 if node_name(code_bytes, node) == "else":
                     return False
+        return True
+
+    def __check_forbidden_words(self) -> bool:
+        if self.__forbidden_words is None:
+            return True
+        code = self.__program_slice.code
+        for forbidden_word in self.__forbidden_words:
+            if forbidden_word in code:
+                return False
         return True
 
 
