@@ -36,7 +36,7 @@ def find_real_block(block, block_lines_ranges):
     for block_id, lines in block_lines_ranges.items():
         start_point = lines[0]
         end_point = lines[1]
-        if (start_point >= cur_block_start_line[0]) and (cur_block_end_line[0] <= end_point):
+        if (cur_block_start_line[0] >= start_point) and (cur_block_end_line[0] <= end_point):
             results_with_diff[block_id] = (start_point, end_point)
 
     # return the closest block
@@ -73,6 +73,21 @@ def find_real_block(block, block_lines_ranges):
     #     print(found_var_decl_in_cfg)
 
 
+def get_privitive_types(var_affected, all_statements):
+    prohibited_types = {
+        'Character', 'Byte', 'Short', 'Integer', 'Long',
+        'Float', 'Double', 'Boolean',
+        'character', 'byte', 'short', 'integer', 'long',
+        'float', 'double', 'boolean', 'String'
+    }
+    filtered_vars_list = []
+    for var_stat in var_affected:
+        statements_by_line = all_statements.get(var_stat.start_point[0])
+        type = [x for x in statements_by_line if x.ast_node_type in ['type_identifier', 'integral_type']][0]
+        if type in prohibited_types:
+            filtered_vars_list.append(var_stat)
+    return filtered_vars_list
+
 
 def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.8) -> \
         List[Tuple[
@@ -87,7 +102,6 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
     """
     # filter_wrong_statements(source_code, lang)
     all_lines = source_code.split('\n')
-    source_code_bytes = bytes(source_code, "utf-8")
     statements_by_block_id, blocks_by_level = __determine_unique_blocks(source_code, lang)
     if not statements_by_block_id:
         return []
@@ -104,24 +118,6 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         block_lines_ranges[block_index] = (min(lines), max(lines))
         block_min_line[min(lines)] = block_index
 
-    # sorted_block_ranges = OrderedDict(sorted(block_lines_ranges.items(), key=lambda x: x[1][0]))
-    # tree_blocks = {}
-    # # add the first block
-    # min_line, max_line = sorted_block_ranges[0]
-    # tree_blocks[0].append({'min_line': min_line, 'max_line': max_line, 'prev': None})
-    # for cur_index, lines_range in sorted_block_ranges.items():
-    #     if cur_index == 0:
-    #         continue
-    #     prev_lines = block_lines_ranges.get(cur_index - 1)
-    #     min_line, max_line = lines_range
-    #
-    #     for block_idx, inner_blocks in tree_blocks.items():
-    #         # if we found
-    #         if (inner_blocks['min_line'] > min_line) and (inner_blocks['max_line'] <= max_line):
-    #
-    #         inner_blocks.add({'min_line': min_line, 'max_line': max_line, 'prev': block_idx - 1})
-
-
     statements_combinations_by_block_id = __generate_all_possible_opportunities(statements_by_block_id)
     ranges = __count_block_bounds(statements_combinations_by_block_id)
 
@@ -131,35 +127,14 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
     reduced_blocks = filter(lambda x: len(all_lines) / (x[1][0] - x[0][0]) > max_percentage, reduced_blocks)
 
     filtered_blocks_list = set()
-    # var_decl = defaultdict(set)
 
     manager_by_source = ProgramGraphsManager(source_code, lang)
-    cfg = manager_by_source.get_control_flow_graph()
-
+    ddg = manager_by_source.get_data_dependence_graph()
     lines_affected_by = defaultdict(set)
-
-    var_decl, all_statements = get_statements_dict(cfg)
-    # for s in ddg:
-    #     if s.ast_node_type == 'variable_declarator':
-    #         blocks = manager_by_source.get_basic_block(s)
-    #         is_inside_for = blocks.get_statements()[-1].ast_class == 'for_statement'
-    #         if not blocks and not is_inside_for:
-    #             # vae not inside for
-
-    # for x in s.affected_by:
-    #
-    #     lines_affected_by[s.start_point[0]].add(x)
+    var_decl, all_statements = get_statements_dict(ddg)
     print(lines_affected_by)
-    # prohibited_types = {
-    #     'Character', 'Byte', 'Short', 'Integer', 'Long',
-    #     'Float', 'Double', 'Boolean',
-    #     'character', 'byte', 'short', 'integer', 'long',
-    #     'float', 'double', 'boolean'
-    # }
 
-    # [x[0][0], x[1][0] for x in reduced_blocks if ]
-
-    all_lines_with_var_decl = set(var_decl.keys())
+    reduced_blocks = sorted(reduced_blocks, key=lambda x: (x[0], x[1]))
     for block in reduced_blocks:
         print(block)
         block_start_line = block[0][0]
@@ -170,75 +145,60 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         # find real block, find rest of blocks find whether we use it
 
 
-        lines_with_var_decl_for_cur_block = lines_for_cur_block.intersection(all_lines_with_var_decl)
-        if len(lines_with_var_decl_for_cur_block) < 2:
-            # more than 2 declarations, we can't return more than 2 objects in Java
+        # lines_with_var_decl_for_cur_block = lines_for_cur_block.intersection(all_lines_with_var_decl)
+        # if len(lines_with_var_decl_for_cur_block) < 2:
+        #     # more than 2 declarations, we can't return more than 2 objects in Java
+        #     filtered_blocks_list.add(block)
+        # else:
+        block_id = find_real_block(block, block_lines_ranges)
+        # extend opportunity to block
+        real_min_line, real_max_line = block_lines_ranges[block_id]
+        rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
+        if not rest_lines:
             filtered_blocks_list.add(block)
+            continue
+
+        var_declarations_in_cur_block = [var_decl.get(line) for line in lines_for_cur_block if var_decl.get(line)]
+        if var_declarations_in_cur_block:
+            var_declarations_in_cur_block = reduce(
+                operator.concat, var_declarations_in_cur_block)
         else:
-            block_id = find_real_block(block, block_lines_ranges)
-            # extend opportunity to block
-            real_min_line, real_max_line = block_lines_ranges[block_id]
-            rest_lines = set(range(block_start_line, real_max_line)).difference(lines_for_cur_block)
-            # continue
-            var_affected = []
-            for bb in cfg:
-                for s in bb.get_statements():
-                    if (s.start_point[0] in rest_lines) and (s.end_point[0] in rest_lines):
-                        var_affected.extend(s.affected_by)
-            # remove variables declared in loops
-            var_affected = set(var_affected)
-            # check if the rest of statements affected by variables
-            var_affected = var_affected.intersection(set().union(*var_decl.values()))
-            if len(var_affected) < 2:
-                filtered_blocks_list.add(block)
+            filtered_blocks_list.add(block)
+            continue
 
-            # statements_for_cur_block = [j for j in ddg if
-            #  (j.start_point[0] in lines_for_cur_block) and
-            #  (j.end_point[0] in lines_for_cur_block)]
+        var_affected = []
+        for var_statement in var_declarations_in_cur_block:
+            nodes_which_use_var = list(ddg.successors(var_statement))
+            lines_which_var_used = [list(range(x.start_point[0], x.end_point[0] + 1)) for x in nodes_which_use_var]
+            if lines_which_var_used:
+                lines_which_var_used = set(reduce(
+                    operator.concat, lines_which_var_used))
+            else:
+                continue
+            found_lines = lines_which_var_used.intersection(rest_lines)
+            if found_lines:
+                var_affected.append(var_statement)
 
-            # stats_depended = [[ddg.successors(x)] for x in statements_for_cur_block]
-            # # TODO find all usage of easy types (int, short)
-            # cur_start_line = 9999999999
-            #
-            # while cur_start_line > block_start_line:
-            #     cur_start_line = block_start_line
-            #
-            # block_index = block_min_line.get(cur_start_line)
-            # real_min_block_line, real_max_block_line = block_lines_ranges.get(block_index)
-            # print('----------------------------------------')
-            #
-            # lines_for_curr_block = range(block_start_line, block_end_line + 1)
-            # lines_with_var_decl_for_block = {x for x in var_decl if x in lines_for_curr_block}
-            # lines_outside_block = set(range(real_min_block_line, real_max_block_line)).difference(lines_for_curr_block)
-            # for line in lines_outside_block:
-            #     vars_affected = lines_affected_by.get(line, [])
-            #     proh_vars = [x for x in vars_affected
-            #                  # if (x.type in prohibited_types)
-            #                  if (x.name in lines_with_var_decl_for_block)]
-            #     if len(proh_vars) < 2:
-            #         # lines_where_var_declared = var_decl.get(proh_vars)
-            #         # real_affected_lines = [x for x in line if line in lines_where_var_declared]
-            #         # if len(real_affected_lines) < 2:
-            #         filtered_blocks_list.add(block)
-            #         # print(f'{all_lines[line]}')
+        primitive_var_affected = get_privitive_types(var_affected, all_statements)
+        if len(primitive_var_affected) < 2:
+            filtered_blocks_list.add(block)
 
     return sorted(filtered_blocks_list, key=lambda x: (x[0][0], x[1][0]))
 
 
-def get_statements_dict(cfg):
+def get_statements_dict(ddg):
     # root = tree_sitter_ast(source_code, lang).root_node
     # for ast, level in __traverse_ast(root):
     #     if ast.type == 'variable_declarator':
     #         if ast.parent.parent.type != 'for_statement':
     #             var_name = node_name(source_code_bytes, ast)
     #             var_decl[ast.start_point[0]].add(var_name)
-    var_decl = {}
+    var_decl = defaultdict(list)
     all_stats = defaultdict(list)
-    for bb in cfg:
-        for stat in bb.get_statements():
-            if stat.ast_node_type == 'variable_declarator':
-                var_decl[stat.start_point[0]] = stat
-            all_stats[stat.start_point[0]].append(stat)
+    for stat in ddg:
+        if stat.ast_node_type == 'variable_declarator':
+            var_decl[stat.start_point[0]].append(stat)
+        all_stats[stat.start_point[0]].append(stat)
     return var_decl, all_stats
 
 def __determine_unique_blocks(source_code: str, lang: str) \

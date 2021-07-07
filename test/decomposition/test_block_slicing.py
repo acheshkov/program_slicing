@@ -299,7 +299,7 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
             code,
             LANG_JAVA,
-            min_range=1,
+            min_range=2,
             max_percentage=1.00)}
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the current scope which is depended on
@@ -307,7 +307,6 @@ class BlockSlicingTestCase(TestCase):
         self.assertTrue((2, 3) not in found_opportunities, True)
         self.assertTrue((2, 4) not in found_opportunities, True)
         self.assertTrue((2, 5) not in found_opportunities, True)
-
 
     def test_filter_with_usage_inside_inner_scope(self):
         code_with_usage_inside_inner_scope = '''
@@ -329,27 +328,45 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
             code_with_usage_inside_inner_scope,
             LANG_JAVA,
-            min_range=5,
-            max_percentage=100)}
+            min_range=2,
+            max_percentage=1.00)}
+        # ignore opportunities where we have 2 var declarations
+        # and there are lines in the inner scope which is depended on
+        # those var declarations
+        self.assertTrue((2, 3) not in found_opportunities, True)
+        self.assertTrue((2, 4) not in found_opportunities, True)
+        self.assertTrue((2, 5) not in found_opportunities, True)
+        self.assertTrue((2, 6) not in found_opportunities, True)
+        self.assertTrue((2, 7) not in found_opportunities, True)
+        self.assertTrue((2, 8) not in found_opportunities, True)
+        self.assertTrue((2, 9) not in found_opportunities, True)
 
     def test_do_not_filter_complex_objects(self):
         complex_objects = '''
             Object h = new Object();
             for(int i = 0; i < 5; ++i) {
                 Finder j = new Finder();
-                Shalala j = new Shalala();
+                Shalala s = new Shalala();
                 int b = 0;
                 find();
                 find();
-                h.append(i, b);
+                h.append(b);
                 j.call();
             }
         '''
         found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
             complex_objects,
             LANG_JAVA,
-            min_range=5,
-            max_percentage=100)}
+            min_range=0,
+            max_percentage=1.00)}
+
+        self.assertTrue((3, 4) in found_opportunities, True)
+        self.assertTrue((3, 5) in found_opportunities, True)
+        self.assertTrue((3, 6) in found_opportunities, True)
+        self.assertTrue((3, 7) in found_opportunities, True)
+        self.assertTrue((4, 5) in found_opportunities, True)
+        self.assertTrue((4, 6) in found_opportunities, True)
+        self.assertTrue((4, 7) in found_opportunities, True)
 
     def test_do_not_filter_with_diff_scope(self):
         diff_scope = '''
@@ -374,8 +391,9 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
             diff_scope,
             LANG_JAVA,
-            min_range=5,
-            max_percentage=100)}
+            min_range=1,
+            max_percentage=1.00)}
+
 
     def test_filter_with_immutable_classes(self):
         diff_scope = '''
