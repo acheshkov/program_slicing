@@ -20,6 +20,7 @@ from program_slicing.graph.parse import tree_sitter_ast
 from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
 from program_slicing.graph.point import Point
+from program_slicing.graph.statement import Statement
 
 
 def filter_blocks_by_range(x, y, min_range: int, max_range: int):
@@ -83,9 +84,107 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
     if not statements_by_block_id:
         return []
 
+    block_indexes_by_range, blocks_by_min_line = get_block_tables(statements_by_block_id)
+    statements_combinations_by_block_id = __generate_all_possible_opportunities(statements_by_block_id)
+    block_ranges = __count_combinations_blocks_bounds(statements_combinations_by_block_id)
+
+    # we subtract since we added class and method to the cur_block of the passed code
+    reduced_blocks = clean_blocks(block_ranges, all_lines, min_range, max_percentage)
+
+    filtered_blocks_list = set()
+
+    manager_by_source = ProgramGraphsManager(source_code, lang)
+    ddg = manager_by_source.get_data_dependence_graph()
+    declarations, all_statements = get_statements_dict(ddg)
+
+    for cur_block in reduced_blocks:
+        all_lines_for_cur_block, rest_lines = get_rest_lines(block_indexes_by_range, cur_block)
+        if not rest_lines:
+            filtered_blocks_list.add(cur_block)
+            continue
+
+        var_declarations_in_cur_block = [
+            declarations.get(line) for line in all_lines_for_cur_block if
+            declarations.get(line)]
+        if var_declarations_in_cur_block:
+            var_declarations_in_cur_block = reduce(
+                operator.concat, var_declarations_in_cur_block)
+        else:
+            filtered_blocks_list.add(cur_block)
+            continue
+
+        if do_filter_block_by_variable_usage(
+                all_statements,
+                ddg,
+                rest_lines,
+                var_declarations_in_cur_block):
+            filtered_blocks_list.add(cur_block)
+
+    return sorted(filtered_blocks_list, key=lambda x: (x[0][0], x[1][0]))
+
+
+def get_rest_lines(block_indexes_by_range, cur_block):
+    block_start_line = cur_block[0][0]
+    block_end_line = cur_block[1][0]
+    cur_block_range = range(block_start_line, block_end_line + 1)
+    lines_for_cur_block = set(cur_block_range)
+    expanded_block_id = find_real_block(cur_block, block_indexes_by_range)
+    # extend opportunity to cur_block
+    real_min_line, real_max_line = block_indexes_by_range[expanded_block_id]
+    rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
+    return lines_for_cur_block, rest_lines
+
+
+def do_filter_block_by_variable_usage(
+        all_statements,
+        ddg,
+        rest_lines,
+        var_declarations_in_cur_block):
+    """
+    Return True if we need to filter this block.
+
+    :param all_statements: dict with key as line number and values as list of Statements
+    :param ddg: Graph
+    :param rest_lines: Lines after current block in the same scope
+    :param var_declarations_in_cur_block: Dict with variables in the current block
+    :return: True if we need to filter that block
+    """
+    var_affected = []
+    for var_statement in var_declarations_in_cur_block:
+        lines_which_var_used = get_lines_where_var_was_used(ddg, var_statement)
+        if lines_which_var_used:
+            lines_which_var_used = set(reduce(
+                operator.concat, lines_which_var_used))
+        else:
+            continue
+        found_lines = lines_which_var_used.intersection(rest_lines)
+        if found_lines:
+            var_affected.append(var_statement)
+    primitive_var_affected = get_privitive_types(var_affected, all_statements)
+    if len(primitive_var_affected) < 2:
+        return True
+
+    return False
+
+
+def clean_blocks(block_ranges, all_lines, min_range_to_filter, max_percentage_to_filter):
+    """
+    Clean unnecessary blocks since we surround code with method and class.
+
+    :param block_ranges:
+    :param min_range_to_filter: minimum number of lines of EMOs which are allowed
+    :param max_percentage_to_filter: max percentage EMO in comparison to all length of snippet which is allowed
+    :return: allowed EMOs
+    """
+    blocks_list = set(itertools.chain(*block_ranges))
+    reduced_blocks = filter(lambda x: x[1][0] - x[0][0] > min_range_to_filter, blocks_list)
+    reduced_blocks = filter(lambda x: len(all_lines) / (x[1][0] - x[0][0]) > max_percentage_to_filter, reduced_blocks)
+    return reduced_blocks
+
+
+def get_block_tables(statements_by_block_id):
     block_lines_ranges = {}
     block_min_line = {}
-
     for block_index, y in statements_by_block_id.items():
         lines = []
         for j in y:
@@ -94,68 +193,33 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         lines = set(lines)
         block_lines_ranges[block_index] = (min(lines), max(lines))
         block_min_line[min(lines)] = block_index
+    return block_lines_ranges, block_min_line
 
-    statements_combinations_by_block_id = __generate_all_possible_opportunities(statements_by_block_id)
-    ranges = __count_block_bounds(statements_combinations_by_block_id)
 
-    # we subtract since we added class and method to the block of the passed code
-    blocks_list = set(itertools.chain(*ranges))
-    reduced_blocks = filter(lambda x: x[1][0] - x[0][0] > min_range, blocks_list)
-    reduced_blocks = filter(lambda x: len(all_lines) / (x[1][0] - x[0][0]) > max_percentage, reduced_blocks)
-
-    filtered_blocks_list = set()
-
-    manager_by_source = ProgramGraphsManager(source_code, lang)
-    ddg = manager_by_source.get_data_dependence_graph()
-    var_decl, all_statements = get_statements_dict(ddg)
-
-    reduced_blocks = sorted(reduced_blocks, key=lambda x: (x[0], x[1]))
-    for block in reduced_blocks:
-        print(block)
-        block_start_line = block[0][0]
-        block_end_line = block[1][0]
-        cur_block_range = range(block_start_line, block_end_line + 1)
-        lines_for_cur_block = set(cur_block_range)
-
-        block_id = find_real_block(block, block_lines_ranges)
-        # extend opportunity to block
-        real_min_line, real_max_line = block_lines_ranges[block_id]
-        rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
-        if not rest_lines:
-            filtered_blocks_list.add(block)
+def get_all_affected_statements(ddg, statement, results):
+    for successor in ddg.successors(statement):
+        if successor in results:
             continue
+        results.add(successor)
+        get_all_affected_statements(ddg, successor, results)
 
-        var_declarations_in_cur_block = [var_decl.get(line) for line in lines_for_cur_block if var_decl.get(line)]
-        if var_declarations_in_cur_block:
-            var_declarations_in_cur_block = reduce(
-                operator.concat, var_declarations_in_cur_block)
-        else:
-            filtered_blocks_list.add(block)
-            continue
 
-        var_affected = []
-        for var_statement in var_declarations_in_cur_block:
-            nodes_which_use_var = list(ddg.successors(var_statement))
-            lines_which_var_used = [
-                list(range(x.start_point.line_number, x.end_point.line_number + 1))
-                for x in nodes_which_use_var]
-            if lines_which_var_used:
-                lines_which_var_used = set(reduce(
-                    operator.concat, lines_which_var_used))
-            else:
-                continue
-            found_lines = lines_which_var_used.intersection(rest_lines)
-            if found_lines:
-                var_affected.append(var_statement)
-
-        primitive_var_affected = get_privitive_types(var_affected, all_statements)
-        if len(primitive_var_affected) < 2:
-            filtered_blocks_list.add(block)
-
-    return sorted(filtered_blocks_list, key=lambda x: (x[0][0], x[1][0]))
+def get_lines_where_var_was_used(ddg, var_statement):
+    results = {}
+    get_all_affected_statements(ddg, var_statement, results)
+    lines_which_var_used = [
+        list(range(x.start_point.line_number, x.end_point.line_number + 1))
+        for x in results]
+    return lines_which_var_used
 
 
 def get_statements_dict(ddg):
+    """
+    Get all variables declarations and its names which can be obtained by line number.
+    Get table of all statements which can be obtained by line number
+    :param ddg:
+    :return:
+    """
     var_decl = defaultdict(list)
     all_stats = defaultdict(list)
     for stat in ddg:
@@ -288,7 +352,8 @@ def __generate_all_possible_opportunities(
     return statements_combinations_by_block_id
 
 
-def __count_block_bounds(statements_combinations_by_block_id) -> List[List[Tuple[Optional[Any], Optional[Any]]]]:
+def __count_combinations_blocks_bounds(statements_combinations_by_block_id) -> List[
+    List[Tuple[Optional[Any], Optional[Any]]]]:
     """
     Count min and max lines for blocks.
     :param statements_combinations_by_block_id: dict with unique blocks.
