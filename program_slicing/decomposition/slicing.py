@@ -233,7 +233,7 @@ def __obtain_linear_extension(root: Statement, basic_block: BasicBlock) -> Itera
 def __obtain_extension(
         manager: ProgramGraphsManager,
         root: Statement,
-        region: Set[BasicBlock]):
+        region: Set[BasicBlock]) -> Iterator[Statement]:
     for statement in __obtain_branch_extension(manager, root, region):
         yield statement
     basic_block = manager.get_basic_block(root)
