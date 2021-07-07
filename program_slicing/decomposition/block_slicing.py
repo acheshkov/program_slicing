@@ -98,13 +98,20 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
     declarations, all_statements = get_statements_dict(ddg)
 
     for cur_block in reduced_blocks:
-        all_lines_for_cur_block, rest_lines = get_rest_lines(block_indexes_by_range, cur_block)
+        block_start_line = cur_block[0][0]
+        block_end_line = cur_block[1][0]
+        cur_block_range = range(block_start_line, block_end_line + 1)
+        lines_for_cur_block = set(cur_block_range)
+        expanded_block_id = find_real_block(cur_block, block_indexes_by_range)
+        # extend opportunity to cur_block
+        real_min_line, real_max_line = block_indexes_by_range[expanded_block_id]
+        rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
         if not rest_lines:
             filtered_blocks_list.add(cur_block)
             continue
 
         var_declarations_in_cur_block = [
-            declarations.get(line) for line in all_lines_for_cur_block if
+            declarations.get(line) for line in lines_for_cur_block if
             declarations.get(line)]
         if var_declarations_in_cur_block:
             var_declarations_in_cur_block = reduce(
@@ -121,18 +128,6 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
             filtered_blocks_list.add(cur_block)
 
     return sorted(filtered_blocks_list, key=lambda x: (x[0][0], x[1][0]))
-
-
-def get_rest_lines(block_indexes_by_range, cur_block):
-    block_start_line = cur_block[0][0]
-    block_end_line = cur_block[1][0]
-    cur_block_range = range(block_start_line, block_end_line + 1)
-    lines_for_cur_block = set(cur_block_range)
-    expanded_block_id = find_real_block(cur_block, block_indexes_by_range)
-    # extend opportunity to cur_block
-    real_min_line, real_max_line = block_indexes_by_range[expanded_block_id]
-    rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
-    return lines_for_cur_block, rest_lines
 
 
 def do_filter_block_by_variable_usage(
@@ -178,7 +173,7 @@ def clean_blocks(block_ranges, all_lines, min_range_to_filter, max_percentage_to
     """
     blocks_list = set(itertools.chain(*block_ranges))
     reduced_blocks = filter(lambda x: x[1][0] - x[0][0] > min_range_to_filter, blocks_list)
-    reduced_blocks = filter(lambda x: len(all_lines) / (x[1][0] - x[0][0]) > max_percentage_to_filter, reduced_blocks)
+    reduced_blocks = filter(lambda x: (x[1][0] - x[0][0]) / len(all_lines) <= max_percentage_to_filter, reduced_blocks)
     return reduced_blocks
 
 
@@ -205,7 +200,7 @@ def get_all_affected_statements(ddg, statement, results):
 
 
 def get_lines_where_var_was_used(ddg, var_statement):
-    results = {}
+    results = set()
     get_all_affected_statements(ddg, var_statement, results)
     lines_which_var_used = [
         list(range(x.start_point.line_number, x.end_point.line_number + 1))
