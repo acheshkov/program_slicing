@@ -173,8 +173,11 @@ def __handle_try(
             continue_statements=continue_statements,
             exit_statements=exit_statements,
             variable_names=variable_names)
+    siblings.append(statement)
+    __route_control_flow(entry_points, statement, cdg)
+    entry_points = [statement]
     body_ast = ast.child_by_field_name("body")
-    siblings += __parse(
+    body = __parse(
         source_code_bytes,
         body_ast,
         cdg,
@@ -183,9 +186,9 @@ def __handle_try(
         continue_statements=continue_statements,
         exit_statements=exit_statements,
         variable_names=variable_names)
-    siblings.append(statement)
-    __route_control_flow(entry_points, statement, cdg)
-    exit_points = [statement]
+    for child in body:
+        cdg.add_edge(statement, child)
+    exit_points = [] + entry_points
     entry_points = [statement]
     clause_ast = body_ast.next_named_sibling
     while clause_ast is not None and clause_ast.type != "finally_clause":
@@ -197,7 +200,8 @@ def __handle_try(
             break_statements=break_statements,
             continue_statements=continue_statements,
             exit_statements=exit_statements,
-            variable_names=variable_names)
+            variable_names=variable_names,
+            end_point=statement.end_point)
         for child in clause:
             cdg.add_edge(statement, child)
         statement = clause[-1]
@@ -215,7 +219,8 @@ def __handle_try(
             break_statements=break_statements,
             continue_statements=continue_statements,
             exit_statements=exit_statements,
-            variable_names=variable_names)
+            variable_names=variable_names,
+            end_point=statement.end_point)
     return siblings, exit_points
 
 
@@ -595,7 +600,9 @@ def __parse(
         break_statements: List[Statement],
         continue_statements: List[Statement],
         exit_statements: List[Statement],
-        variable_names: Set[str]) -> List[Statement]:
+        variable_names: Set[str],
+        start_point: Point = None,
+        end_point: Point = None) -> List[Statement]:
     """
     Parse the tree_sitter ast into a Control Dependence Graph.
     :param ast: tree_sitter Node.
@@ -603,7 +610,11 @@ def __parse(
     :return: Statements that are siblings and should be placed instead of the given ast Node.
     """
     statement_type, statement_handler = __parse_statement_type_and_handler(ast)
-    start_point, end_point = __parse_position_range(ast)
+    __start_point, __end_point = __parse_position_range(ast)
+    if start_point is None:
+        start_point = __start_point
+    if end_point is None:
+        end_point = __end_point
     statement = Statement(
         statement_type,
         start_point=start_point,
