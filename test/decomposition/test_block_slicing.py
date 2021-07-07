@@ -372,12 +372,14 @@ class BlockSlicingTestCase(TestCase):
         diff_scope = '''
             Object h = new Object();
             for(int i = 0; i < 5; ++i) {
-                int b = 0;
-                find();
-                find();
-                find();
-                find();
-                h.append(b);
+                {
+                    int b = 0;
+                    find();
+                    find();
+                    find();
+                    find();
+                    h.append(b);
+                }
                 for(int j= 0; j < 5; ++j) {
                     int a = 0;
                     int b = 0;
@@ -391,11 +393,38 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
             diff_scope,
             LANG_JAVA,
-            min_range=1,
+            min_range=0,
             max_percentage=1.00)}
-
+        self.assertTrue((4, 5) in found_opportunities)
+        self.assertTrue((4, 6) in found_opportunities)
+        self.assertTrue((4, 7) in found_opportunities)
+        self.assertTrue((4, 8) in found_opportunities)
+        self.assertTrue((4, 9) in found_opportunities)
 
     def test_filter_with_immutable_classes(self):
+        diff_scope = '''
+            Object h = new Object();
+            for(int i = 0; i < 5; ++i) {
+                int b = 0;
+                Integer a = b;
+                find();
+                find();
+                find();
+                func(b);
+                System.out.println(a);
+            }
+        '''
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            diff_scope,
+            LANG_JAVA,
+            min_range=1,
+            max_percentage=1.00)}
+        self.assertTrue((3, 4) not in found_opportunities)
+        self.assertTrue((3, 5) not in found_opportunities)
+        self.assertTrue((3, 6) not in found_opportunities)
+        self.assertTrue((3, 7) not in found_opportunities)
+
+    def test_filter_with_assignment_usage(self):
         diff_scope = '''
             Object h = new Object();
             for(int i = 0; i < 5; ++i) {
@@ -411,6 +440,9 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
             diff_scope,
             LANG_JAVA,
-            min_range=5,
-            max_percentage=100)}
-        self.assertTrue(3, True)
+            min_range=1,
+            max_percentage=1.00)}
+        self.assertTrue((3, 4) not in found_opportunities)
+        self.assertTrue((3, 5) not in found_opportunities)
+        self.assertTrue((3, 6) not in found_opportunities)
+        self.assertTrue((3, 7) not in found_opportunities)

@@ -54,14 +54,14 @@ def get_privitive_types(var_affected, all_statements):
     prohibited_types = {
         'Character', 'Byte', 'Short', 'Integer', 'Long',
         'Float', 'Double', 'Boolean',
-        'character', 'byte', 'short', 'integer', 'long',
+        'character', 'byte', 'short', 'int', 'long',
         'float', 'double', 'boolean', 'String'
     }
     filtered_vars_list = []
     for var_stat in var_affected:
-        statements_by_line = all_statements.get(var_stat.start_point[0])
+        statements_by_line = all_statements.get(var_stat.start_point.line_number)
         type = [x for x in statements_by_line if x.ast_node_type in ['type_identifier', 'integral_type']][0]
-        if type in prohibited_types:
+        if type.name in prohibited_types:
             filtered_vars_list.append(var_stat)
     return filtered_vars_list
 
@@ -107,9 +107,7 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
 
     manager_by_source = ProgramGraphsManager(source_code, lang)
     ddg = manager_by_source.get_data_dependence_graph()
-    lines_affected_by = defaultdict(set)
     var_decl, all_statements = get_statements_dict(ddg)
-    print(lines_affected_by)
 
     reduced_blocks = sorted(reduced_blocks, key=lambda x: (x[0], x[1]))
     for block in reduced_blocks:
@@ -118,15 +116,7 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         block_end_line = block[1][0]
         cur_block_range = range(block_start_line, block_end_line + 1)
         lines_for_cur_block = set(cur_block_range)
-        # remove_useless_var_decl(var_decl, all_statements, cur_block_range, cfg)
-        # find real block, find rest of blocks find whether we use it
 
-
-        # lines_with_var_decl_for_cur_block = lines_for_cur_block.intersection(all_lines_with_var_decl)
-        # if len(lines_with_var_decl_for_cur_block) < 2:
-        #     # more than 2 declarations, we can't return more than 2 objects in Java
-        #     filtered_blocks_list.add(block)
-        # else:
         block_id = find_real_block(block, block_lines_ranges)
         # extend opportunity to block
         real_min_line, real_max_line = block_lines_ranges[block_id]
@@ -146,7 +136,9 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         var_affected = []
         for var_statement in var_declarations_in_cur_block:
             nodes_which_use_var = list(ddg.successors(var_statement))
-            lines_which_var_used = [list(range(x.start_point[0], x.end_point[0] + 1)) for x in nodes_which_use_var]
+            lines_which_var_used = [
+                list(range(x.start_point.line_number, x.end_point.line_number + 1))
+                for x in nodes_which_use_var]
             if lines_which_var_used:
                 lines_which_var_used = set(reduce(
                     operator.concat, lines_which_var_used))
@@ -164,19 +156,14 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
 
 
 def get_statements_dict(ddg):
-    # root = tree_sitter_ast(source_code, lang).root_node
-    # for ast, level in __traverse_ast(root):
-    #     if ast.type == 'variable_declarator':
-    #         if ast.parent.parent.type != 'for_statement':
-    #             var_name = node_name(source_code_bytes, ast)
-    #             var_decl[ast.start_point[0]].add(var_name)
     var_decl = defaultdict(list)
     all_stats = defaultdict(list)
     for stat in ddg:
         if stat.ast_node_type == 'variable_declarator':
-            var_decl[stat.start_point[0]].append(stat)
-        all_stats[stat.start_point[0]].append(stat)
+            var_decl[stat.start_point.line_number].append(stat)
+        all_stats[stat.start_point.line_number].append(stat)
     return var_decl, all_stats
+
 
 def __determine_unique_blocks(source_code: str, lang: str) \
         -> Tuple[Dict[int, List[tree_sitter.Node]], Dict[int, int]]:
