@@ -86,6 +86,8 @@ class SlicingTestCase(TestCase):
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(3, len(slices))
         for function_statement, variable_statement, program_slice in slices:
             if variable_statement.name == "a":
                 self.assertEqual(
