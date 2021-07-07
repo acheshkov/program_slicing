@@ -6,7 +6,7 @@ __date__ = '2021/05/20'
 
 import itertools
 import operator
-from collections import defaultdict, OrderedDict
+from collections import defaultdict
 from functools import reduce
 from itertools import combinations_with_replacement
 from typing import Tuple, Iterator, List, Dict, Optional, Any
@@ -16,10 +16,10 @@ from tree_sitter import Node
 
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.manager import ProgramGraphsManager
-from program_slicing.graph.parse import tree_sitter_ast, data_dependence_graph, LANG_JAVA
+from program_slicing.graph.parse import tree_sitter_ast
 from program_slicing.graph.parse import tree_sitter_parsers
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
-from program_slicing.graph.statement import StatementLineNumber, StatementColumnNumber
+from program_slicing.graph.point import Point
 
 
 def filter_blocks_by_range(x, y, min_range: int, max_range: int):
@@ -50,29 +50,6 @@ def find_real_block(block, block_lines_ranges):
     return sorted(blocks_with_diff.items(), key=lambda x: x[1], reverse=True)[0][0]
 
 
-# def remove_useless_var_decl(var_decl, all_statements, cur_block_range, cfg):
-#     cur_var_decl = [var_decl.get(line) for line in cur_block_range if var_decl.get(line)]
-#     cycles_and_try_resources = []
-#     for bb in cfg:
-#         for stat in bb.get_statements():
-#             if stat.ast_node_type in ['for_statement', '']:
-#                 cycles_and_try_resources.append(stat)
-#
-#     needed_var_decl = []
-#     for var_statement in cur_var_decl:
-#         for node in cycles_and_try_resources:
-#             if not cfg.has_successor(node, var_statement):
-#                 needed_var_decl.append(var_statement)
-
-
-
-
-    # for start_point, var_name in var_decl.items():
-    #     elems = v[start_point]
-    #     found_var_decl_in_cfg = [x for x in elems if x.ast_node_type == 'variable_declarator' and name == ''][0]
-    #     print(found_var_decl_in_cfg)
-
-
 def get_privitive_types(var_affected, all_statements):
     prohibited_types = {
         'Character', 'Byte', 'Short', 'Integer', 'Long',
@@ -91,8 +68,8 @@ def get_privitive_types(var_affected, all_statements):
 
 def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.8) -> \
         List[Tuple[
-            Tuple[StatementLineNumber, StatementColumnNumber],
-            Tuple[StatementLineNumber, StatementColumnNumber]
+            Point,
+            Point
         ]]:
     """
     Return opportunities list.
@@ -338,11 +315,9 @@ def __count_block_bounds(statements_combinations_by_block_id) -> List[List[Tuple
             start_point = None
             end_point = None
             for statement in statements_combination:
-                if start_point is None or statement.start_point[0] < start_point[0] or (
-                        statement.start_point[0] == start_point[0] and statement.start_point[1] < start_point[1]):
+                if start_point is None or statement.start_point < start_point:
                     start_point = statement.start_point
-                if end_point is None or statement.end_point[0] > end_point[0] or (
-                        statement.end_point[0] == end_point[0] and statement.end_point[1] > end_point[1]):
+                if end_point is None or statement.end_point > end_point:
                     end_point = statement.end_point
             ranges.append((start_point, end_point))
         ranges_by_block_id[block_id] = ranges

@@ -33,6 +33,6 @@ class DDGJavaTestCase(TestCase):
         }
         """
         ddg = parse(source_code)
-        roots = ddg.get_entry_points()
+        roots = ddg.entry_points
         self.assertIsNotNone(roots)
         self.assertEqual(1, len(roots))

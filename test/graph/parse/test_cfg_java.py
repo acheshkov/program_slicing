@@ -11,7 +11,7 @@ from program_slicing.graph.parse.cfg_java import parse
 
 class CFGJavaTestCase(TestCase):
 
-    def test_parse(self):
+    def test_parse(self) -> None:
         source_code = """
         class A {
             public static int main() {
@@ -33,6 +33,6 @@ class CFGJavaTestCase(TestCase):
         }
         """
         cfg = parse(source_code)
-        roots = cfg.get_entry_points()
+        roots = cfg.entry_points
         self.assertIsNotNone(roots)
         self.assertEqual(1, len(roots))

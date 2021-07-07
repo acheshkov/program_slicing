@@ -143,8 +143,8 @@ ___
 from program_slicing.graph.basic_block import BasicBlock
 ```
 
-- **get_statements** - get the content of the _Basic Block_, i.e a list of  _Statements_.
-- **get_root** - get the first _Statement_ from the _Basic Block_. None if it is empty.
+- **statements** - get the content of the _Basic Block_, i.e a list of  _Statements_.
+- **root** - get the first _Statement_ from the _Basic Block_. None if it is empty.
 - **append** - add a specified _Statement_ to the _Basic Block_.
 - **is_empty** - return True if there are no statements in the _Basic Block_, otherwise - False.
 - **split** - split content by the given index, left first part of the split at the original _Basic Block_

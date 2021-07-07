@@ -9,14 +9,14 @@ from unittest import TestCase
 
 class ReaderTestCase(TestCase):
 
-    def test_read_json(self):
+    def test_read_json(self) -> None:
         pass
 
-    def test_read_file(self):
+    def test_read_file(self) -> None:
         pass
 
-    def test_read_files(self):
+    def test_read_files(self) -> None:
         pass
 
-    def test_browse_file_sub_paths(self):
+    def test_browse_file_sub_paths(self) -> None:
         pass

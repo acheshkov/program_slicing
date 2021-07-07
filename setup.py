@@ -9,7 +9,8 @@ NAME = "vendor"
 
 
 class BuildCommand(build_py):
-    def run(self):
+
+    def run(self) -> None:
         build_py.run(self)
         if not self.dry_run:
             target_dir = os.path.join(self.build_lib, NAME)

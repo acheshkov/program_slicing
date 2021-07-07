@@ -9,11 +9,11 @@ from unittest import TestCase
 
 class CLITestCase(TestCase):
 
-    def test_get_uri_type(self):
+    def test_get_uri_type(self) -> None:
         pass
 
-    def test_get_uri_message(self):
+    def test_get_uri_message(self) -> None:
         pass
 
-    def test_cli(self):
+    def test_cli(self) -> None:
         pass
