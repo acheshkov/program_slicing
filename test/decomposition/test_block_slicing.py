@@ -22,14 +22,14 @@ class BlockSlicingTestCase(TestCase):
             return Collections.emptySet();
         }
         '''
-        blocks = determine_unique_blocks(if_statement, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(if_statement, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_for_each(self):
         for_each_block = '''
         for (LaunchConfiguration config: workspace.getLaunchConfigurations()) { int i = 0;}
         '''
-        blocks = determine_unique_blocks(for_each_block, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(for_each_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_while(self):
@@ -37,7 +37,7 @@ class BlockSlicingTestCase(TestCase):
         while (null != (line = input.readLine()) && maxLines > 0) {
                 maxLines--;
         }'''
-        blocks = determine_unique_blocks(while_block, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(while_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_sync(self):
@@ -45,7 +45,7 @@ class BlockSlicingTestCase(TestCase):
         synchronized (getLock(cache)) {
            url = cache.toURI().toURL();
         }'''
-        blocks = determine_unique_blocks(sync_block, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(sync_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_for(self):
@@ -53,7 +53,7 @@ class BlockSlicingTestCase(TestCase):
         for (int i = 0; i < 10; ++i) {
             foo();
         }'''
-        blocks = determine_unique_blocks(for_cycle_block, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(for_cycle_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_without_brackets(self):
@@ -61,7 +61,7 @@ class BlockSlicingTestCase(TestCase):
         for (int i = 0; i < 10; ++i)
             foo();
         '''
-        blocks = determine_unique_blocks(block_without_brackets, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(block_without_brackets, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_blocks_with_try(self):
@@ -75,7 +75,7 @@ class BlockSlicingTestCase(TestCase):
                 int j = 0;
             }
         '''
-        blocks = determine_unique_blocks(block_without_try, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(block_without_try, LANG_JAVA)
         self.assertEqual(4, len(blocks))
 
     def test_identify_unique_blocks_with_anonymous_class(self):
@@ -92,14 +92,14 @@ class BlockSlicingTestCase(TestCase):
             }
         };
         '''
-        blocks = determine_unique_blocks(block_without_try, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(block_without_try, LANG_JAVA)
         self.assertEqual(3, len(blocks))
 
     def test_identify_unique_blocks_with_lambda(self):
         block_without_lambda = '''
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
-        blocks = determine_unique_blocks(block_without_lambda, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(block_without_lambda, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_break(self):
@@ -122,7 +122,7 @@ class BlockSlicingTestCase(TestCase):
             }
         }
         '''
-        blocks = determine_unique_blocks(while_block, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(while_block, LANG_JAVA)
         self.assertEqual(2, len(blocks))
 
     def test_identify_unique_block_with_continue(self):
@@ -133,11 +133,32 @@ class BlockSlicingTestCase(TestCase):
              if (true) { continue;}
         }
         '''
-        blocks = determine_unique_blocks(while_block, LANG_JAVA)
+        blocks, _ = determine_unique_blocks(while_block, LANG_JAVA)
         self.assertEqual(1, len(blocks))
 
     def test_opportunities_ranges(self):
-        code = '''
+        expected_opportunities = [
+            ((1, 8), (1, 19)), ((1, 8), (2, 38)), ((1, 8), (3, 53)), ((1, 8), (14, 9)), ((1, 8), (28, 9)),
+            ((1, 8), (29, 59)), ((1, 8), (39, 10)), ((1, 8), (41, 51)), ((1, 8), (43, 34)), ((1, 8), (46, 34)),
+            ((1, 8), (47, 17)), ((2, 8), (2, 38)), ((2, 8), (3, 53)), ((2, 8), (14, 9)), ((2, 8), (28, 9)),
+            ((2, 8), (29, 59)), ((2, 8), (39, 10)), ((2, 8), (41, 51)), ((2, 8), (43, 34)), ((2, 8), (46, 34)),
+            ((2, 8), (47, 17)), ((3, 8), (3, 53)), ((3, 8), (14, 9)), ((3, 8), (28, 9)), ((3, 8), (29, 59)),
+            ((3, 8), (39, 10)), ((3, 8), (41, 51)), ((3, 8), (43, 34)), ((3, 8), (46, 34)), ((3, 8), (47, 17)),
+            ((5, 8), (14, 9)), ((5, 8), (28, 9)), ((5, 8), (29, 59)), ((5, 8), (39, 10)), ((5, 8), (41, 51)),
+            ((5, 8), (43, 34)), ((5, 8), (46, 34)), ((5, 8), (47, 17)), ((6, 12), (6, 33)), ((6, 12), (7, 34)),
+            ((7, 12), (7, 34)), ((9, 12), (9, 22)), ((9, 12), (10, 16)), ((10, 12), (10, 16)), ((12, 12), (12, 22)),
+            ((12, 12), (13, 16)), ((13, 12), (13, 16)), ((16, 8), (28, 9)), ((16, 8), (29, 59)), ((16, 8), (39, 10)),
+            ((16, 8), (41, 51)), ((16, 8), (43, 34)), ((16, 8), (46, 34)), ((16, 8), (47, 17)), ((17, 12), (17, 18)),
+            ((17, 12), (26, 13)), ((18, 12), (26, 13)), ((19, 16), (25, 17)), ((20, 20), (20, 42)),
+            ((20, 20), (21, 42)), ((21, 20), (21, 42)), ((24, 20), (24, 42)), ((29, 8), (29, 59)),
+            ((29, 8), (39, 10)), ((29, 8), (41, 51)), ((29, 8), (43, 34)),
+            ((29, 8), (46, 34)), ((29, 8), (47, 17)), ((31, 8), (39, 10)), ((31, 8), (41, 51)), ((31, 8), (43, 34)),
+            ((31, 8), (46, 34)), ((31, 8), (47, 17)), ((33, 16), (33, 46)), ((36, 16), (36, 31)), ((36, 16), (37, 52)),
+            ((37, 16), (37, 52)), ((41, 8), (41, 51)), ((41, 8), (43, 34)), ((41, 8), (46, 34)), ((41, 8), (47, 17)),
+            ((42, 8), (43, 34)), ((42, 8), (46, 34)), ((42, 8), (47, 17)), ((43, 12), (43, 33)), ((45, 8), (46, 34)),
+            ((45, 8), (47, 17)), ((46, 12), (46, 33)), ((47, 8), (47, 17))
+        ]
+        self.t_ = '''
         int t = 12;
         fImage= loadImage("logo.gif");
         MediaTracker tracker= new MediaTracker(this);
@@ -185,28 +206,7 @@ class BlockSlicingTestCase(TestCase):
         while(b < 10)
             System.out.println(s);
         return t;'''
-
-        expected_opportunities = [
-            ((1, 8), (1, 19)), ((1, 8), (2, 38)), ((1, 8), (3, 53)), ((1, 8), (14, 9)), ((1, 8), (28, 9)),
-            ((1, 8), (29, 59)), ((1, 8), (39, 10)), ((1, 8), (41, 51)), ((1, 8), (43, 34)), ((1, 8), (46, 34)),
-            ((1, 8), (47, 17)), ((2, 8), (2, 38)), ((2, 8), (3, 53)), ((2, 8), (14, 9)), ((2, 8), (28, 9)),
-            ((2, 8), (29, 59)), ((2, 8), (39, 10)), ((2, 8), (41, 51)), ((2, 8), (43, 34)), ((2, 8), (46, 34)),
-            ((2, 8), (47, 17)), ((3, 8), (3, 53)), ((3, 8), (14, 9)), ((3, 8), (28, 9)), ((3, 8), (29, 59)),
-            ((3, 8), (39, 10)), ((3, 8), (41, 51)), ((3, 8), (43, 34)), ((3, 8), (46, 34)), ((3, 8), (47, 17)),
-            ((5, 8), (14, 9)), ((5, 8), (28, 9)), ((5, 8), (29, 59)), ((5, 8), (39, 10)), ((5, 8), (41, 51)),
-            ((5, 8), (43, 34)), ((5, 8), (46, 34)), ((5, 8), (47, 17)), ((6, 12), (6, 33)), ((6, 12), (7, 34)),
-            ((7, 12), (7, 34)), ((9, 12), (9, 22)), ((9, 12), (10, 16)), ((10, 12), (10, 16)), ((12, 12), (12, 22)),
-            ((12, 12), (13, 16)), ((13, 12), (13, 16)), ((16, 8), (28, 9)), ((16, 8), (29, 59)), ((16, 8), (39, 10)),
-            ((16, 8), (41, 51)), ((16, 8), (43, 34)), ((16, 8), (46, 34)), ((16, 8), (47, 17)), ((17, 12), (17, 18)),
-            ((17, 12), (26, 13)), ((18, 12), (26, 13)), ((19, 16), (25, 17)), ((20, 20), (20, 42)),
-            ((20, 20), (21, 42)), ((21, 20), (21, 42)), ((24, 20), (24, 42)), ((29, 8), (29, 59)),
-            ((29, 8), (39, 10)), ((29, 8), (41, 51)), ((29, 8), (43, 34)),
-            ((29, 8), (46, 34)), ((29, 8), (47, 17)), ((31, 8), (39, 10)), ((31, 8), (41, 51)), ((31, 8), (43, 34)),
-            ((31, 8), (46, 34)), ((31, 8), (47, 17)), ((33, 16), (33, 46)), ((36, 16), (36, 31)), ((36, 16), (37, 52)),
-            ((37, 16), (37, 52)), ((41, 8), (41, 51)), ((41, 8), (43, 34)), ((41, 8), (46, 34)), ((41, 8), (47, 17)),
-            ((42, 8), (43, 34)), ((42, 8), (46, 34)), ((42, 8), (47, 17)), ((43, 12), (43, 33)), ((45, 8), (46, 34)),
-            ((45, 8), (47, 17)), ((46, 12), (46, 33)), ((47, 8), (47, 17))]
-        found_opportunities = get_block_slices(code, LANG_JAVA)
+        found_opportunities = get_block_slices(self.t_, LANG_JAVA, min_range=1, max_percentage=1.00)
         self.assertEqual(expected_opportunities, found_opportunities)
 
     def test_else_blocks(self):
@@ -237,8 +237,162 @@ class BlockSlicingTestCase(TestCase):
             problemString = buffer.toString();
         }
         '''
-        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(code, LANG_JAVA)}
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            code,
+            LANG_JAVA,
+            min_range=1,
+            max_percentage=1.00)}
         self.assertTrue((12, 12) in found_opportunities, True)
         self.assertTrue((15, 15) in found_opportunities, True)
         self.assertTrue((21, 21) in found_opportunities, True)
         self.assertTrue((23, 23) in found_opportunities, True)
+
+    def test_opportunities_with_range_number(self):
+        code = '''
+        if (problems != null) {
+            int max = problems.length;
+            StringBuffer buffer = new StringBuffer(25);
+            int count = 0;
+            for (int i = 0; i < max; i++) {
+                CategorizedProblem problem = problems[i];
+                if ((problem != null) && (problem.isError())) {
+                    buffer.append("\t"  +problem.getMessage() + "\n" );
+                    count++;
+                    if (problemLine == 0) {
+                        problemLine = problem.getSourceLineNumber();
+                    }
+                    else {
+                        problemLine = problem.getSourceLineNumber();
+                    }
+                    problems[i] = null;
+                }
+            }
+            if (count > 1) {
+                buffer.insert(0, Messages.compilation_unresolvedProblems);
+            } else {
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+            }
+            problemString = buffer.toString();
+        }
+        '''
+        all_lines = code.split('\n')
+        max_percentage = 0.8
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            code,
+            LANG_JAVA,
+            min_range=3,
+            max_percentage=0.8)}
+        self.assertTrue([x for x in found_opportunities if x[1][0] - x[0][0] <= 3], 0)
+        self.assertTrue([x for x in found_opportunities if len(all_lines) / (x[1][0] - x[0][0]) > max_percentage], 0)
+
+    def test_opportunities_filter_scope(self):
+        code = '''
+            for(int i = 0; i < 5; ++i) {
+                int j = 0;
+                int m = 0;
+                find();
+                find();
+                find(m);
+                find(j);
+            }
+        '''
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            code,
+            LANG_JAVA,
+            min_range=1,
+            max_percentage=1.00)}
+        # ignore opportunities where we have 2 var declarations
+        # and there are lines in the current scope which is depended on
+        # those var declarations
+        self.assertTrue((2, 3) not in found_opportunities, True)
+        self.assertTrue((2, 4) not in found_opportunities, True)
+        self.assertTrue((2, 5) not in found_opportunities, True)
+
+
+    def test_filter_with_usage_inside_inner_scope(self):
+        code_with_usage_inside_inner_scope = '''
+            for(int i = 0; i < 5; ++i) {
+                int j = 0;
+                int m = 0;
+                for(int k = 0; k < 5; ++k) {
+                    for(int u = 0; u < 5; ++u) {
+                        find();
+                        find();
+                        find();
+                        find();
+                        find(m);
+                        find(j);
+                    }
+                }    
+            }
+        '''
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            code_with_usage_inside_inner_scope,
+            LANG_JAVA,
+            min_range=5,
+            max_percentage=100)}
+
+    def test_do_not_filter_complex_objects(self):
+        complex_objects = '''
+            Object h = new Object();
+            for(int i = 0; i < 5; ++i) {
+                Finder j = new Finder();
+                Shalala j = new Shalala();
+                int b = 0;
+                find();
+                find();
+                h.append(i, b);
+                j.call();
+            }
+        '''
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            complex_objects,
+            LANG_JAVA,
+            min_range=5,
+            max_percentage=100)}
+
+    def test_do_not_filter_with_diff_scope(self):
+        diff_scope = '''
+            Object h = new Object();
+            for(int i = 0; i < 5; ++i) {
+                int b = 0;
+                find();
+                find();
+                find();
+                find();
+                h.append(b);
+                for(int j= 0; j < 5; ++j) {
+                    int a = 0;
+                    int b = 0;
+                    find();
+                    find();
+                    --b;
+                    ++a;
+                }
+            }
+        '''
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            diff_scope,
+            LANG_JAVA,
+            min_range=5,
+            max_percentage=100)}
+
+    def test_filter_with_immutable_classes(self):
+        diff_scope = '''
+            Object h = new Object();
+            for(int i = 0; i < 5; ++i) {
+                int b = 0;
+                Integer a = b;
+                find();
+                find();
+                --b;
+                a = b * 2;
+                System.out.println(a);
+            }
+        '''
+        found_opportunities = {(x[0][0], x[1][0]) for x in get_block_slices(
+            diff_scope,
+            LANG_JAVA,
+            min_range=5,
+            max_percentage=100)}
+        self.assertTrue(3, True)
