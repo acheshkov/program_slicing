@@ -9,7 +9,7 @@ import operator
 from collections import defaultdict
 from functools import reduce
 from itertools import combinations_with_replacement
-from typing import Tuple, Iterator, List, Dict, Optional, Any
+from typing import Tuple, Iterator, List, Dict, Optional, Any, Set
 
 import tree_sitter
 from tree_sitter import Node
@@ -18,21 +18,13 @@ from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import tree_sitter_ast
 from program_slicing.graph.parse import tree_sitter_parsers
-from program_slicing.graph.parse.tree_sitter_parsers import node_name
 from program_slicing.graph.point import Point
 from program_slicing.graph.statement import Statement
 
 
-def filter_blocks_by_range(x, y, min_range: int, max_range: int):
-    diff = x - y
-    if (diff > min_range) and (diff < max_range):
-        return False
-    else:
-        return True
-
-
-def find_real_block(block, block_lines_ranges):
-    cur_block_start_line, cur_block_end_line = block
+def determine_block_by_its_part(part_of_block: List[int, int], block_lines_ranges: Dict[int, Tuple[int, int]])\
+        -> Dict[int, int]:
+    cur_block_start_line, cur_block_end_line = part_of_block
     results_with_diff = {}
     for block_id, lines in block_lines_ranges.items():
         start_point = lines[0]
@@ -45,13 +37,14 @@ def find_real_block(block, block_lines_ranges):
     for block_id, block_lines in results_with_diff.items():
         potential_block_start_line, potential_block_end_line = block_lines
         total_diff = (cur_block_start_line[0] - potential_block_start_line) \
-                     + (cur_block_end_line[0] - potential_block_end_line)
+            + (cur_block_end_line[0] - potential_block_end_line)
         blocks_with_diff[block_id] = total_diff
 
     return sorted(blocks_with_diff.items(), key=lambda x: x[1], reverse=True)[0][0]
 
 
-def get_privitive_types(var_affected, all_statements):
+def find_var_declarations_with_primitive_types(var_affected: List[Statement], all_statements: List[Statement]) \
+        -> List[Statement]:
     prohibited_types = {
         'Character', 'Byte', 'Short', 'Integer', 'Long',
         'Float', 'Double', 'Boolean',
@@ -61,8 +54,8 @@ def get_privitive_types(var_affected, all_statements):
     filtered_vars_list = []
     for var_stat in var_affected:
         statements_by_line = all_statements.get(var_stat.start_point.line_number)
-        type = [x for x in statements_by_line if x.ast_node_type in ['type_identifier', 'integral_type']][0]
-        if type.name in prohibited_types:
+        var_type = [x for x in statements_by_line if x.ast_node_type in ['type_identifier', 'integral_type']][0]
+        if var_type.name in prohibited_types:
             filtered_vars_list.append(var_stat)
     return filtered_vars_list
 
@@ -74,6 +67,9 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         ]]:
     """
     Return opportunities list.
+
+    :param max_percentage: maximum percentage of lines to return: EMO's lines / all lines
+    :param min_range: minimum range of lines of opportunity to return
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :return: list of tuples where first item is start point, last item is end point.
@@ -102,7 +98,7 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         block_end_line = cur_block[1][0]
         cur_block_range = range(block_start_line, block_end_line + 1)
         lines_for_cur_block = set(cur_block_range)
-        expanded_block_id = find_real_block(cur_block, block_indexes_by_range)
+        expanded_block_id = determine_block_by_its_part(cur_block, block_indexes_by_range)
         # extend opportunity to cur_block
         real_min_line, real_max_line = block_indexes_by_range[expanded_block_id]
         rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
@@ -155,29 +151,37 @@ def do_filter_block_by_variable_usage(
         found_lines = lines_which_var_used.intersection(rest_lines)
         if found_lines:
             var_affected.append(var_statement)
-    primitive_var_affected = get_privitive_types(var_affected, all_statements)
+    primitive_var_affected = find_var_declarations_with_primitive_types(var_affected, all_statements)
     if len(primitive_var_affected) < 2:
         return True
 
     return False
 
 
-def clean_blocks(block_ranges, all_lines, min_range_to_filter, max_percentage_to_filter):
+def clean_blocks(
+        block_ranges: List[List[Tuple[Optional[Any], Optional[Any]]]],
+        all_lines_of_snippet,
+        min_range_to_filter: int,
+        max_percentage_to_filter: float):
     """
     Clean unnecessary blocks since we surround code with method and class.
 
-    :param block_ranges:
+    :param all_lines_of_snippet: all lines of snippet
+    :param block_ranges: list of combinations of Statements (EMOs)
     :param min_range_to_filter: minimum number of lines of EMOs which are allowed
     :param max_percentage_to_filter: max percentage EMO in comparison to all length of snippet which is allowed
     :return: allowed EMOs
     """
     blocks_list = set(itertools.chain(*block_ranges))
     reduced_blocks = filter(lambda x: x[1][0] - x[0][0] > min_range_to_filter, blocks_list)
-    reduced_blocks = filter(lambda x: (x[1][0] - x[0][0]) / len(all_lines) <= max_percentage_to_filter, reduced_blocks)
+    reduced_blocks = filter(
+        lambda x: (x[1][0] - x[0][0]) / len(all_lines_of_snippet) <= max_percentage_to_filter,
+        reduced_blocks)
     return reduced_blocks
 
 
-def get_block_tables(statements_by_block_id):
+def get_block_tables(statements_by_block_id: Dict[int, List[tree_sitter.Node]]) \
+        -> Tuple[Dict[int, Tuple[int, int]], Dict[int, int]]:
     block_lines_ranges = {}
     block_min_line = {}
     for block_index, y in statements_by_block_id.items():
@@ -191,7 +195,14 @@ def get_block_tables(statements_by_block_id):
     return block_lines_ranges, block_min_line
 
 
-def get_all_affected_statements(ddg, statement, results):
+def get_all_affected_statements(ddg: DataDependenceGraph, statement: Statement, results: Set[Statement]) -> None:
+    """
+    Get all affected statements for given statement
+    :param ddg: Data Dependence Graph
+    :param statement: statement, for which we search all affected statements
+    :param results: list with affected statements, empty list a the beginning
+    :return: None
+    """
     for successor in ddg.successors(statement):
         if successor in results:
             continue
@@ -199,7 +210,7 @@ def get_all_affected_statements(ddg, statement, results):
         get_all_affected_statements(ddg, successor, results)
 
 
-def get_lines_where_var_was_used(ddg, var_statement):
+def get_lines_where_var_was_used(ddg: DataDependenceGraph, var_statement: Statement) -> List[List[int]]:
     results = set()
     get_all_affected_statements(ddg, var_statement, results)
     lines_which_var_used = [
@@ -208,7 +219,7 @@ def get_lines_where_var_was_used(ddg, var_statement):
     return lines_which_var_used
 
 
-def get_statements_dict(ddg):
+def get_statements_dict(ddg: DataDependenceGraph) -> Tuple[Dict[int, Statement], Dict[int, Statement]]:
     """
     Get all variables declarations and its names which can be obtained by line number.
     Get table of all statements which can be obtained by line number
@@ -347,8 +358,8 @@ def __generate_all_possible_opportunities(
     return statements_combinations_by_block_id
 
 
-def __count_combinations_blocks_bounds(statements_combinations_by_block_id) -> List[
-    List[Tuple[Optional[Any], Optional[Any]]]]:
+def __count_combinations_blocks_bounds(statements_combinations_by_block_id: Dict[int, List[List[Node]]]) \
+        -> List[List[Tuple[Optional[Any], Optional[Any]]]]:
     """
     Count min and max lines for blocks.
     :param statements_combinations_by_block_id: dict with unique blocks.
