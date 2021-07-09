@@ -748,7 +748,7 @@ def __add_exit_point(cdg: ControlDependenceGraph, statement: Statement, entry_po
             affected_by.update(exit_point.affected_by)
     exit_point = Statement(
         StatementType.EXIT,
-        start_point=statement.start_point,
+        start_point=statement.end_point,
         end_point=statement.end_point,
         affected_by=affected_by,
         name=None,
