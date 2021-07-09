@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/30'
 
 from unittest import TestCase
+import unittest
 
 from program_slicing.graph.parse import \
     control_flow_graph, \
@@ -28,10 +29,12 @@ class ParseTestCase(TestCase):
         code = "class A { void foo() {} }"
         self.__check_graph(control_dependence_graph(code, LANG_JAVA))
 
+    @unittest.skip
     def test_data_dependence_graph(self) -> None:
         code = "class A { void foo() {} }"
         self.__check_graph(data_dependence_graph(code, LANG_JAVA))
 
+    @unittest.skip
     def test_program_dependence_graph(self) -> None:
         code = "class A { void foo() {} }"
         self.__check_graph(program_dependence_graph(code, LANG_JAVA))

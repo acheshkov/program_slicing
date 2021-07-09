@@ -108,8 +108,7 @@ def __process_loop(
             cfg.add_edge(prev_block, old_block)
         return
     new_block = old_block.split(index)
-    for new_block_statement in new_block.statements:
-        block[new_block_statement] = new_block
+    block[child] = new_block
     cfg.add_node(new_block)
     old_successors: List[BasicBlock] = [successor for successor in cfg.successors(old_block)]
     for old_successor in old_successors:
