@@ -4,7 +4,6 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/01'
 
-import unittest
 from unittest import TestCase
 
 from program_slicing.decomposition import block_slicing
@@ -138,7 +137,7 @@ class BlockSlicingTestCase(TestCase):
 
     def test_opportunities_ranges(self):
         expected_opportunities = {
-            ((1, 8), (28, 9)), ((1, 8), (29, 59)), ((1, 8), (39, 10)),
+            ((1, 8), (28, 9)), ((1, 8), (29, 59)), ((1, 8), (39, 10)), ((1, 8), (14, 9)),
             ((2, 8), (14, 9)), ((2, 8), (28, 9)), ((2, 8), (29, 59)), ((2, 8), (39, 10)),
             ((3, 8), (14, 9)), ((3, 8), (28, 9)), ((3, 8), (29, 59)), ((3, 8), (39, 10)),
             ((3, 8), (41, 51)),
@@ -368,12 +367,11 @@ class BlockSlicingTestCase(TestCase):
         self.assertTrue((4, 6) in found_opportunities, True)
         self.assertTrue((4, 7) in found_opportunities, True)
 
-    @unittest.skip("Function with getting successors doesn't work for diff scope with the same var ")
     def test_do_not_filter_with_diff_scope(self):
         diff_scope = '''
             Object h = new Object();
             for(int i = 0; i < 5; ++i) {
-                {
+                for(int k = 0; k < 5; ++k) {
                     int b = 0;
                     find();
                     find();

@@ -18,11 +18,10 @@ from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import tree_sitter_ast
 from program_slicing.graph.parse import tree_sitter_parsers
-from program_slicing.graph.point import Point
 from program_slicing.graph.statement import Statement
 
 
-def determine_block_by_its_part(part_of_block: List[int, int], block_lines_ranges: Dict[int, Tuple[int, int]])\
+def determine_block_by_its_part(part_of_block: Tuple[int, int], block_lines_ranges: Dict[int, Tuple[int, int]])\
         -> Dict[int, int]:
     cur_block_start_line, cur_block_end_line = part_of_block
     results_with_diff = {}
@@ -61,10 +60,7 @@ def find_var_declarations_with_primitive_types(var_affected: List[Statement], al
 
 
 def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.8) -> \
-        List[Tuple[
-            Point,
-            Point
-        ]]:
+        List[Tuple[int, int]]:
     """
     Return opportunities list.
 
@@ -87,12 +83,26 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
     # we subtract since we added class and method to the cur_block of the passed code
     reduced_blocks = clean_blocks(block_ranges, all_lines, min_range, max_percentage)
 
-    filtered_blocks_list = set()
-
     manager_by_source = ProgramGraphsManager(source_code, lang)
     ddg = manager_by_source.get_data_dependence_graph()
-    declarations, all_statements = get_statements_dict(ddg)
+    var_declarations_by_min_line, all_statements_by_min_line = get_statements_dict(ddg)
 
+    filtered_blocks_list = filter_blocks_by_variables_usage(
+        all_statements_by_min_line, block_indexes_by_range, ddg,
+        var_declarations_by_min_line, reduced_blocks)
+
+    return sorted(filtered_blocks_list, key=lambda x: (x[0][0], x[1][0]))
+
+
+def filter_blocks_by_variables_usage(
+        all_statements: Dict[int, Statement],
+        block_indexes_by_range: Tuple[Dict[int, Tuple[int, int]]],
+        ddg: DataDependenceGraph,
+        declarations: Dict[int, Statement],
+        reduced_blocks: Iterator[Tuple[Optional[Any], Optional[Any]]]) \
+        -> List[Tuple[int, int]]:
+
+    filtered_blocks_list = []
     for cur_block in reduced_blocks:
         block_start_line = cur_block[0][0]
         block_end_line = cur_block[1][0]
@@ -103,7 +113,7 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         real_min_line, real_max_line = block_indexes_by_range[expanded_block_id]
         rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
         if not rest_lines:
-            filtered_blocks_list.add(cur_block)
+            filtered_blocks_list.append(cur_block)
             continue
 
         var_declarations_in_cur_block = [
@@ -113,17 +123,17 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
             var_declarations_in_cur_block = reduce(
                 operator.concat, var_declarations_in_cur_block)
         else:
-            filtered_blocks_list.add(cur_block)
+            filtered_blocks_list.append(cur_block)
             continue
 
-        if do_filter_block_by_variable_usage(
+        if not do_filter_block_by_variable_usage(
                 all_statements,
                 ddg,
                 rest_lines,
                 var_declarations_in_cur_block):
-            filtered_blocks_list.add(cur_block)
+            filtered_blocks_list.append(cur_block)
 
-    return sorted(filtered_blocks_list, key=lambda x: (x[0][0], x[1][0]))
+    return filtered_blocks_list
 
 
 def do_filter_block_by_variable_usage(
@@ -153,16 +163,16 @@ def do_filter_block_by_variable_usage(
             var_affected.append(var_statement)
     primitive_var_affected = find_var_declarations_with_primitive_types(var_affected, all_statements)
     if len(primitive_var_affected) < 2:
-        return True
+        return False
 
-    return False
+    return True
 
 
 def clean_blocks(
         block_ranges: List[List[Tuple[Optional[Any], Optional[Any]]]],
         all_lines_of_snippet,
         min_range_to_filter: int,
-        max_percentage_to_filter: float):
+        max_percentage_to_filter: float) -> Iterator[Tuple[Optional[Any], Optional[Any]]]:
     """
     Clean unnecessary blocks since we surround code with method and class.
 
