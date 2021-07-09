@@ -5,7 +5,6 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/04/02'
 
 from unittest import TestCase
-import unittest
 
 import networkx
 
@@ -335,52 +334,56 @@ class CDGTestCase(TestCase):
         return pdg
 
     @staticmethod
-    def print_graph(graph):
+    def graph_to_str(graph):
+        result = []
         for node in graph:
             successors = [str(successor) for successor in graph.successors(node)]
             if successors:
-                print(str(node) + ":\n\t" + "\n\t".join(successors))
+                result.append(str(node) + ":\n\t" + "\n\t".join(successors))
+        return "".join(result)
+
+    def assertIsomorphic(self, graph1, graph2) -> None:
+        if not networkx.is_isomorphic(graph1, graph2):
+            self.assertEqual(CDGTestCase.graph_to_str(graph1), CDGTestCase.graph_to_str(graph2))
 
     def test_convert_cdg_to_cfg_isomorphic(self):
         cdg = self.__get_cdg_0()
         cfg = self.__get_cfg_0()
-        self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
+        self.assertIsomorphic(cfg, convert.cdg.to_cfg(cdg))
         cdg = self.__get_cdg_1()
         cfg = self.__get_cfg_1()
-        self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
+        self.assertIsomorphic(cfg, convert.cdg.to_cfg(cdg))
         cdg = self.__get_cdg_2()
         cfg = self.__get_cfg_2()
-        self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
+        self.assertIsomorphic(cfg, convert.cdg.to_cfg(cdg))
         cdg = self.__get_cdg_3()
         cfg = self.__get_cfg_3()
-        self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
+        self.assertIsomorphic(cfg, convert.cdg.to_cfg(cdg))
 
-    @unittest.skip
     def test_convert_cdg_to_ddg_isomorphic(self):
         cdg = self.__get_cdg_0()
         ddg = self.__get_ddg_0()
-        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
+        self.assertIsomorphic(ddg, convert.cdg.to_ddg(cdg))
         cdg = self.__get_cdg_1()
         ddg = self.__get_ddg_1()
-        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
+        self.assertIsomorphic(ddg, convert.cdg.to_ddg(cdg))
         cdg = self.__get_cdg_2()
         ddg = self.__get_ddg_2()
-        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
+        self.assertIsomorphic(ddg, convert.cdg.to_ddg(cdg))
         cdg = self.__get_cdg_3()
         ddg = self.__get_ddg_3()
-        self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
+        self.assertIsomorphic(ddg, convert.cdg.to_ddg(cdg))
 
-    @unittest.skip
     def test_convert_cdg_to_pdg_isomorphic(self):
         cdg = self.__get_cdg_0()
         pdg = self.__get_pdg_0()
-        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
+        self.assertIsomorphic(pdg, convert.cdg.to_pdg(cdg))
         cdg = self.__get_cdg_1()
         pdg = self.__get_pdg_1()
-        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
+        self.assertIsomorphic(pdg, convert.cdg.to_pdg(cdg))
         cdg = self.__get_cdg_2()
         pdg = self.__get_pdg_2()
-        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
+        self.assertIsomorphic(pdg, convert.cdg.to_pdg(cdg))
         cdg = self.__get_cdg_3()
         pdg = self.__get_pdg_3()
-        self.assertTrue(networkx.is_isomorphic(pdg, convert.cdg.to_pdg(cdg)))
+        self.assertIsomorphic(pdg, convert.cdg.to_pdg(cdg))

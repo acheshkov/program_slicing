@@ -41,8 +41,8 @@ def to_ddg(cfg: ControlFlowGraph) -> DataDependenceGraph:
     variables: Dict[str, Set[Statement]] = {}
     for root in cfg.entry_points:
         __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
-        __update_scope_relations(ddg)
         ddg.add_entry_point(root.root)
+    __correct_scope_relations(ddg)
     return ddg
 
 
@@ -100,7 +100,7 @@ def __update_variables(old_variables: Dict[str, Set[Statement]], new_variables: 
     return updated
 
 
-def __update_scope_relations(ddg: DataDependenceGraph) -> None:
+def __correct_scope_relations(ddg: DataDependenceGraph) -> None:
     scope_for_statement: Dict[Statement, Statement] = __obtain_scope_hierarchy(ddg)
     variable_statements = [statement for statement in ddg if statement.statement_type == StatementType.VARIABLE]
     for variable_statement in variable_statements:

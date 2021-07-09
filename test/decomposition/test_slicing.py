@@ -5,7 +5,6 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/22'
 
 from unittest import TestCase
-import unittest
 
 from program_slicing.decomposition import slicing
 from program_slicing.decomposition.slice_predicate import SlicePredicate
@@ -52,7 +51,6 @@ class SlicingTestCase(TestCase):
     def test_decompose_file(self):
         pass
 
-    @unittest.skip
     def test_decompose_code(self):
         source_code = self.__get_source_code_0()
         res = [decomposition for decomposition in slicing.decompose_code(source_code, LANG_JAVA)]
@@ -72,7 +70,6 @@ class SlicingTestCase(TestCase):
         self.assertFalse(is_slicing_criterion(c, b))
         self.assertTrue(is_slicing_criterion(c, c))
 
-    @unittest.skip
     def test_get_complete_computation_slices(self):
         source_code = """
         int n = 0;
@@ -123,7 +120,6 @@ class SlicingTestCase(TestCase):
             else:
                 self.assertTrue(False)
 
-    @unittest.skip
     def test_get_complete_computation_slices_goto(self):
         source_code = """
         int a = 10;
@@ -160,7 +156,6 @@ class SlicingTestCase(TestCase):
                 "}",
                 program_slice.code)
 
-    @unittest.skip
     def test_get_complete_computation_slices_try(self):
         source_code = """
         class A {
@@ -201,13 +196,11 @@ class SlicingTestCase(TestCase):
                 "}",
                 program_slice.code)
 
-    @unittest.skip
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         self.assertEqual(2, len(variable_statements))
         self.assertEqual({"a", "b"}, {variable_statement.name for variable_statement in variable_statements})
 
-    @unittest.skip
     def test_obtain_seed_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
@@ -218,7 +211,6 @@ class SlicingTestCase(TestCase):
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
 
-    @unittest.skip
     def test_obtain_slicing_criteria(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
@@ -230,7 +222,6 @@ class SlicingTestCase(TestCase):
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
 
-    @unittest.skip
     def test_obtain_common_boundary_blocks(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
@@ -239,7 +230,6 @@ class SlicingTestCase(TestCase):
             seed_statements = obtain_seed_statements(cdg, function_statements[0], variable_statement)
             self.assertEqual(1, len(obtain_common_boundary_blocks(manager, seed_statements)))
 
-    @unittest.skip
     def test_obtain_backward_slice(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
@@ -280,7 +270,6 @@ class SlicingTestCase(TestCase):
                         {3, 4, 5, 6, 7},
                         {slice_statement.end_point.line_number for slice_statement in backward_slice})
 
-    @unittest.skip
     def test_obtain_complete_computation_slices(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
