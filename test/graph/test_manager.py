@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/04/02'
 
 from unittest import TestCase
+import unittest
 
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import LANG_JAVA
@@ -42,6 +43,7 @@ class ManagerTestCase(TestCase):
     def test_init(self) -> None:
         pass
 
+    @unittest.skip
     def test_basic_blocks(self) -> None:
         mgr = self.__get_manager_0()
         blocks = [block for block in mgr.get_control_flow_graph()]
@@ -50,6 +52,7 @@ class ManagerTestCase(TestCase):
             for statement in block:
                 self.assertEqual(block, mgr.get_basic_block(statement))
 
+    @unittest.skip
     def test_dom(self) -> None:
         mgr = self.__get_manager_0()
         cfg = mgr.get_control_flow_graph()
@@ -100,6 +103,7 @@ class ManagerTestCase(TestCase):
         self.assertEqual(second_if_blocks, mgr.get_dominated_blocks(block_with_break))
         self.assertEqual(second_if_blocks, mgr.get_dominated_blocks(block_with_else))
 
+    @unittest.skip
     def test_reach(self) -> None:
         mgr = self.__get_manager_0()
         cfg = mgr.get_control_flow_graph()
@@ -169,6 +173,7 @@ class ManagerTestCase(TestCase):
             block_with_return,
         }, mgr.get_reach_blocks(block_with_return))
 
+    @unittest.skip
     def test_boundary_blocks(self) -> None:
         mgr = self.__get_manager_0()
         cfg = mgr.get_control_flow_graph()

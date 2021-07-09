@@ -131,23 +131,23 @@ class CDGJavaTestCase(TestCase):
             0: StatementType.FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
-        self.assertEqual(19, len(function_children))
+        self.assertEqual(12, len(function_children))
         self.__check_cdg_children(function_children, {
             0: StatementType.SCOPE,
-            1: StatementType.SCOPE,
-            7: StatementType.ASSIGNMENT,
-            8: StatementType.BRANCH,
-            10: StatementType.SCOPE,
-            12: StatementType.CALL,
-            18: StatementType.EXIT
+            1: StatementType.BRANCH,
+            3: StatementType.SCOPE,
+            5: StatementType.CALL,
+            11: StatementType.EXIT
         })
-        try_children = [child for child in cdg.successors(function_children[8])]
-        self.assertEqual(4, len(try_children))
+        try_children = [child for child in cdg.successors(function_children[1])]
+        self.assertEqual(11, len(try_children))
         self.__check_cdg_children(try_children, {
-            0: StatementType.VARIABLE,
-            3: StatementType.BRANCH
+            0: StatementType.SCOPE,
+            6: StatementType.ASSIGNMENT,
+            7: StatementType.VARIABLE,
+            10: StatementType.BRANCH
         })
-        catch_children = [child for child in cdg.successors(try_children[3])]
+        catch_children = [child for child in cdg.successors(try_children[10])]
         self.assertEqual(5, len(catch_children))
         self.__check_cdg_children(catch_children, {
             0: StatementType.SCOPE,
@@ -177,21 +177,21 @@ class CDGJavaTestCase(TestCase):
             0: StatementType.FUNCTION
         })
         function_children = [child for child in cdg.successors(entry_points[0])]
-        self.assertEqual(14, len(function_children))
+        self.assertEqual(7, len(function_children))
         self.__check_cdg_children(function_children, {
             0: StatementType.SCOPE,
-            5: StatementType.SCOPE,
-            11: StatementType.ASSIGNMENT,
-            12: StatementType.BRANCH,
-            13: StatementType.EXIT
+            5: StatementType.BRANCH,
+            6: StatementType.EXIT
         })
-        try_children = [child for child in cdg.successors(function_children[12])]
-        self.assertEqual(4, len(try_children))
+        try_children = [child for child in cdg.successors(function_children[5])]
+        self.assertEqual(11, len(try_children))
         self.__check_cdg_children(try_children, {
-            0: StatementType.VARIABLE,
-            3: StatementType.BRANCH
+            0: StatementType.SCOPE,
+            6: StatementType.ASSIGNMENT,
+            7: StatementType.VARIABLE,
+            10: StatementType.BRANCH
         })
-        catch_1_children = [child for child in cdg.successors(try_children[3])]
+        catch_1_children = [child for child in cdg.successors(try_children[10])]
         self.assertEqual(9, len(catch_1_children))
         self.__check_cdg_children(catch_1_children, {
             0: StatementType.SCOPE,

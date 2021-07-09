@@ -5,12 +5,14 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/04/22'
 
 from unittest import TestCase
+import unittest
 
 from program_slicing.graph.parse.pdg_java import parse
 
 
 class PDGJavaTestCase(TestCase):
 
+    @unittest.skip
     def test_parse(self) -> None:
         source_code = """
         class A {
