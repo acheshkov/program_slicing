@@ -24,10 +24,19 @@ class Point:
         return "({}, {})".format(self.__line_number, self.__column_number)
 
     def __eq__(self, other: 'Point') -> bool:
-        return self.__line_number == other.__line_number and self.__column_number == other.__column_number
+        return \
+            other is not None and \
+            self.__line_number == other.__line_number and \
+            self.__column_number == other.__column_number
+
+    def __hash__(self) -> hash:
+        return hash((self.__line_number, self.__column_number))
 
     def __ne__(self, other: 'Point') -> bool:
-        return self.__line_number != other.__line_number or self.__column_number != other.__column_number
+        return \
+            other is None or \
+            self.__line_number != other.__line_number or \
+            self.__column_number != other.__column_number
 
     def __lt__(self, other: 'Point') -> bool:
         return \
