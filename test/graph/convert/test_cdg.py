@@ -5,7 +5,6 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/04/02'
 
 from unittest import TestCase
-import unittest
 
 import networkx
 
@@ -355,7 +354,6 @@ class CDGTestCase(TestCase):
         cfg = self.__get_cfg_3()
         self.assertTrue(networkx.is_isomorphic(cfg, convert.cdg.to_cfg(cdg)))
 
-    @unittest.skip
     def test_convert_cdg_to_ddg_isomorphic(self):
         cdg = self.__get_cdg_0()
         ddg = self.__get_ddg_0()
@@ -370,7 +368,6 @@ class CDGTestCase(TestCase):
         ddg = self.__get_ddg_3()
         self.assertTrue(networkx.is_isomorphic(ddg, convert.cdg.to_ddg(cdg)))
 
-    @unittest.skip
     def test_convert_cdg_to_pdg_isomorphic(self):
         cdg = self.__get_cdg_0()
         pdg = self.__get_pdg_0()
