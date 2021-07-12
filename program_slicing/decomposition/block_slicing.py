@@ -53,7 +53,7 @@ def find_var_declarations_with_primitive_types(var_affected: List[Statement], al
     filtered_vars_list = []
     for var_stat in var_affected:
         statements_by_line = all_statements.get(var_stat.start_point.line_number)
-        var_type = [x for x in statements_by_line if x.ast_node_type in ['type_identifier', 'integral_type']][0]
+        var_type = [x for x in statements_by_line if x.ast_node_type in ['type_identifier', 'integral_type', 'boolean_type']][0]
         if var_type.name in prohibited_types:
             filtered_vars_list.append(var_stat)
     return filtered_vars_list
@@ -106,15 +106,15 @@ def filter_blocks_by_variables_usage(
     for cur_block in reduced_blocks:
         block_start_line = cur_block[0][0]
         block_end_line = cur_block[1][0]
+        # print(block_start_line + 1 , block_end_line + 1)
+        if (block_start_line) == 1 and (block_end_line) == 39:
+            print(1)
         cur_block_range = range(block_start_line, block_end_line + 1)
         lines_for_cur_block = set(cur_block_range)
         expanded_block_id = determine_block_by_its_part(cur_block, block_indexes_by_range)
         # extend opportunity to cur_block
         real_min_line, real_max_line = block_indexes_by_range[expanded_block_id]
         rest_lines = set(range(block_start_line, real_max_line + 1)).difference(lines_for_cur_block)
-        if not rest_lines:
-            filtered_blocks_list.append(cur_block)
-            continue
 
         var_declarations_in_cur_block = [
             declarations.get(line) for line in lines_for_cur_block if
@@ -122,11 +122,9 @@ def filter_blocks_by_variables_usage(
         if var_declarations_in_cur_block:
             var_declarations_in_cur_block = reduce(
                 operator.concat, var_declarations_in_cur_block)
-        else:
-            filtered_blocks_list.append(cur_block)
-            continue
 
         if not do_filter_block_by_variable_usage(
+                cur_block,
                 all_statements,
                 ddg,
                 rest_lines,
@@ -137,10 +135,11 @@ def filter_blocks_by_variables_usage(
 
 
 def do_filter_block_by_variable_usage(
-        all_statements,
-        ddg,
-        rest_lines,
-        var_declarations_in_cur_block):
+        cur_block: Tuple[int, int],
+        all_statements: Dict[int, Statement],
+        ddg: DataDependenceGraph,
+        rest_lines: Set[int],
+        var_declarations_in_cur_block: List[Statement]):
     """
     Return True if we need to filter this block.
 
@@ -162,8 +161,22 @@ def do_filter_block_by_variable_usage(
         if found_lines:
             var_affected.append(var_statement)
     primitive_var_affected = find_var_declarations_with_primitive_types(var_affected, all_statements)
-    if len(primitive_var_affected) < 2:
-        return False
+    is_not_affected_by_declarations = len(primitive_var_affected) < 2
+
+    if is_not_affected_by_declarations:
+        # if var are assigned (*=, =, , -=, etc.) we need to count it
+        # print(rest_lines)
+        start_line = cur_block[0][0]
+        end_line = cur_block[1][0]
+        stats_for_cur_block = reduce(
+            operator.concat,
+            [all_statements.get(x) for x in range(start_line, end_line + 1) if all_statements.get(x)]
+        )
+        rest_stats_with_assigments = {x.name for x in stats_for_cur_block if x.ast_node_type == 'assignment_expression'}
+        assigned_number = set(rest_stats_with_assigments).difference(set([x.name for x in primitive_var_affected]))
+
+        if len(assigned_number) < 2:
+            return False
 
     return True
 
