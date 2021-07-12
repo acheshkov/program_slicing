@@ -128,12 +128,33 @@ _Program Dependence Graph_ nodes.
 from program_slicing.graph.statement import Statement
 ```
 
-- **statement_type** - string with a description af the _Statement's_ type.
+- **statement_type** - _StatementType_ object.
 - **start_point** - line and column numbers of the _Statement's_ start.
 - **end_point** - line and column numbers of the _Statement's_ end.
 - **affected_by** - set of strings with names of variables that may affect the current _Statement_.
 - **name** - string with the name of the _Statement_. Not all _Statements_ are named.
 - **ast_node_type** - string with additional information about node (e.g. an AST root's class).
+
+___
+
+***StatementType*** - structure that enumerates _Statement_ types.
+
+```python
+from program_slicing.graph.statement import StatementType
+```
+
+- **FUNCTION** - function declaration _Statement_.
+- **VARIABLE** - variable declaration _Statement_.
+- **ASSIGNMENT** - variable assignment _Statement_ (such as `i = 0`, `i += 1`, `i++`, etc).
+- **CALL** - function call _Statement_.
+- **SCOPE** - scope _Statement_ (such as braces `{}` or empty body in `if (...) a = 0`).
+- **BRANCH** - _Statement_ that branches the flow (such as `if`, `try`, `catch`, `switch`).
+- **LOOP** - branch _Statement_ that generates backward flow (such as `for` and `while`).
+- **GOTO** - _Statement_ that lead flow to a concrete _Statement_ 
+  (such as `break`, `continue`, `throw`, `return` and even `else`).
+- **UNKNOWN** - all the other _Statements_.
+- **EXIT** - special _Statement_ that is placed in the end of function declaration, has zero size and 
+  all the 'return' and 'throw' nodes leads flow into it (as well as the last _Statement_ in the flow).
 
 ___
 
@@ -173,6 +194,8 @@ manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph
 - **get_control_flow_graph** - return the _Control Flow Graph_.
 - **get_data_dependence_graph** - return the _Data Dependence Graph_.
 - **get_program_dependence_graph** - return the _Program Dependence Graph_.
+- **get_scope_statement** - return a minimal 'scope-like' (SCOPE, LOOP, BRANCH) _Statement_ 
+  that contains a given _Statement_.
 - **get_basic_block** - return a _Basic Block_ (that is a node of the _Control Flow Graph_)
   that contains a given _Statement_.
 - **get_dominated_blocks** return a set of _Basic Blocks_ that are dominated by the given one (i.e. their
