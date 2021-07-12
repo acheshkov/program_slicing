@@ -91,7 +91,7 @@ def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.
         all_statements_by_min_line, block_indexes_by_range, ddg,
         var_declarations_by_min_line, reduced_blocks)
 
-    return filtered_blocks_list
+    return sorted(filtered_blocks_list, key=lambda x: (x[0][0], x[1][0]))
 
 
 def filter_blocks_by_variables_usage(
@@ -133,7 +133,7 @@ def filter_blocks_by_variables_usage(
                 var_declarations_in_cur_block):
             filtered_blocks_list.append(cur_block)
 
-    return list(set(filtered_blocks_list))
+    return set(filtered_blocks_list)
 
 
 def do_filter_block_by_variable_usage(
