@@ -585,10 +585,13 @@ def parse(source_code: str) -> ControlDependenceGraph:
     ast = tree_sitter_ast_java.parse(source_code).root_node
     result = ControlDependenceGraph()
     if __parse_undeclared_class(source_code_bytes, ast, result):
+        result.build_scope_dependency()
         return result
     if __parse_undeclared_method(source_code_bytes, ast, result):
+        result.build_scope_dependency()
         return result
     __parse(source_code_bytes, ast, result, [], [], [], [], set())
+    result.build_scope_dependency()
     return result
 
 

@@ -27,6 +27,7 @@ def to_cfg(cdg: ControlDependenceGraph) -> ControlFlowGraph:
     block: Dict[Statement, BasicBlock] = {}
     for root in cdg.entry_points:
         __to_cfg(root, cdg=cdg, cfg=cfg, block=block)
+    cfg.set_scope_dependency(cdg.scope_dependency)
     return cfg
 
 
@@ -61,6 +62,7 @@ def to_pdg(cdg: ControlDependenceGraph) -> ProgramDependenceGraph:
                 pdg.add_edge(node, ddg_successor)
     for entry_point in cdg.entry_points:
         pdg.add_entry_point(entry_point)
+    pdg.set_scope_dependency(cdg.scope_dependency)
     return pdg
 
 

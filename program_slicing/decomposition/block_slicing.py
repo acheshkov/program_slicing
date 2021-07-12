@@ -9,16 +9,118 @@ import operator
 from collections import defaultdict
 from functools import reduce
 from itertools import combinations_with_replacement
-from typing import Tuple, Iterator, List, Dict, Optional, Any, Set
+from typing import Tuple, Iterable, List, Dict, Optional, Any, Set
 
+import networkx
 import tree_sitter
 from tree_sitter import Node
 
+from program_slicing.decomposition.program_slice import ProgramSlice
+from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import tree_sitter_ast
 from program_slicing.graph.parse import tree_sitter_parsers
-from program_slicing.graph.statement import Statement
+from program_slicing.graph.statement import Statement, StatementType
+
+
+def build_opportunities_filtered(source_code: str, lang: str) -> Iterable[ProgramSlice]:
+    slice_predicate = SlicePredicate(
+        min_amount_of_lines=2,
+        max_amount_of_lines=30,
+        forbidden_words={"return ", "return:"},
+        lang_to_check_parsing=lang)
+    return (program_slice for program_slice in build_opportunities(source_code, lang) if slice_predicate(program_slice))
+
+
+def build_opportunities(source_code: str, lang: str) -> Iterable[ProgramSlice]:
+    source_lines = source_code.split("\n")
+    manager = ProgramGraphsManager(source_code, lang)
+    statements_in_scope = __build_statements_in_scope(manager)
+    for scope, statements in statements_in_scope.items():
+        dominant_statements = __build_dominant_statements(statements)
+        id_combinations = [
+            c for c in combinations_with_replacement([idx for idx in range(len(dominant_statements))], 2)
+        ]
+        for ids in id_combinations:
+            current_statements = []
+            for current_statement in dominant_statements[ids[0]: ids[1] + 1]:
+                current_statements.extend(current_statement)
+            elder_statements = [
+                s for s in manager.get_control_dependence_graph()
+                if s.start_point >= current_statements[-1].end_point
+            ]
+            if not current_statements:
+                continue
+            if len(__get_changed_variables(manager, current_statements).intersection(
+                    __get_used_variables(manager, elder_statements))) > 1:
+                continue
+            if len(__get_outer_goto(manager, current_statements)) > 0:
+                continue
+            yield ProgramSlice(source_lines).from_statements(current_statements)
+
+
+def __build_statements_in_scope(manager: ProgramGraphsManager) -> Dict[Statement, Set[Statement]]:
+    statements_in_scope = defaultdict(set)
+    cdg = manager.get_control_dependence_graph()
+    for statement in cdg:
+        scope = manager.get_scope_statement(statement)
+        if scope is None:
+            scope = 0
+        statements_in_scope[scope].add(statement)
+    return statements_in_scope
+
+
+def __build_dominant_statements(statements: Iterable[Statement]) -> List[List[Statement]]:
+    statements = sorted(
+        statements,
+        key=lambda s: (s.start_point, (-s.end_point.line_number, -s.end_point.column_number)))
+    result = []
+    for statement in statements:
+        if not result or statement.end_point > result[-1][0].end_point:
+            result.append([statement])
+        else:
+            result[-1].append(statement)
+    return result
+
+
+def __get_changed_variables(manager: ProgramGraphsManager, statements: Iterable[Statement]) -> Set[Statement]:
+    used_variables = set()
+    for statement in statements:
+        if statement.statement_type == StatementType.VARIABLE:
+            used_variables.add(statement)
+        if statement.statement_type == StatementType.ASSIGNMENT:
+            if statement not in manager.get_data_dependence_graph():
+                continue
+            for ancestor in networkx.ancestors(manager.get_data_dependence_graph(), statement):
+                if ancestor.statement_type == StatementType.VARIABLE:
+                    used_variables.add(ancestor)
+    return used_variables
+
+
+def __get_used_variables(manager: ProgramGraphsManager, statements: Iterable[Statement]) -> Set[Statement]:
+    used_variables = set()
+    for statement in statements:
+        if statement not in manager.get_data_dependence_graph():
+            continue
+        for ancestor in networkx.ancestors(manager.get_data_dependence_graph(), statement):
+            if ancestor.statement_type == StatementType.VARIABLE:
+                used_variables.add(ancestor)
+    return used_variables
+
+
+def __get_outer_goto(manager: ProgramGraphsManager, statements: List[Statement]) -> Set[Statement]:
+    cdg = manager.get_control_dependence_graph()
+    scope = manager.get_scope_statement(statements[0])
+    scope = 0 if scope is None else scope
+    outer_goto = set()
+    for statement in statements:
+        if statement.statement_type == StatementType.GOTO:
+            if statement in cdg.control_flow:
+                for flow_statement in cdg[statement]:
+                    if flow_statement.start_point < scope.start_point or flow_statement.end_point > scope.end_point:
+                        outer_goto.add(statement)
+    return outer_goto
 
 
 def determine_block_by_its_part(part_of_block: Tuple[int, int], block_lines_ranges: Dict[int, Tuple[int, int]])\
@@ -53,14 +155,15 @@ def find_var_declarations_with_primitive_types(var_affected: List[Statement], al
     filtered_vars_list = []
     for var_stat in var_affected:
         statements_by_line = all_statements.get(var_stat.start_point.line_number)
-        var_type = [x for x in statements_by_line if x.ast_node_type in ['type_identifier', 'integral_type', 'boolean_type']][0]
+        var_type = [
+            x for x in statements_by_line
+            if x.ast_node_type in ['type_identifier', 'integral_type', 'boolean_type']][0]
         if var_type.name in prohibited_types:
             filtered_vars_list.append(var_stat)
     return filtered_vars_list
 
 
-def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.8) -> \
-        List[Tuple[int, int]]:
+def get_block_slices(source_code: str, lang: str, min_range=5, max_percentage=0.8) -> Iterable[ProgramSlice]:
     """
     Return opportunities list.
 
@@ -99,7 +202,7 @@ def filter_blocks_by_variables_usage(
         block_indexes_by_range: Tuple[Dict[int, Tuple[int, int]]],
         ddg: DataDependenceGraph,
         declarations: Dict[int, Statement],
-        reduced_blocks: Iterator[Tuple[Optional[Any], Optional[Any]]]) \
+        reduced_blocks: Iterable[Tuple[Optional[Any], Optional[Any]]]) \
         -> List[Tuple[int, int]]:
 
     filtered_blocks_list = []
@@ -185,7 +288,7 @@ def clean_blocks(
         block_ranges: List[List[Tuple[Optional[Any], Optional[Any]]]],
         all_lines_of_snippet,
         min_range_to_filter: int,
-        max_percentage_to_filter: float) -> Iterator[Tuple[Optional[Any], Optional[Any]]]:
+        max_percentage_to_filter: float) -> Iterable[Tuple[Optional[Any], Optional[Any]]]:
     """
     Clean unnecessary blocks since we surround code with method and class.
 
@@ -289,7 +392,7 @@ def __determine_unique_blocks(source_code: str, lang: str) \
     return statements_by_block_id, blocks_by_level
 
 
-def __traverse_ast(root: tree_sitter.Node, level=0) -> Iterator[Tuple[tree_sitter.Node, int]]:
+def __traverse_ast(root: tree_sitter.Node, level=0) -> Iterable[Tuple[tree_sitter.Node, int]]:
     """
     Traverse ast.
     :param root: node to start traversing.
@@ -302,7 +405,7 @@ def __traverse_ast(root: tree_sitter.Node, level=0) -> Iterator[Tuple[tree_sitte
     yield root, level
 
 
-def __get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_sitter.Node, int]]:
+def __get_block_nodes_per_level(root: tree_sitter.Node) -> Iterable[Tuple[tree_sitter.Node, int]]:
     """
     Returns block with level number in ast tree.
     :param root: node to start finding.

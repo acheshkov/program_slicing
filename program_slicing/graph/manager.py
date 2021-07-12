@@ -28,7 +28,7 @@ class ProgramGraphsManager:
         self.__basic_block: Dict[Statement, BasicBlock] = {}
         self.__dom_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         self.__reach_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
-        self.__scope_statement: Dict[Statement, Statement] = {}
+        self.__scope_dependency: Dict[Statement, Statement] = {}
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
 
@@ -69,7 +69,7 @@ class ProgramGraphsManager:
         return self.__pdg
 
     def get_scope_statement(self, statement: Statement) -> Optional[Statement]:
-        return self.__scope_statement.get(statement, None)
+        return self.__scope_dependency.get(statement, None)
 
     def get_basic_block(self, statement: Statement) -> Optional[BasicBlock]:
         return self.__basic_block.get(statement, None)
@@ -144,7 +144,7 @@ class ProgramGraphsManager:
         for block in networkx.algorithms.traversal.dfs_tree(self.__cfg):
             for statement in block:
                 self.__basic_block[statement] = block
-        self.__scope_statement = self.__ddg.build_scope_statement_dictionary()
+        self.__scope_dependency = self.__cdg.scope_dependency
 
     def __build_reach_blocks(self, block: BasicBlock, visited_blocks: Set[BasicBlock] = None) -> Set[BasicBlock]:
         if block in self.__reach_blocks:
