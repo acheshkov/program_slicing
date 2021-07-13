@@ -4,18 +4,19 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/01'
 
+import unittest
 from unittest import TestCase
 
 from program_slicing.decomposition.block_slicing import build_opportunities_filtered, __build_statements_in_scope
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.manager import ProgramGraphsManager
+from program_slicing.graph.point import Point
 
 build_statements_in_scope = __build_statements_in_scope
 
 
 class BlockSlicingTestCase(TestCase):
     def test_identify_unique_block_with_if(self) -> None:
-
         if_statement = '''
         if (workspace == null) {
             return Collections.emptySet();
@@ -297,6 +298,44 @@ class BlockSlicingTestCase(TestCase):
                 code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=max_percentage)
         }
         self.assertEqual(set(), found_opportunities)
+
+    @unittest.skip("If block is strange")
+    def test_opportunities_with_else_if(self):
+        code = '''
+            if (count > 1) {
+                buffer.insert(0, Messages.compilation_unresolvedProblems);
+                buffer.insert(0, Messages.compilation_unresolvedProblems);
+                buffer.insert(0, Messages.compilation_unresolvedProblems);
+                buffer.insert(0, Messages.compilation_unresolvedProblems);
+                buffer.insert(0, Messages.compilation_unresolvedProblems);
+  
+            } else if (count > 2) {
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+
+            }
+            else {
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+                buffer.insert(0, Messages.compilation_unresolvedProblem);
+            }
+        }
+        '''
+        found_opportunities = {
+            (program_slice.ranges[0][0], program_slice.ranges[-1][1])
+            for program_slice in build_opportunities_filtered(
+                code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=1.00)
+        }
+        expected = {
+            (Point(9, 16), Point(13, 73)), (Point(17, 16), Point(21, 73)), (Point(1, 12), Point(22, 13)),
+            (Point(2, 16), Point(6, 74)), (Point(9, 0), Point(13, 0))}
+
+        self.assertEqual(found_opportunities, expected)
 
     def test_opportunities_filter_scope(self):
         code = '''
