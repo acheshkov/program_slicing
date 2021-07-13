@@ -4,178 +4,172 @@ __credits__ = ['lyriccoder, kuyaki']
 __maintainer__ = 'lyriccoder'
 __date__ = '2021/05/20'
 
-import itertools
+from collections import defaultdict
 from itertools import combinations_with_replacement
-from typing import Tuple, Iterator, List, Dict, Optional, Any
+from typing import Iterable, List, Dict, Set
 
-import tree_sitter
-from tree_sitter import Node
+import networkx
 
-from program_slicing.graph.parse import tree_sitter_ast
-from program_slicing.graph.parse import tree_sitter_parsers
+from program_slicing.decomposition.program_slice import ProgramSlice
+from program_slicing.decomposition.slice_predicate import SlicePredicate
+from program_slicing.graph.manager import ProgramGraphsManager
+from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
 
 
-def get_block_slices(source_code: str, lang: str) -> \
-        List[Tuple[
-            Point,
-            Point
-        ]]:
-    """
-    Return opportunities list.
-    :param source_code: source code that should be decomposed.
-    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
-    :return: list of tuples where first item is start point, last item is end point.
-    """
-    # filter_wrong_statements(source_code, lang)
-    statements_by_block_id: Dict[int, List[tree_sitter.Node]] = __determine_unique_blocks(source_code, lang)
-    if not statements_by_block_id:
-        return []
-    statements_combinations_by_block_id = __generate_all_possible_opportunities(statements_by_block_id)
-    ranges = __count_block_bounds(statements_combinations_by_block_id)
-    # we subtract  since we added class and method to the block of the passed code
-    return sorted(list(itertools.chain(*ranges)), key=lambda x: (x[0][0], x[1][0]))
+def build_opportunities_filtered(
+        source_code: str,
+        lang: str,
+        min_amount_of_lines: int = None,
+        max_amount_of_lines: int = None,
+        max_percentage_of_lines: float = None) -> Iterable[ProgramSlice]:
+    slice_predicate = SlicePredicate(
+        min_amount_of_lines=min_amount_of_lines,
+        max_amount_of_lines=max_amount_of_lines,
+        lang_to_check_parsing=lang)
+    return (program_slice for program_slice in build_opportunities(
+        source_code,
+        lang,
+        max_percentage_of_lines=max_percentage_of_lines
+    ) if slice_predicate(program_slice))
 
 
-def __determine_unique_blocks(source_code: str, lang: str) -> Dict[int, List[tree_sitter.Node]]:
-    """
-    Gets unique blocks.
-    :param source_code: source code that should be analyzed.
-    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
-    :return: dict with unique key, where value is block.
-    """
-    counter = 0
-    statements_by_block_id: Dict[int, List[tree_sitter.Node]] = {}
-    ast = tree_sitter_ast(source_code, lang).root_node
-    source_code_bytes = bytes(source_code, "utf-8")
-    block_nodes_and_levels = (
-        (block_node, level)
-        for block_node, level in __get_block_nodes_per_level(ast)
-        if not __ast_contains_outer_goto(source_code_bytes, block_node)
-    )
-    for block_node, level in block_nodes_and_levels:
-        named_node = block_node.children[0]
-        named_node = named_node if named_node.is_named else named_node.next_named_sibling
-        statements_by_block_id[counter] = []
-        while named_node:
-            statements_by_block_id[counter].append(named_node)
-            named_node = named_node.next_named_sibling
-        if statements_by_block_id[counter]:
-            counter += 1
-    return statements_by_block_id
-
-
-def __traverse_ast(root: tree_sitter.Node, level=0) -> Iterator[Tuple[tree_sitter.Node, int]]:
-    """
-    Traverse ast.
-    :param root: node to start traversing.
-    :param level: start level.
-    :return: child with level.
-    """
-    for child in root.children:
-        for ast_and_level in __traverse_ast(child, level + 1):
-            yield ast_and_level
-    yield root, level
-
-
-def __get_block_nodes_per_level(root: tree_sitter.Node) -> Iterator[Tuple[tree_sitter.Node, int]]:
-    """
-    Returns block with level number in ast tree.
-    :param root: node to start finding.
-    :return: found node with level.
-    """
-    for ast, level in __traverse_ast(root):
-        # get blocks for cycles, etc.
-        body_node = ast.child_by_field_name("body")
-        # get blocks for if statement
-        consequence_node = ast.child_by_field_name("consequence")
-        # get blocks for else statement
-        alternative_node = ast.child_by_field_name("alternative")
-        if body_node is not None:
-            yield body_node, level
-        elif consequence_node is not None:
-            yield consequence_node, level
-            if alternative_node is not None:
-                yield alternative_node, level
-        elif ast.type == "finally_clause":
-            if len(ast.children) > 1:
-                yield ast.children[1], level
-        elif ast.type == "program":
-            if {
-                "class_declaration",
-                "enum_declaration",
-                "interface_declaration",
-            }.intersection({node.type for node in ast.children}):
+def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=None) -> Iterable[ProgramSlice]:
+    source_lines = source_code.split("\n")
+    manager = ProgramGraphsManager(source_code, lang)
+    statements_in_scope = __build_statements_in_scope(manager)
+    for scope, statements in statements_in_scope.items():
+        dominant_statements = __build_dominant_statements(statements)
+        id_combinations = [
+            c for c in combinations_with_replacement([idx for idx in range(len(dominant_statements))], 2)
+        ]
+        for ids in id_combinations:
+            current_statements = dominant_statements[ids[0]: ids[1] + 1]
+            elder_statements = [
+                s for s in manager.get_control_dependence_graph()
+                if s.start_point >= current_statements[-1].end_point
+            ]
+            if not current_statements:
                 continue
-            yield ast, level
+            if max_percentage_of_lines is not None:
+                lines_n = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number
+                if float(lines_n) / len(source_lines) > max_percentage_of_lines:
+                    continue
+            extended_statements = __get_all_statements(
+                manager,
+                current_statements[0].start_point,
+                current_statements[-1].end_point)
+            changed_variables = __get_changed_variables(manager, extended_statements)
+            used_variables = __get_used_variables(manager, elder_statements)
+            changed_and_used_variables = changed_variables.intersection(used_variables)
+            if len(changed_and_used_variables) > 1:
+                continue
+            if len(__get_outer_goto(manager, extended_statements, scope)) > 0:
+                continue
+            if __contain_redundant_statements(manager, extended_statements):
+                continue
+            yield ProgramSlice(source_lines).from_statements(extended_statements)
 
 
-def __ast_contains_outer_goto(source_code_bytes: bytes, ast: Node, hooks: Dict[str, int] = None) -> bool:
-    if hooks is None:
-        hooks = {}
-    ast_name = tree_sitter_parsers.node_name(source_code_bytes, ast)
-    ast_name = 0 if ast_name is None else ast_name
-    ast_is_goto = \
-        ast.type == "break_statement" or \
-        ast.type == "continue_statement"
-    ast_is_hook = \
-        ast.type == "labeled_statement" or \
-        ast.type == "for_statement" or \
-        ast.type == "enhanced_for_statement" or \
-        ast.type == "while_statement"
-    if ast_is_goto:
-        if ast_name not in hooks:
+def __build_statements_in_scope(manager: ProgramGraphsManager) -> Dict[Statement, Set[Statement]]:
+    statements_in_scope = defaultdict(set)
+    cdg = manager.get_control_dependence_graph()
+    for statement in cdg:
+        scope = manager.get_scope_statement(statement)
+        if scope is None:
+            continue
+        statements_in_scope[scope].add(statement)
+    return statements_in_scope
+
+
+def __build_dominant_statements(statements: Iterable[Statement]) -> List[Statement]:
+    statements = sorted(
+        statements,
+        key=lambda s: (s.start_point, (-s.end_point.line_number, -s.end_point.column_number)))
+    result = []
+    for statement in statements:
+        if not result or statement.end_point > result[-1].end_point:
+            result.append(statement)
+    return result
+
+
+def __get_all_statements(manager: ProgramGraphsManager, start_point: Point, end_point: Point) -> Set[Statement]:
+    result = set()
+    for statement in manager.get_control_dependence_graph():
+        if start_point <= statement.start_point and end_point >= statement.end_point:
+            result.add(statement)
+    return result
+
+
+def __get_changed_variables(manager: ProgramGraphsManager, statements: Iterable[Statement]) -> Set[Statement]:
+    used_variables = set()
+    for statement in statements:
+        if statement.statement_type == StatementType.VARIABLE:
+            used_variables.add(statement)
+        if statement.statement_type == StatementType.ASSIGNMENT:
+            if statement not in manager.get_data_dependence_graph():
+                continue
+            for ancestor in networkx.ancestors(manager.get_data_dependence_graph(), statement):
+                if ancestor.statement_type == StatementType.VARIABLE:
+                    used_variables.add(ancestor)
+    return used_variables
+
+
+def __get_used_variables(manager: ProgramGraphsManager, statements: Iterable[Statement]) -> Set[Statement]:
+    used_variables = set()
+    for statement in statements:
+        if statement not in manager.get_data_dependence_graph():
+            continue
+        for ancestor in networkx.ancestors(manager.get_data_dependence_graph(), statement):
+            if ancestor.statement_type == StatementType.VARIABLE:
+                used_variables.add(ancestor)
+    return used_variables
+
+
+def __get_outer_goto(
+        manager: ProgramGraphsManager,
+        statements: Iterable[Statement],
+        scope: Statement) -> Set[Statement]:
+    cdg = manager.get_control_dependence_graph()
+    scope = 0 if scope is None else scope
+    outer_goto = set()
+    for statement in statements:
+        if statement.statement_type == StatementType.GOTO:
+            if statement in cdg.control_flow:
+                for flow_statement in cdg[statement]:
+                    if flow_statement.start_point < scope.start_point or flow_statement.end_point > scope.end_point:
+                        outer_goto.add(statement)
+    return outer_goto
+
+
+def __contain_redundant_statements(manager: ProgramGraphsManager, statements: Set[Statement]) -> bool:
+    for statement in statements:
+        if statement.ast_node_type == "else" or statement.ast_node_type == "catch_clause":
+            for predecessor in manager.get_control_dependence_graph().predecessors(statement):
+                if predecessor not in statements:
+                    return True
+        elif statement.ast_node_type == "finally_clause" and __is_redundant_finally(manager, statement, statements):
             return True
-    elif ast_is_hook:
-        val = hooks.get(ast_name, 0)
-        hooks[ast_name] = val + 1
-    if ast.children:
-        for child in ast.children:
-            if __ast_contains_outer_goto(source_code_bytes, child, hooks):
-                return True
-    if ast_is_hook:
-        val = hooks.get(ast_name, None)
-        if val <= 1:
-            del hooks[ast_name]
-        else:
-            hooks[ast_name] = val - 1
+        elif statement.ast_node_type == "if_statement" and __is_redundant_if(manager, statement, statements):
+            return True
     return False
 
 
-def __generate_all_possible_opportunities(
-        statements_by_block_id: Dict[int, List[tree_sitter.Node]]) -> Dict[int, List[List[Node]]]:
-    """
-    Get all possible combinations of blocks.
-    :param statements_by_block_id: dict with unique blocks.
-    :return: dict with combinations of statements for block.
-    """
-    statements_combinations_by_block_id = {}
-    for block_id, statements in statements_by_block_id.items():
-        id_combinations = [c for c in combinations_with_replacement([idx for idx in range(len(statements))], 2)]
-        statements_combinations = [statements[ids[0]: ids[1] + 1] for ids in id_combinations]
-        statements_combinations_by_block_id[block_id] = statements_combinations
-    return statements_combinations_by_block_id
+def __is_redundant_finally(manager: ProgramGraphsManager, statement: Statement, statements: Set[Statement]) -> bool:
+    cfg = manager.get_control_flow_graph()
+    finally_block = manager.get_basic_block(statement)
+    if finally_block is None:
+        return True
+    for predecessor_block in cfg.predecessors(finally_block):
+        if predecessor_block.statements and predecessor_block.statements[-1] not in statements:
+            return True
+    return False
 
 
-def __count_block_bounds(statements_combinations_by_block_id) -> List[List[Tuple[Optional[Any], Optional[Any]]]]:
-    """
-    Count min and max lines for blocks.
-    :param statements_combinations_by_block_id: dict with unique blocks.
-    Key is unique int, value is list of ranges.
-    :return: List of line ranges.
-    """
-    ranges_by_block_id = {}
-    for block_id, statements_combinations in statements_combinations_by_block_id.items():
-        ranges = []
-        for statements_combination in statements_combinations:
-            start_point = None
-            end_point = None
-            for statement in statements_combination:
-                if start_point is None or statement.start_point < start_point:
-                    start_point = statement.start_point
-                if end_point is None or statement.end_point > end_point:
-                    end_point = statement.end_point
-            ranges.append((start_point, end_point))
-        ranges_by_block_id[block_id] = ranges
-
-    return [list(x) for x in ranges_by_block_id.values()]
+def __is_redundant_if(manager: ProgramGraphsManager, statement: Statement, statements: Set[Statement]) -> bool:
+    cdg = manager.get_control_dependence_graph()
+    if statement in cdg.control_flow:
+        for successor in cdg.control_flow[statement]:
+            if successor.ast_node_type == "else" and successor not in statements:
+                return True
+    return False
