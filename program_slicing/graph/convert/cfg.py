@@ -4,8 +4,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/04/01'
 
-import bisect
-from typing import Dict, Set, List, Tuple, Optional
+from typing import Dict, Set
 
 import networkx
 
@@ -14,7 +13,7 @@ from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.pdg import ProgramDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
-from program_slicing.graph.statement import Statement, StatementType, Point
+from program_slicing.graph.statement import Statement, StatementType
 
 
 def to_cdg(cfg: ControlFlowGraph) -> ControlDependenceGraph:
@@ -42,6 +41,7 @@ def to_ddg(cfg: ControlFlowGraph) -> DataDependenceGraph:
     for root in cfg.entry_points:
         __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
         ddg.add_entry_point(root.root)
+    ddg.set_scope_dependency(cfg.scope_dependency)
     __correct_scope_relations(ddg)
     return ddg
 
@@ -101,12 +101,11 @@ def __update_variables(old_variables: Dict[str, Set[Statement]], new_variables: 
 
 
 def __correct_scope_relations(ddg: DataDependenceGraph) -> None:
-    scope_for_statement: Dict[Statement, Statement] = __obtain_scope_hierarchy(ddg)
     variable_statements = [statement for statement in ddg if statement.statement_type == StatementType.VARIABLE]
     for variable_statement in variable_statements:
-        if variable_statement not in scope_for_statement:
+        if variable_statement not in ddg.scope_dependency:
             continue
-        variable_scope = scope_for_statement[variable_statement]
+        variable_scope = ddg.scope_dependency[variable_statement]
         remove_statements = []
         for statement in networkx.descendants(ddg, variable_statement):
             if statement.start_point < variable_scope.start_point or statement.end_point > variable_scope.end_point:
@@ -118,50 +117,3 @@ def __correct_scope_relations(ddg: DataDependenceGraph) -> None:
                         variable_scope.end_point >= predecessor.end_point:
                     remove_edges.append((predecessor, statement))
             ddg.remove_edges_from(remove_edges)
-
-
-def __obtain_scope_hierarchy(ddg: DataDependenceGraph) -> Dict[Statement, Statement]:
-    scopes_for_start_point: Dict[Point, Statement] = {}
-    scopes_for_end_point: Dict[Point, Statement] = {}
-    scopes: List[Statement] = sorted([
-        statement for statement in ddg if
-        statement.statement_type == StatementType.SCOPE or
-        statement.statement_type == StatementType.GOTO or
-        statement.statement_type == StatementType.BRANCH or
-        statement.statement_type == StatementType.LOOP or
-        statement.statement_type == StatementType.FUNCTION
-    ], key=lambda statement: (
-        statement.start_point,
-        (-statement.end_point.line_number, -statement.end_point.column_number)
-    ))
-    points = []
-    for scope in scopes:
-        interval_start, interval_end = __obtain_interval(points, scope)
-        if interval_start != scope.start_point:
-            bisect.insort(points, scope.start_point)
-            # insort is slow on array list, use linked list instead
-            if interval_start in scopes_for_start_point:
-                scopes_for_end_point[scope.start_point] = scopes_for_start_point[interval_start]
-        if interval_end != scope.end_point:
-            bisect.insort(points, scope.end_point)
-            # insort is slow on array list, use linked list instead
-            if interval_end in scopes_for_end_point:
-                scopes_for_start_point[scope.end_point] = scopes_for_end_point[interval_end]
-        scopes_for_start_point[scope.start_point] = scope
-        scopes_for_end_point[scope.end_point] = scope
-    result = {}
-    for statement in ddg:
-        interval_start, interval_end = __obtain_interval(points, statement)
-        scope = None if (interval_start is None or interval_end is None) else \
-            scopes_for_start_point.get(interval_start, None)
-        if scope is not None:
-            result[statement] = scope
-    return result
-
-
-def __obtain_interval(points: List[Point], statement: Statement) -> Tuple[Optional[Point], Optional[Point]]:
-    nearest_start_point_id = bisect.bisect_right(points, statement.start_point) - 1
-    nearest_start_point = None if nearest_start_point_id < 0 else points[nearest_start_point_id]
-    nearest_end_point_id = bisect.bisect_left(points, statement.start_point)
-    nearest_end_point = None if nearest_end_point_id >= len(points) else points[nearest_end_point_id]
-    return nearest_start_point, nearest_end_point

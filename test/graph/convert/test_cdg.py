@@ -340,7 +340,7 @@ class CDGTestCase(TestCase):
             successors = [str(successor) for successor in graph.successors(node)]
             if successors:
                 result.append(str(node) + ":\n\t" + "\n\t".join(successors))
-        return "".join(result)
+        return "\n".join(result)
 
     def assertIsomorphic(self, graph1, graph2) -> None:
         if not networkx.is_isomorphic(graph1, graph2):
