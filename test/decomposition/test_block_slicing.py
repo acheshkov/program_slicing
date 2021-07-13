@@ -4,70 +4,69 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/01'
 
-import unittest
 from unittest import TestCase
 
-from program_slicing.decomposition import block_slicing
-from program_slicing.decomposition.block_slicing import build_opportunities_filtered, build_opportunities
+from program_slicing.decomposition.block_slicing import build_opportunities_filtered, __build_statements_in_scope
 from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.manager import ProgramGraphsManager
 
-determine_unique_blocks = block_slicing.__determine_unique_blocks
+build_statements_in_scope = __build_statements_in_scope
 
 
 class BlockSlicingTestCase(TestCase):
-
     def test_identify_unique_block_with_if(self) -> None:
+
         if_statement = '''
         if (workspace == null) {
             return Collections.emptySet();
         }
         '''
-        blocks, _ = determine_unique_blocks(if_statement, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(if_statement, LANG_JAVA)
+        self.assertEqual(4, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_with_for_each(self) -> None:
         for_each_block = '''
         for (LaunchConfiguration config: workspace.getLaunchConfigurations()) { int i = 0;}
         '''
-        blocks, _ = determine_unique_blocks(for_each_block, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(for_each_block, LANG_JAVA)
+        self.assertEqual(3, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_with_while(self) -> None:
         while_block = '''
         while (null != (line = input.readLine()) && maxLines > 0) {
                 maxLines--;
         }'''
-        blocks, _ = determine_unique_blocks(while_block, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        self.assertEqual(3, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_with_sync(self) -> None:
         sync_block = '''
         synchronized (getLock(cache)) {
            url = cache.toURI().toURL();
         }'''
-        blocks, _ = determine_unique_blocks(sync_block, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(sync_block, LANG_JAVA)
+        self.assertEqual(2, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_with_for(self) -> None:
         for_cycle_block = '''
         for (int i = 0; i < 10; ++i) {
             foo();
         }'''
-        blocks, _ = determine_unique_blocks(for_cycle_block, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(for_cycle_block, LANG_JAVA)
+        self.assertEqual(3, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_without_brackets(self) -> None:
         block_without_brackets = '''
         for (int i = 0; i < 10; ++i)
             foo();
         '''
-        blocks, _ = determine_unique_blocks(block_without_brackets, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(block_without_brackets, LANG_JAVA)
+        self.assertEqual(2, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_blocks_with_try(self) -> None:
         block_without_try = '''
-            try {
-                tracker.waitForAll();
+            try (int resource = getResources()) {
+                tracker.waitForAll(resource);
             } catch (Exception e) {
                 int i = 0;
             }
@@ -75,8 +74,8 @@ class BlockSlicingTestCase(TestCase):
                 int j = 0;
             }
         '''
-        blocks, _ = determine_unique_blocks(block_without_try, LANG_JAVA)
-        self.assertEqual(4, len(blocks))
+        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
+        self.assertEqual(6, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_blocks_with_anonymous_class(self) -> None:
         block_without_try = '''
@@ -92,15 +91,15 @@ class BlockSlicingTestCase(TestCase):
             }
         };
         '''
-        blocks, _ = determine_unique_blocks(block_without_try, LANG_JAVA)
-        self.assertEqual(3, len(blocks))
+        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
+        self.assertEqual(5, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_blocks_with_lambda(self) -> None:
         block_without_lambda = '''
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
-        blocks, _ = determine_unique_blocks(block_without_lambda, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(block_without_lambda, LANG_JAVA)
+        self.assertEqual(2, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_with_break(self) -> None:
         while_block = '''
@@ -122,8 +121,8 @@ class BlockSlicingTestCase(TestCase):
             }
         }
         '''
-        blocks, _ = determine_unique_blocks(while_block, LANG_JAVA)
-        self.assertEqual(2, len(blocks))
+        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        self.assertEqual(13, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_with_continue(self) -> None:
         while_block = '''
@@ -133,10 +132,9 @@ class BlockSlicingTestCase(TestCase):
              if (true) { continue;}
         }
         '''
-        blocks, _ = determine_unique_blocks(while_block, LANG_JAVA)
-        self.assertEqual(1, len(blocks))
+        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        self.assertEqual(5, len(build_statements_in_scope(manager)))
 
-    @unittest.skip
     def test_opportunities_ranges(self):
         expected_opportunities = {
             ((1, 8), (28, 9)), ((1, 8), (29, 59)), ((1, 8), (39, 10)), ((1, 8), (14, 9)),
@@ -154,7 +152,7 @@ class BlockSlicingTestCase(TestCase):
             ((29, 8), (47, 17)),
             ((31, 8), (39, 10)), ((31, 8), (41, 51)), ((31, 8), (43, 34)), ((31, 8), (46, 34)),
             ((31, 8), (47, 17)),
-            ((41, 8), (47, 17))}
+            ((41, 8), (46, 34)), ((41, 8), (47, 17)), ((42, 8), (47, 17))}
         self.t_ = '''
         int t = 12;
         fImage= loadImage("logo.gif");
@@ -206,7 +204,12 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {
             ((program_slice.ranges[0][0].line_number, program_slice.ranges[0][0].column_number),
              (program_slice.ranges[-1][1].line_number, program_slice.ranges[-1][1].column_number))
-            for program_slice in build_opportunities_filtered(self.t_, LANG_JAVA) if program_slice.ranges}
+            for program_slice in build_opportunities_filtered(
+                self.t_,
+                LANG_JAVA,
+                min_amount_of_lines=5,
+                max_percentage_of_lines=0.8
+            ) if program_slice.ranges}
         self.assertEqual(expected_opportunities, found_opportunities)
 
     def test_else_blocks(self) -> None:
@@ -281,12 +284,19 @@ class BlockSlicingTestCase(TestCase):
         all_lines = code.split('\n')
         max_percentage = 0.8
         found_opportunities = {
-            ((program_slice.ranges[0][0].line_number, program_slice.ranges[0][0].column_number),
-             (program_slice.ranges[-1][1].line_number, program_slice.ranges[-1][1].column_number))
-            for program_slice in build_opportunities_filtered(code, LANG_JAVA)
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in build_opportunities_filtered(
+                code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=max_percentage)
         }
-        self.assertEqual([x for x in found_opportunities if x[1][0] - x[0][0] < 2], [])
-        self.assertEqual([x for x in found_opportunities if (len(all_lines) / x[1][0] - x[0][0]) > max_percentage], [])
+        self.assertEqual([], [x for x in found_opportunities if x[1] - x[0] < 4])
+        self.assertEqual([], [x for x in found_opportunities if (len(all_lines) / x[1] - x[0]) > max_percentage])
+        max_percentage = 0
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in build_opportunities_filtered(
+                code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=max_percentage)
+        }
+        self.assertEqual(set(), found_opportunities)
 
     def test_opportunities_filter_scope(self):
         code = '''
@@ -357,10 +367,12 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(complex_objects, LANG_JAVA)
+            for program_slice in build_opportunities_filtered(
+                complex_objects, LANG_JAVA, min_amount_of_lines=2, max_percentage_of_lines=0.8)
         }
         self.assertEqual({
-            (1, 11),
+            (1, 10),
+            (2, 10),
             (3, 4), (3, 8), (3, 9),
             (4, 5), (4, 6), (4, 7), (4, 8), (4, 9),
             (5, 6), (5, 7), (5, 8), (5, 9),

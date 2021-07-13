@@ -282,17 +282,20 @@ def __handle_for(
             continue_statements=continue_statements,
             exit_statements=exit_statements,
             variable_names=variable_names)
-    condition = __parse(
-        source_code_bytes,
-        ast.child_by_field_name("condition"),
-        cdg,
-        entry_points,
-        break_statements=break_statements,
-        continue_statements=continue_statements,
-        exit_statements=exit_statements,
-        variable_names=variable_names)
+    condition_ast = ast.child_by_field_name("condition")
+    condition = []
+    if condition_ast is not None:
+        condition = __parse(
+            source_code_bytes,
+            condition_ast,
+            cdg,
+            entry_points,
+            break_statements=break_statements,
+            continue_statements=continue_statements,
+            exit_statements=exit_statements,
+            variable_names=variable_names)
+    condition.append(statement)
     siblings += condition
-    siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
     entry_points = [statement]
     local_break_statements = []
