@@ -148,12 +148,28 @@ def __contain_redundant_statements(manager: ProgramGraphsManager, statements: Se
             for predecessor in manager.get_control_dependence_graph().predecessors(statement):
                 if predecessor not in statements:
                     return True
-        elif statement.ast_node_type == "finally_clause":
-            cfg = manager.get_control_flow_graph()
-            finally_block = manager.get_basic_block(statement)
-            if finally_block is None:
+        elif statement.ast_node_type == "finally_clause" and __is_redundant_finally(manager, statement, statements):
+            return True
+        elif statement.ast_node_type == "if_statement" and __is_redundant_if(manager, statement, statements):
+            return True
+    return False
+
+
+def __is_redundant_finally(manager: ProgramGraphsManager, statement: Statement, statements: Set[Statement]) -> bool:
+    cfg = manager.get_control_flow_graph()
+    finally_block = manager.get_basic_block(statement)
+    if finally_block is None:
+        return True
+    for predecessor_block in cfg.predecessors(finally_block):
+        if predecessor_block.statements and predecessor_block.statements[-1] not in statements:
+            return True
+    return False
+
+
+def __is_redundant_if(manager: ProgramGraphsManager, statement: Statement, statements: Set[Statement]) -> bool:
+    cdg = manager.get_control_dependence_graph()
+    if statement in cdg.control_flow:
+        for successor in cdg.control_flow[statement]:
+            if successor.ast_node_type == "else" and successor not in statements:
                 return True
-            for predecessor_block in cfg.predecessors(finally_block):
-                if predecessor_block.statements and predecessor_block.statements[-1] not in statements:
-                    return True
     return False
