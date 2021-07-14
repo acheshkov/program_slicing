@@ -63,9 +63,8 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
     :return: generator of decomposed source code versions in a string format.
     """
     slice_predicate = SlicePredicate(
-        min_amount_of_lines=3,
-        max_amount_of_lines=45,
-        forbidden_words={"return ", "return;"},
+        min_amount_of_lines=1,
+        max_amount_of_lines=60,
         lang_to_check_parsing=lang)
     slices = get_complete_computation_slices(source_code, lang, slice_predicate)
     for function_statement, variable_statement, cc_slice in slices:
