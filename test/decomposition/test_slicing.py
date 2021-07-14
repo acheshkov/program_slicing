@@ -196,6 +196,58 @@ class SlicingTestCase(TestCase):
                 "}",
                 program_slice.code)
 
+    def test_get_complete_computation_slices_switch(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                int a = 10;
+                for (int i = 0; i < 10; i++) {
+                    switch(a) {
+                        default:
+                            a = 1;
+                        case 10:
+                            myFoo();
+                        case 5:
+                            break;
+                        case 3:
+                            continue;
+                        case 4:
+                            a = -1;
+                    }
+                }
+                return a;
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(2, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "int a = 10;\n"
+                    "for (int i = 0; i < 10; i++) {\n"
+                    "    switch(a) {\n"
+                    "        default:\n"
+                    "            a = 1;\n"
+                    "        case 10:\n"
+                    "        case 5:\n"
+                    "            break;\n"
+                    "        case 3:\n"
+                    "            continue;\n"
+                    "        case 4:\n"
+                    "            a = -1;\n"
+                    "    }\n"
+                    "}",
+                    program_slice.code)
+            elif variable_statement.name == "i":
+                self.assertEqual(
+                    "for (int i = 0; i < 10; i++) {\n"
+                    "}",
+                    program_slice.code)
+
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         self.assertEqual(2, len(variable_statements))
