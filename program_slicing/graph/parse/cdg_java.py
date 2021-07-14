@@ -483,6 +483,47 @@ def __handle_for_each(
     return siblings, local_break_statements
 
 
+def __handle_synchronized(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    siblings = []
+    entry_points = []
+    body_ast = ast.child_by_field_name("body")
+    parameters_ast = body_ast.prev_named_sibling
+    if parameters_ast is not None:
+        siblings += __parse(
+            source_code_bytes,
+            parameters_ast,
+            cdg,
+            entry_points,
+            break_statements=break_statements,
+            continue_statements=continue_statements,
+            exit_statements=exit_statements,
+            variable_names=variable_names)
+    siblings.append(statement)
+    __route_control_flow(entry_points, statement, cdg)
+    entry_points = [statement]
+    __route_control_flow(entry_points, siblings[0], cdg)
+    body = __parse(
+        source_code_bytes,
+        body_ast,
+        cdg,
+        entry_points,
+        break_statements=break_statements,
+        continue_statements=continue_statements,
+        exit_statements=exit_statements,
+        variable_names=variable_names)
+    for child in body:
+        cdg.add_edge(statement, child)
+    return siblings, entry_points
+
+
 def __handle_assignment(
         statement: Statement,
         source_code_bytes,
@@ -623,6 +664,8 @@ statement_type_and_handler_map = {
         (StatementType.LOOP, __handle_for),
     "enhanced_for_statement":
         (StatementType.LOOP, __handle_for_each),
+    "synchronized_statement":
+        (StatementType.LOOP, __handle_synchronized),
     "assignment_expression":
         (StatementType.ASSIGNMENT, __handle_assignment),
     "update_expression":

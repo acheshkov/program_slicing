@@ -5,7 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/05/20'
 
 from enum import Enum
-from typing import List, Tuple, Dict, Optional, Iterable
+from typing import List, Tuple, Dict, Set, Optional, Iterable
 
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
@@ -30,7 +30,7 @@ class ProgramSlice:
         self.__end_point: Optional[Point] = None
         self.__start_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.__end_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
-        self.__external_scope: Optional[Statement] = None
+        self.__scopes: Set[Statement] = set()
         self.__code = None
         self.__lines = None
         self.__ranges = None
@@ -82,6 +82,7 @@ class ProgramSlice:
         """
         if self.__ranges is not None:
             return self.__ranges
+        self.__update_scopes()
         self.__ranges = []
         for line_number in sorted(self.__end_points.keys()):
             start_column = self.__start_point.column_number if line_number == self.__start_point.line_number else (
@@ -126,16 +127,8 @@ class ProgramSlice:
             RangeType.BOUNDS if statement.statement_type == StatementType.SCOPE else \
             RangeType.FULL if statement.statement_type == StatementType.UNKNOWN else \
             RangeType.BEGINNING
-        start_point = statement.start_point
-        end_point = statement.end_point
-        if self.__external_scope is not None:
-            if start_point < self.__external_scope.start_point or end_point > self.__external_scope.end_point:
-                self.add_range(self.__external_scope.start_point, self.__external_scope.end_point, RangeType.BOUNDS)
-                self.__external_scope = None
-        if statement.statement_type == StatementType.SCOPE and \
-                (self.__start_point is None or start_point <= self.__start_point) and \
-                (self.__end_point is None or end_point >= self.__end_point):
-            self.__external_scope = statement
+        if statement.statement_type == StatementType.SCOPE:
+            self.__scopes.add(statement)
         else:
             self.add_range(statement.start_point, statement.end_point, range_type)
 
@@ -194,3 +187,11 @@ class ProgramSlice:
             self.__minimum_column = start_point.column_number
         elif end_point.column_number < self.__minimum_column:
             self.__minimum_column = max(0, end_point.column_number - 1)
+
+    def __update_scopes(self):
+        added_scopes = set()
+        for scope in self.__scopes:
+            if self.__start_point <= scope.start_point and self.__end_point >= scope.end_point:
+                self.add_range(scope.start_point, scope.end_point, RangeType.BOUNDS)
+                added_scopes.add(scope)
+        self.__scopes.difference_update(added_scopes)

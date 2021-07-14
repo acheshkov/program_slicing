@@ -248,6 +248,75 @@ class SlicingTestCase(TestCase):
                     "}",
                     program_slice.code)
 
+    def test_get_complete_computation_slices_synchronized(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                int a = 0;
+                int b = 1;
+                synchronized(a) {
+                    int c = 10;
+                    b = a;
+                    c = b;
+                }
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(3, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "int a = 0;",
+                    program_slice.code)
+            elif variable_statement.name == "b":
+                self.assertEqual(
+                    "int a = 0;\n"
+                    "int b = 1;\n"
+                    "synchronized(a) {\n"
+                    "    b = a;\n"
+                    "}",
+                    program_slice.code)
+            elif variable_statement.name == "c":
+                self.assertEqual(
+                    "int c = 10;\n"
+                    "b = a;\n"
+                    "c = b;",
+                    program_slice.code)
+
+    def test_get_complete_computation_slices_linear_scopes(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                {
+                    int b = 1;
+                    {
+                        {
+                            int a = 0;
+                        }
+                    }
+                }
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(2, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "int a = 0;",
+                    program_slice.code)
+            elif variable_statement.name == "b":
+                self.assertEqual(
+                    "int b = 1;",
+                    program_slice.code)
+
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         self.assertEqual(2, len(variable_statements))
