@@ -248,6 +248,112 @@ class SlicingTestCase(TestCase):
                     "}",
                     program_slice.code)
 
+    def test_get_complete_computation_slices_synchronized(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                int a = 0;
+                int b = 1;
+                synchronized(a) {
+                    int c = 10;
+                    b = a;
+                    c = b;
+                }
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(3, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "int a = 0;",
+                    program_slice.code)
+            elif variable_statement.name == "b":
+                self.assertEqual(
+                    "int a = 0;\n"
+                    "int b = 1;\n"
+                    "synchronized(a) {\n"
+                    "    b = a;\n"
+                    "}",
+                    program_slice.code)
+            elif variable_statement.name == "c":
+                self.assertEqual(
+                    "int c = 10;\n"
+                    "b = a;\n"
+                    "c = b;",
+                    program_slice.code)
+
+    def test_get_complete_computation_slices_linear_scopes(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                {
+                    int b = 1;
+                    {
+                        {
+                            int a = 0;
+                        }
+                    }
+                }
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(2, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "int a = 0;",
+                    program_slice.code)
+            elif variable_statement.name == "b":
+                self.assertEqual(
+                    "int b = 1;",
+                    program_slice.code)
+
+    def test_get_complete_computation_slices_unreachable(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                int a = 10;
+                while (1) {
+                    if (a < 10) {
+                        a++;
+                        continue;
+                    }
+                    else
+                        break;
+                    a = 0;
+                    break;
+                }
+                return a;
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(1, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            self.assertEqual(
+                "int a = 10;\n"
+                "while (1) {\n"
+                "    if (a < 10) {\n"
+                "        a++;\n"
+                "        continue;\n"
+                "    }\n"
+                "    else\n"
+                "        break;\n"
+                "}",
+                program_slice.code)
+
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         self.assertEqual(2, len(variable_statements))
@@ -258,7 +364,7 @@ class SlicingTestCase(TestCase):
         cdg = manager.get_control_dependence_graph()
         function_statements = [statement for statement in cdg.entry_points]
         for variable_statement in variable_statements:
-            seed_statements = obtain_seed_statements(cdg, function_statements[0], variable_statement)
+            seed_statements = obtain_seed_statements(manager, function_statements[0], variable_statement)
             self.assertEqual(2, len(seed_statements))
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
@@ -267,7 +373,7 @@ class SlicingTestCase(TestCase):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
         function_statements = [statement for statement in cdg.entry_points]
-        slicing_criteria = obtain_slicing_criteria(cdg, function_statements[0])
+        slicing_criteria = obtain_slicing_criteria(manager, function_statements[0])
         self.assertEqual({"a", "b"}, {key.name for key in slicing_criteria.keys()})
         for variable_statement, seed_statements in slicing_criteria.items():
             self.assertEqual(2, len(seed_statements))
@@ -279,14 +385,14 @@ class SlicingTestCase(TestCase):
         cdg = manager.get_control_dependence_graph()
         function_statements = [statement for statement in cdg.entry_points]
         for variable_statement in variable_statements:
-            seed_statements = obtain_seed_statements(cdg, function_statements[0], variable_statement)
+            seed_statements = obtain_seed_statements(manager, function_statements[0], variable_statement)
             self.assertEqual(1, len(obtain_common_boundary_blocks(manager, seed_statements)))
 
     def test_obtain_backward_slice(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
         function_statements = [statement for statement in cdg.entry_points]
-        slicing_criteria = obtain_slicing_criteria(cdg, function_statements[0])
+        slicing_criteria = obtain_slicing_criteria(manager, function_statements[0])
         basic_blocks = [block for block in manager.get_control_flow_graph()]
         self.assertEqual(1, len(basic_blocks))
         boundary_block = basic_blocks[0]
@@ -326,7 +432,7 @@ class SlicingTestCase(TestCase):
         manager, variable_statements = self.__get_manager_and_variables_0()
         cdg = manager.get_control_dependence_graph()
         function_statements = [statement for statement in cdg.entry_points]
-        slicing_criteria = obtain_slicing_criteria(cdg, function_statements[0])
+        slicing_criteria = obtain_slicing_criteria(manager, function_statements[0])
         for variable_statement, seed_statements in slicing_criteria.items():
             complete_computation_slices = obtain_complete_computation_slices(manager, seed_statements)
             self.assertEqual(1, len(complete_computation_slices))
