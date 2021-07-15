@@ -54,7 +54,8 @@ def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=Non
             if not current_statements:
                 continue
             if max_percentage_of_lines is not None:
-                lines_n = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number
+                lines_n = \
+                    current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
                 if float(lines_n) / len(source_lines) > max_percentage_of_lines:
                     continue
             extended_statements = __get_all_statements(
