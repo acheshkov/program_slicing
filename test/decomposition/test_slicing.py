@@ -317,6 +317,29 @@ class SlicingTestCase(TestCase):
                     "int b = 1;",
                     program_slice.code)
 
+    def test_get_complete_computation_slices_double_for(self):
+        source_code = """
+        class A {
+            int main(String args) {
+                for (int a = 0; a < n; a++) {
+                }
+                for (int a = 0; a < n; a++) {
+                }
+            }
+        }
+        """
+        slices = slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(2, len(slices))
+        for function_statement, variable_statement, program_slice in slices:
+            if variable_statement.name == "a":
+                self.assertEqual(
+                    "for (int a = 0; a < n; a++) {\n"
+                    "}",
+                    program_slice.code)
+
     def test_get_complete_computation_slices_unreachable(self):
         source_code = """
         class A {
@@ -361,10 +384,8 @@ class SlicingTestCase(TestCase):
 
     def test_obtain_seed_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
-        cdg = manager.get_control_dependence_graph()
-        function_statements = [statement for statement in cdg.entry_points]
         for variable_statement in variable_statements:
-            seed_statements = obtain_seed_statements(manager, function_statements[0], variable_statement)
+            seed_statements = obtain_seed_statements(manager, variable_statement)
             self.assertEqual(2, len(seed_statements))
             for seed_statement in seed_statements:
                 self.assertEqual(variable_statement.name, seed_statement.name)
@@ -382,10 +403,8 @@ class SlicingTestCase(TestCase):
 
     def test_obtain_common_boundary_blocks(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
-        cdg = manager.get_control_dependence_graph()
-        function_statements = [statement for statement in cdg.entry_points]
         for variable_statement in variable_statements:
-            seed_statements = obtain_seed_statements(manager, function_statements[0], variable_statement)
+            seed_statements = obtain_seed_statements(manager, variable_statement)
             self.assertEqual(1, len(obtain_common_boundary_blocks(manager, seed_statements)))
 
     def test_obtain_backward_slice(self):
