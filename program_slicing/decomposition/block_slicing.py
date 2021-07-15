@@ -37,8 +37,12 @@ def build_opportunities_filtered(
 def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=None) -> Iterable[ProgramSlice]:
     source_lines = source_code.split("\n")
     manager = ProgramGraphsManager(source_code, lang)
+    control_flow_dict = manager.get_control_dependence_graph().control_flow
     statements_in_scope = __build_statements_in_scope(manager)
     for scope, statements in statements_in_scope.items():
+        exit_points = {
+            statement for statement in __get_all_statements(manager, scope.end_point)
+        }
         dominant_statements = __build_dominant_statements(statements)
         id_combinations = [
             c for c in combinations_with_replacement([idx for idx in range(len(dominant_statements))], 2)
@@ -68,6 +72,15 @@ def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=Non
                 continue
             if __contain_redundant_statements(manager, extended_statements):
                 continue
+            exit_statements_count = 0
+            for statement in extended_statements:
+                if statement not in control_flow_dict:
+                    continue
+                for flow_statement in control_flow_dict[statement]:
+                    if flow_statement in exit_points:
+                        exit_statements_count += 1
+            if exit_statements_count > 1:
+                continue
             yield ProgramSlice(source_lines).from_statements(extended_statements)
 
 
@@ -93,10 +106,14 @@ def __build_dominant_statements(statements: Iterable[Statement]) -> List[Stateme
     return result
 
 
-def __get_all_statements(manager: ProgramGraphsManager, start_point: Point, end_point: Point) -> Set[Statement]:
+def __get_all_statements(
+        manager: ProgramGraphsManager,
+        start_point: Point = None,
+        end_point: Point = None) -> Set[Statement]:
     result = set()
     for statement in manager.get_control_dependence_graph():
-        if start_point <= statement.start_point and end_point >= statement.end_point:
+        if (start_point is None or start_point <= statement.start_point) and \
+                (end_point is None or end_point >= statement.end_point):
             result.add(statement)
     return result
 

@@ -30,7 +30,7 @@ def main():
                 found_opportunities = {
                     (program_slice.ranges[0][0].line_number + 1, program_slice.ranges[-1][1].line_number + 1)
                     for program_slice in build_opportunities_filtered(
-                        code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=0.8)
+                        code, LANG_JAVA, min_amount_of_lines=6, max_percentage_of_lines=0.8)
                 }
             observable_emos[java_file.name] = tuple(found_opportunities)
     run_check(expected_emos, observable_emos)
