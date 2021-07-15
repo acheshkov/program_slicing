@@ -40,19 +40,16 @@ def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=Non
     control_flow_dict = manager.get_control_dependence_graph().control_flow
     statements_in_scope = __build_statements_in_scope(manager)
     for scope, statements in statements_in_scope.items():
-        exit_points = {
-            statement for statement in __get_all_statements(manager, scope.end_point)
-        }
         dominant_statements = __build_dominant_statements(statements)
         id_combinations = [
             c for c in combinations_with_replacement([idx for idx in range(len(dominant_statements))], 2)
         ]
         for ids in id_combinations:
             current_statements = dominant_statements[ids[0]: ids[1] + 1]
-            elder_statements = [
+            elder_statements = {
                 s for s in manager.get_control_dependence_graph()
                 if s.start_point >= current_statements[-1].end_point
-            ]
+            }
             if not current_statements:
                 continue
             if max_percentage_of_lines is not None:
@@ -77,7 +74,7 @@ def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=Non
                 if statement not in control_flow_dict:
                     continue
                 for flow_statement in control_flow_dict[statement]:
-                    if flow_statement in exit_points:
+                    if flow_statement in elder_statements:
                         exit_statements_count += 1
             if exit_statements_count > 1:
                 continue
