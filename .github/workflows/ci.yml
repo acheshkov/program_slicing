@@ -34,5 +34,5 @@ jobs:
     - name: Integration tests
       run: |
         ls -a
-        ls program_slices/integration_tests
-        python3 program_slices/integration_tests/integration_block_slicing.py
+        ls program_slicing/integration_tests
+        python3 program_slicing/integration_tests/integration_block_slicing.py
