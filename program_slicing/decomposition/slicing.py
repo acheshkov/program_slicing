@@ -118,7 +118,7 @@ def __obtain_seed_statements(
         root: Statement,
         variable_statement: Statement) -> Set[Statement]:
     return {
-        statement for statement in networkx.algorithms.traversal.dfs_tree(manager.get_control_dependence_graph(), root)
+        statement for statement in networkx.descendants(manager.get_control_dependence_graph(), root)
         if __is_slicing_criterion(statement, variable_statement) and manager.get_basic_block(statement) is not None
     }
 
