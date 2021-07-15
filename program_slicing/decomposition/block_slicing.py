@@ -69,14 +69,14 @@ def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=Non
                 continue
             if __contain_redundant_statements(manager, extended_statements):
                 continue
-            exit_statements_count = 0
+            exit_statements = set()
             for statement in extended_statements:
                 if statement not in control_flow_dict:
                     continue
                 for flow_statement in control_flow_dict[statement]:
                     if flow_statement in elder_statements:
-                        exit_statements_count += 1
-            if exit_statements_count > 1:
+                        exit_statements.add(flow_statement)
+            if len(exit_statements) > 1:
                 continue
             yield ProgramSlice(source_lines).from_statements(extended_statements)
 
