@@ -26,6 +26,7 @@ def build_opportunities_filtered(
     slice_predicate = SlicePredicate(
         min_amount_of_lines=min_amount_of_lines,
         max_amount_of_lines=max_amount_of_lines,
+        lines_are_full=True,
         lang_to_check_parsing=lang)
     return (program_slice for program_slice in build_opportunities(
         source_code,

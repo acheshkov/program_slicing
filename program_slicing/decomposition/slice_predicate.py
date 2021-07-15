@@ -18,16 +18,19 @@ class SlicePredicate:
             min_amount_of_lines: int = None,
             max_amount_of_lines: int = None,
             lang_to_check_parsing: str = None,
-            forbidden_words: Set[str] = None):
+            forbidden_words: Set[str] = None,
+            lines_are_full: bool = True):
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
         self.__lang_to_check_parsing = lang_to_check_parsing
         self.__forbidden_words = forbidden_words
+        self.__lines_are_full = lines_are_full
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
             self.__check_parsing,
             self.__check_forbidden_words,
+            self.__check_lines_are_full
         ]
         self.__program_slice = None
 
@@ -85,6 +88,19 @@ class SlicePredicate:
         for forbidden_word in self.__forbidden_words:
             if forbidden_word in code:
                 return False
+        return True
+
+    def __check_lines_are_full(self) -> bool:
+        if self.__lines_are_full is None:
+            return True
+        source_lines = self.__program_slice.source_lines
+        for current_range in self.__program_slice.ranges:
+            current_line_bounds = \
+                source_lines[current_range[0].line_number][:current_range[0].column_number] + \
+                source_lines[current_range[1].line_number][current_range[1].column_number:]
+            for char in current_line_bounds:
+                if char != ' ' and char != '\t' and char != '\r':
+                    return False
         return True
 
 

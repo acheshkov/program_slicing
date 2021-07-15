@@ -657,11 +657,10 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             result = True
             scope = node.next_named_sibling
             declaration = node.prev_named_sibling
-            start_point, end_point = __parse_position_range(scope)
             entry_point = Statement(
                 StatementType.FUNCTION,
-                start_point=start_point,
-                end_point=end_point,
+                start_point=Point.from_tuple(node.start_point),
+                end_point=Point.from_tuple(scope.end_point),
                 affected_by=set(),
                 name=tree_sitter_parsers.node_name(source_code_bytes, declaration.children[-1]),
                 ast_node_type="method_declaration")
