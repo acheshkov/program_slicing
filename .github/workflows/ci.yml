@@ -33,4 +33,6 @@ jobs:
         python3 -m unittest discover -s test
     - name: Integration tests
       run: |
+        ls -a
+        ls integration_tests
         python3 integration_tests/integration_block_slicing.py
