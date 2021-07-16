@@ -19,7 +19,7 @@ class SlicePredicate:
             max_amount_of_lines: int = None,
             lang_to_check_parsing: str = None,
             forbidden_words: Set[str] = None,
-            lines_are_full: bool = True):
+            lines_are_full: bool = None):
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
         self.__lang_to_check_parsing = lang_to_check_parsing
@@ -108,17 +108,20 @@ def check_slice(
         program_slice: ProgramSlice,
         min_amount_of_lines: int = None,
         max_amount_of_lines: int = None,
-        lang_to_check_parsing: str = None) -> bool:
+        lang_to_check_parsing: str = None,
+        lines_are_full: bool = None) -> bool:
     """
     Check a ProgramSlice if it matches specified conditions.
     :param program_slice: slice that should to be checked.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
     :param lang_to_check_parsing: language in which slice should to be compilable.
+    :param lines_are_full: check if all the lines in slice are included fully.
     :return: True if slice matches specified conditions.
     """
     return SlicePredicate(
         min_amount_of_lines=min_amount_of_lines,
         max_amount_of_lines=max_amount_of_lines,
         lang_to_check_parsing=lang_to_check_parsing,
+        lines_are_full=lines_are_full
     )(program_slice)
