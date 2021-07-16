@@ -138,12 +138,11 @@ class BlockSlicingTestCase(TestCase):
 
     def test_opportunities_ranges(self):
         expected_opportunities = {
-            ((1, 8), (28, 9)), ((1, 8), (29, 59)), ((1, 8), (39, 10)), ((1, 8), (14, 9)),
+            ((1, 8), (28, 9)), ((1, 8), (29, 59)), ((1, 8), (14, 9)),
             ((2, 8), (14, 9)), ((2, 8), (28, 9)), ((2, 8), (29, 59)), ((2, 8), (39, 10)),
             ((3, 8), (14, 9)), ((3, 8), (28, 9)), ((3, 8), (29, 59)), ((3, 8), (39, 10)),
-            ((3, 8), (41, 51)),
             ((5, 8), (14, 9)), ((5, 8), (28, 9)), ((5, 8), (29, 59)), ((5, 8), (39, 10)),
-            ((5, 8), (41, 51)), ((5, 8), (43, 34)),
+            ((5, 8), (41, 51)),
             ((16, 8), (28, 9)), ((16, 8), (29, 59)), ((16, 8), (39, 10)), ((16, 8), (41, 51)),
             ((16, 8), (43, 34)), ((16, 8), (46, 34)), ((16, 8), (47, 17)),
             ((17, 12), (26, 13)),
@@ -407,7 +406,7 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in build_opportunities_filtered(
-                complex_objects, LANG_JAVA, min_amount_of_lines=2, max_percentage_of_lines=0.8)
+                complex_objects, LANG_JAVA, min_amount_of_lines=2, max_percentage_of_lines=1.0)
         }
         self.assertEqual({
             (1, 10),

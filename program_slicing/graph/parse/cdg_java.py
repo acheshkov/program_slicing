@@ -615,6 +615,8 @@ def __parse(
     :param cdg: Control Dependence Graph that will contain parsed Statements.
     :return: Statements that are siblings and should be placed instead of the given ast Node.
     """
+    if ast.type == "comment":
+        return []
     statement_type, statement_handler = __parse_statement_type_and_handler(ast)
     __start_point, __end_point = __parse_position_range(ast)
     if start_point is None:
