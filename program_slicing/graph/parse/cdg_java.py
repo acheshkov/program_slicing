@@ -151,7 +151,8 @@ def __handle_switch(
         for child in switch_block_item:
             cdg.add_edge(statement, child)
         switch_block_item_ast = switch_block_item_ast.next_named_sibling
-    return siblings, [statement] + entry_points + local_break_statements
+    __split_by_hook(local_break_statements, statement.name, entry_points, break_statements)
+    return siblings, [statement] + entry_points
 
 
 def __handle_if(
@@ -373,6 +374,10 @@ def __handle_for(
         continue_statements=local_continue_statements,
         exit_statements=exit_statements,
         variable_names=variable_names)
+    current_continue_statements = []
+    __split_by_hook(local_continue_statements, statement.name, current_continue_statements, continue_statements)
+    current_break_statements = []
+    __split_by_hook(local_break_statements, statement.name, current_break_statements, break_statements)
     update_ast = ast.child_by_field_name("update")
     if update_ast is not None:
         update = __parse(
@@ -385,14 +390,14 @@ def __handle_for(
             exit_statements=exit_statements,
             variable_names=variable_names)
         body += update
-        __route_control_flow(local_continue_statements, update[0], cdg)
+        __route_control_flow(current_continue_statements, update[0], cdg)
     else:
-        entry_points += local_continue_statements
+        entry_points += current_continue_statements
     __route_control_flow(entry_points, condition[0], cdg)
     for child in body:
         cdg.add_edge(statement, child)
-    local_break_statements.append(statement)
-    return siblings, local_break_statements
+    current_break_statements.append(statement)
+    return siblings, current_break_statements
 
 
 def __handle_for_each(
@@ -475,12 +480,14 @@ def __handle_for_each(
         continue_statements=local_continue_statements,
         exit_statements=exit_statements,
         variable_names=variable_names)
-    entry_points += local_continue_statements
+    __split_by_hook(local_continue_statements, statement.name, entry_points, continue_statements)
+    current_break_statements = []
+    __split_by_hook(local_break_statements, statement.name, current_break_statements, break_statements)
     __route_control_flow(entry_points, siblings[0], cdg)
     for child in body:
         cdg.add_edge(statement, child)
-    local_break_statements.append(statement)
-    return siblings, local_break_statements
+    current_break_statements.append(statement)
+    return siblings, current_break_statements
 
 
 def __handle_synchronized(
@@ -882,3 +889,15 @@ def __route_control_flow(
             cdg.control_flow[entry_point] = [statement_to]
         else:
             cdg.control_flow[entry_point].append(statement_to)
+
+
+def __split_by_hook(
+        goto_statements: List[Statement],
+        hook_name: str,
+        positive_result: List[Statement],
+        negative_result: List[Statement]) -> None:
+    for goto_statement in goto_statements:
+        if goto_statement.name is None or goto_statement.name == hook_name:
+            positive_result.append(goto_statement)
+        else:
+            negative_result.append(goto_statement)
