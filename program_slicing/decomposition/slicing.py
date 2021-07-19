@@ -66,7 +66,8 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
         min_amount_of_lines=3,
         max_amount_of_lines=20,
         forbidden_words={"return ", "return;"},
-        lang_to_check_parsing=lang)
+        lang_to_check_parsing=lang,
+        has_returnable_variable=True)
     slices = get_complete_computation_slices(source_code, lang, slice_predicate)
     for function_statement, variable_statement, cc_slice in slices:
         yield "\033[33m\nSlice" + \
