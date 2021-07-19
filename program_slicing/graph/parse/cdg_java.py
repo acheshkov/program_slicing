@@ -151,7 +151,13 @@ def __handle_switch(
         for child in switch_block_item:
             cdg.add_edge(statement, child)
         switch_block_item_ast = switch_block_item_ast.next_named_sibling
-    return siblings, [statement] + entry_points + local_break_statements
+    current_break_statements = []
+    for break_statement in local_break_statements:
+        if break_statement.name is None or break_statement.name == statement.name:
+            current_break_statements.append(break_statement)
+        else:
+            break_statements.append(break_statement)
+    return siblings, [statement] + entry_points + current_break_statements
 
 
 def __handle_if(
