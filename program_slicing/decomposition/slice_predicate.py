@@ -91,7 +91,7 @@ class SlicePredicate:
         cdg = self.__manager.get_control_dependence_graph()
         for statement in cdg:
             if statement.statement_type == StatementType.GOTO:
-                if statement not in cdg.control_flow or not cdg.control_flow[statement]:
+                if not cdg.control_flow.get(statement, None):
                     return False
         return True
 
