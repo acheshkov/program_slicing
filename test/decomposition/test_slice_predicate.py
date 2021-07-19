@@ -11,6 +11,7 @@ from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition import check_slice
+from program_slicing.graph.parse import parse
 
 
 class CheckSliceTestCase(TestCase):
@@ -34,7 +35,7 @@ class CheckSliceTestCase(TestCase):
 
     @staticmethod
     def __get_slice_0() -> ProgramSlice:
-        slicer = ProgramSlice("""
+        program_slice = ProgramSlice("""
         int a = 0;
         int b = 0;
         int c = 0;
@@ -46,8 +47,32 @@ class CheckSliceTestCase(TestCase):
         c = b;
         """.split("\n"))
         for statement in CheckSliceTestCase.__get_statements_0():
-            slicer.add_statement(statement)
-        return slicer
+            program_slice.add_statement(statement)
+        return program_slice
+
+    @staticmethod
+    def __get_slice_1() -> ProgramSlice:
+        source_lines = """
+        hook:
+        for(int i = 0; i < n; i++) {
+            i++;
+            break hook;
+        }
+        """.split("\n")
+        return ProgramSlice(source_lines).from_ranges([
+            (Point(0, 0), Point(len(source_lines) - 1, len(source_lines[-1])))
+        ])
+
+    @staticmethod
+    def __get_slice_2() -> ProgramSlice:
+        source_lines = """
+        for(int i = 0; i < n; i++) {
+            break hook;
+        }
+        """.split("\n")
+        return ProgramSlice(source_lines).from_ranges([
+            (Point(0, 0), Point(len(source_lines) - 1, len(source_lines[-1])))
+        ])
 
     def test_statements(self) -> None:
         self.assertTrue(
@@ -65,3 +90,26 @@ class CheckSliceTestCase(TestCase):
                 CheckSliceTestCase.__get_slice_0(),
                 min_amount_of_lines=5,
                 max_amount_of_lines=5))
+
+    def test_parsing(self) -> None:
+        self.assertTrue(
+            check_slice(
+                CheckSliceTestCase.__get_slice_1(),
+                lang_to_check_parsing=parse.LANG_JAVA
+            )
+        )
+        self.assertFalse(
+            check_slice(
+                CheckSliceTestCase.__get_slice_2(),
+                lang_to_check_parsing=parse.LANG_JAVA
+            )
+        )
+
+    def test_returnable_variable(self) -> None:
+        self.assertFalse(
+            check_slice(
+                CheckSliceTestCase.__get_slice_1(),
+                lang_to_check_parsing=parse.LANG_JAVA,
+                has_returnable_variable=True
+            )
+        )

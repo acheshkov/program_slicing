@@ -373,6 +373,18 @@ def __handle_for(
         continue_statements=local_continue_statements,
         exit_statements=exit_statements,
         variable_names=variable_names)
+    current_continue_statements = []
+    for continue_statement in local_continue_statements:
+        if continue_statement.name is None or continue_statement.name == statement.name:
+            current_continue_statements.append(continue_statement)
+        else:
+            continue_statements.append(continue_statement)
+    current_break_statements = []
+    for break_statement in local_break_statements:
+        if break_statement.name is None or break_statement.name == statement.name:
+            current_break_statements.append(break_statement)
+        else:
+            break_statements.append(break_statement)
     update_ast = ast.child_by_field_name("update")
     if update_ast is not None:
         update = __parse(
@@ -385,14 +397,14 @@ def __handle_for(
             exit_statements=exit_statements,
             variable_names=variable_names)
         body += update
-        __route_control_flow(local_continue_statements, update[0], cdg)
+        __route_control_flow(current_continue_statements, update[0], cdg)
     else:
-        entry_points += local_continue_statements
+        entry_points += current_continue_statements
     __route_control_flow(entry_points, condition[0], cdg)
     for child in body:
         cdg.add_edge(statement, child)
-    local_break_statements.append(statement)
-    return siblings, local_break_statements
+    current_break_statements.append(statement)
+    return siblings, current_break_statements
 
 
 def __handle_for_each(
@@ -475,12 +487,22 @@ def __handle_for_each(
         continue_statements=local_continue_statements,
         exit_statements=exit_statements,
         variable_names=variable_names)
-    entry_points += local_continue_statements
+    for continue_statement in local_continue_statements:
+        if continue_statement.name is None or continue_statement.name == statement.name:
+            entry_points.append(continue_statement)
+        else:
+            continue_statements.append(continue_statement)
+    current_break_statements = []
+    for break_statement in local_break_statements:
+        if break_statement.name is None or break_statement.name == statement.name:
+            current_break_statements.append(break_statement)
+        else:
+            break_statements.append(break_statement)
     __route_control_flow(entry_points, siblings[0], cdg)
     for child in body:
         cdg.add_edge(statement, child)
-    local_break_statements.append(statement)
-    return siblings, local_break_statements
+    current_break_statements.append(statement)
+    return siblings, current_break_statements
 
 
 def __handle_synchronized(

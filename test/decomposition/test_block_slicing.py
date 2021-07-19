@@ -308,7 +308,7 @@ class BlockSlicingTestCase(TestCase):
                 buffer.insert(0, Messages.compilation_unresolvedProblems);
                 buffer.insert(0, Messages.compilation_unresolvedProblems);
                 buffer.insert(0, Messages.compilation_unresolvedProblems);
-  
+
             } else if (count > 2) {
                 buffer.insert(0, Messages.compilation_unresolvedProblem);
                 buffer.insert(0, Messages.compilation_unresolvedProblem);
