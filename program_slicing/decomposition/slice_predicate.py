@@ -72,7 +72,15 @@ class SlicePredicate:
             current_line_bounds = \
                 source_lines[current_range[0].line_number][:current_range[0].column_number] + \
                 source_lines[current_range[1].line_number][current_range[1].column_number:]
+            contain_commented_part = False
             for char in current_line_bounds:
+                if char == "/":
+                    if contain_commented_part:
+                        break
+                    contain_commented_part = True
+                    continue
+                if contain_commented_part:
+                    return False
                 if char != ' ' and char != '\t' and char != '\r':
                     return False
         return True

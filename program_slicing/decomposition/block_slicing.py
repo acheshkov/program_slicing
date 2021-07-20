@@ -126,7 +126,7 @@ def __get_changed_variables(manager: ProgramGraphsManager, statements: Iterable[
             if statement not in manager.get_data_dependence_graph():
                 continue
             for ancestor in networkx.ancestors(manager.get_data_dependence_graph(), statement):
-                if ancestor.statement_type == StatementType.VARIABLE:
+                if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
                     used_variables.add(ancestor)
     return used_variables
 
@@ -137,7 +137,7 @@ def __get_used_variables(manager: ProgramGraphsManager, statements: Iterable[Sta
         if statement not in manager.get_data_dependence_graph():
             continue
         for ancestor in networkx.ancestors(manager.get_data_dependence_graph(), statement):
-            if ancestor.statement_type == StatementType.VARIABLE:
+            if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
                 used_variables.add(ancestor)
     return used_variables
 
