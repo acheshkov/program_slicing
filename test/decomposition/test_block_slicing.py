@@ -4,7 +4,6 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/01'
 
-import unittest
 from unittest import TestCase
 
 from program_slicing.decomposition.block_slicing import build_opportunities_filtered, __build_statements_in_scope
@@ -298,7 +297,6 @@ class BlockSlicingTestCase(TestCase):
         }
         self.assertEqual(set(), found_opportunities)
 
-    @unittest.skip("If block is strange")
     def test_opportunities_with_else_if(self):
         code = '''
             if (count > 1) {
@@ -323,18 +321,18 @@ class BlockSlicingTestCase(TestCase):
                 buffer.insert(0, Messages.compilation_unresolvedProblem);
                 buffer.insert(0, Messages.compilation_unresolvedProblem);
             }
-        }
         '''
         found_opportunities = {
             (program_slice.ranges[0][0], program_slice.ranges[-1][1])
             for program_slice in build_opportunities_filtered(
                 code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=1.00)
         }
-        expected = {
-            (Point(9, 16), Point(13, 73)), (Point(17, 16), Point(21, 73)), (Point(1, 12), Point(22, 13)),
-            (Point(2, 16), Point(6, 74)), (Point(9, 0), Point(13, 0))}
-
-        self.assertEqual(found_opportunities, expected)
+        self.assertEqual({
+            (Point(9, 16), Point(13, 73)),
+            (Point(17, 16), Point(21, 73)),
+            (Point(1, 12), Point(22, 13)),
+            (Point(2, 16), Point(6, 74))},
+            found_opportunities)
 
     def test_opportunities_filter_scope(self):
         code = '''
@@ -354,9 +352,9 @@ class BlockSlicingTestCase(TestCase):
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the current scope which is depended on
         # those var declarations
-        self.assertTrue((2, 3) not in found_opportunities, True)
-        self.assertTrue((2, 4) not in found_opportunities, True)
-        self.assertTrue((2, 5) not in found_opportunities, True)
+        self.assertTrue((2, 3) not in found_opportunities)
+        self.assertTrue((2, 4) not in found_opportunities)
+        self.assertTrue((2, 5) not in found_opportunities)
 
     def test_filter_with_usage_inside_inner_scope(self):
         code_with_usage_inside_inner_scope = '''
@@ -382,13 +380,13 @@ class BlockSlicingTestCase(TestCase):
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the inner scope which is depended on
         # those var declarations
-        self.assertTrue((2, 3) not in found_opportunities, True)
-        self.assertTrue((2, 4) not in found_opportunities, True)
-        self.assertTrue((2, 5) not in found_opportunities, True)
-        self.assertTrue((2, 6) not in found_opportunities, True)
-        self.assertTrue((2, 7) not in found_opportunities, True)
-        self.assertTrue((2, 8) not in found_opportunities, True)
-        self.assertTrue((2, 9) not in found_opportunities, True)
+        self.assertTrue((2, 3) not in found_opportunities)
+        self.assertTrue((2, 4) not in found_opportunities)
+        self.assertTrue((2, 5) not in found_opportunities)
+        self.assertTrue((2, 6) not in found_opportunities)
+        self.assertTrue((2, 7) not in found_opportunities)
+        self.assertTrue((2, 8) not in found_opportunities)
+        self.assertTrue((2, 9) not in found_opportunities)
 
     def test_do_not_filter_complex_objects(self):
         complex_objects = '''
