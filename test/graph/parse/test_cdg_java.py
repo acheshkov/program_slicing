@@ -18,6 +18,51 @@ class CDGJavaTestCase(TestCase):
             statement_type = statement_type_map.get(i, StatementType.UNKNOWN)
             self.assertEqual(statement_type, child.statement_type)
 
+    def test_switch(self) -> None:
+        source_code = """
+        class A {
+            int main() {
+                switch(a) {
+                    default:
+                        a = 1;
+                    case 10:
+                        myFoo();
+                    case 5:
+                        break;
+                    case 4:
+                        a = -1;
+                }
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        self.assertEqual(27, len(cdg.nodes))
+        entry_points = [entry_point for entry_point in cdg.entry_points]
+        self.assertEqual(1, len(entry_points))
+        self.__check_cdg_children(entry_points, {
+            0: StatementType.FUNCTION
+        })
+        function_children = [child for child in cdg.successors(entry_points[0])]
+        self.assertEqual(6, len(function_children))
+        self.__check_cdg_children(function_children, {
+            0: StatementType.SCOPE,
+            3: StatementType.SCOPE,
+            4: StatementType.BRANCH,
+            5: StatementType.EXIT
+        })
+        branch_children = [child for child in cdg.successors(function_children[4])]
+        self.assertEqual(17, len(branch_children))
+        self.__check_cdg_children(branch_children, {
+            0: StatementType.SCOPE,
+            4: StatementType.ASSIGNMENT,
+            5: StatementType.SCOPE,
+            7: StatementType.CALL,
+            9: StatementType.SCOPE,
+            10: StatementType.GOTO,
+            11: StatementType.SCOPE,
+            16: StatementType.ASSIGNMENT
+        })
+
     def test_while(self) -> None:
         source_code = """
         class A {
@@ -276,6 +321,37 @@ class CDGJavaTestCase(TestCase):
         self.__check_cdg_children(branch_children, {
             0: StatementType.SCOPE,
             2: StatementType.GOTO
+        })
+
+    def test_synchronized(self) -> None:
+        source_code = """
+        class A {
+            int main() {
+                synchronized(a) {
+                    a = -1;
+                }
+            }
+        }
+        """
+        cdg = cdg_java.parse(source_code)
+        self.assertEqual(15, len(cdg.nodes))
+        entry_points = [entry_point for entry_point in cdg.entry_points]
+        self.assertEqual(1, len(entry_points))
+        self.__check_cdg_children(entry_points, {
+            0: StatementType.FUNCTION
+        })
+        function_children = [child for child in cdg.successors(entry_points[0])]
+        self.assertEqual(5, len(function_children))
+        self.__check_cdg_children(function_children, {
+            0: StatementType.SCOPE,
+            3: StatementType.LOOP,
+            4: StatementType.EXIT
+        })
+        loop_children = [child for child in cdg.successors(function_children[3])]
+        self.assertEqual(6, len(loop_children))
+        self.__check_cdg_children(loop_children, {
+            0: StatementType.SCOPE,
+            5: StatementType.ASSIGNMENT
         })
 
     def test_parse(self) -> None:

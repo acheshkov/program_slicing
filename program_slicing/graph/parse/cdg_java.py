@@ -90,6 +90,71 @@ def __handle_method_declaration(
     return [], []
 
 
+def __handle_switch(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    entry_points = []
+    siblings = __parse(
+        source_code_bytes,
+        ast.child_by_field_name("condition"),
+        cdg,
+        entry_points,
+        break_statements=break_statements,
+        continue_statements=continue_statements,
+        exit_statements=exit_statements,
+        variable_names=variable_names)
+    switch_block_ast = ast.child_by_field_name("body")
+    switch_block_start_point, switch_block_end_point = __parse_position_range(switch_block_ast)
+    block_statement = Statement(
+        StatementType.SCOPE,
+        start_point=switch_block_start_point,
+        end_point=switch_block_end_point,
+        affected_by=__parse_affected_by(source_code_bytes, switch_block_ast, variable_names),
+        ast_node_type=switch_block_ast.type)
+    siblings.append(block_statement)
+    __route_control_flow(entry_points, block_statement, cdg)
+    entry_points = [block_statement]
+    siblings.append(statement)
+    __route_control_flow(entry_points, statement, cdg)
+    switch_block_item_ast = switch_block_ast.children[0].next_named_sibling if switch_block_ast.children else None
+    local_break_statements = []
+    entry_points = []
+    while switch_block_item_ast is not None:
+        if switch_block_item_ast.type == "switch_label":
+            switch_label_start_point = Point.from_tuple(switch_block_item_ast.start_point)
+            switch_label_statement = Statement(
+                StatementType.SCOPE,
+                start_point=switch_label_start_point,
+                end_point=switch_block_end_point,
+                ast_node_type=switch_block_item_ast.type)
+            cdg.add_edge(statement, switch_label_statement)
+            __route_control_flow([statement], switch_label_statement, cdg)
+            __route_control_flow(entry_points, switch_label_statement, cdg)
+            entry_points = [switch_label_statement]
+            switch_block_item_ast = switch_block_item_ast.next_named_sibling
+            continue
+        switch_block_item = __parse(
+            source_code_bytes,
+            switch_block_item_ast,
+            cdg,
+            entry_points,
+            break_statements=local_break_statements,
+            continue_statements=continue_statements,
+            exit_statements=exit_statements,
+            variable_names=variable_names)
+        for child in switch_block_item:
+            cdg.add_edge(statement, child)
+        switch_block_item_ast = switch_block_item_ast.next_named_sibling
+    __split_by_hook(local_break_statements, statement.name, entry_points, break_statements)
+    return siblings, [statement] + entry_points
+
+
 def __handle_if(
         statement: Statement,
         source_code_bytes,
@@ -309,6 +374,10 @@ def __handle_for(
         continue_statements=local_continue_statements,
         exit_statements=exit_statements,
         variable_names=variable_names)
+    current_continue_statements = []
+    __split_by_hook(local_continue_statements, statement.name, current_continue_statements, continue_statements)
+    current_break_statements = []
+    __split_by_hook(local_break_statements, statement.name, current_break_statements, break_statements)
     update_ast = ast.child_by_field_name("update")
     if update_ast is not None:
         update = __parse(
@@ -321,14 +390,14 @@ def __handle_for(
             exit_statements=exit_statements,
             variable_names=variable_names)
         body += update
-        __route_control_flow(local_continue_statements, update[0], cdg)
+        __route_control_flow(current_continue_statements, update[0], cdg)
     else:
-        entry_points += local_continue_statements
+        entry_points += current_continue_statements
     __route_control_flow(entry_points, condition[0], cdg)
     for child in body:
         cdg.add_edge(statement, child)
-    local_break_statements.append(statement)
-    return siblings, local_break_statements
+    current_break_statements.append(statement)
+    return siblings, current_break_statements
 
 
 def __handle_for_each(
@@ -411,12 +480,55 @@ def __handle_for_each(
         continue_statements=local_continue_statements,
         exit_statements=exit_statements,
         variable_names=variable_names)
-    entry_points += local_continue_statements
+    __split_by_hook(local_continue_statements, statement.name, entry_points, continue_statements)
+    current_break_statements = []
+    __split_by_hook(local_break_statements, statement.name, current_break_statements, break_statements)
     __route_control_flow(entry_points, siblings[0], cdg)
     for child in body:
         cdg.add_edge(statement, child)
-    local_break_statements.append(statement)
-    return siblings, local_break_statements
+    current_break_statements.append(statement)
+    return siblings, current_break_statements
+
+
+def __handle_synchronized(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    siblings = []
+    entry_points = []
+    body_ast = ast.child_by_field_name("body")
+    parameters_ast = body_ast.prev_named_sibling
+    if parameters_ast is not None:
+        siblings += __parse(
+            source_code_bytes,
+            parameters_ast,
+            cdg,
+            entry_points,
+            break_statements=break_statements,
+            continue_statements=continue_statements,
+            exit_statements=exit_statements,
+            variable_names=variable_names)
+    siblings.append(statement)
+    __route_control_flow(entry_points, statement, cdg)
+    entry_points = [statement]
+    __route_control_flow(entry_points, siblings[0], cdg)
+    body = __parse(
+        source_code_bytes,
+        body_ast,
+        cdg,
+        entry_points,
+        break_statements=break_statements,
+        continue_statements=continue_statements,
+        exit_statements=exit_statements,
+        variable_names=variable_names)
+    for child in body:
+        cdg.add_edge(statement, child)
+    return siblings, entry_points
 
 
 def __handle_assignment(
@@ -541,6 +653,8 @@ statement_type_and_handler_map = {
         (StatementType.FUNCTION, __handle_method_declaration),
     "constructor_declaration":
         (StatementType.FUNCTION, __handle_method_declaration),
+    "switch_statement":
+        (StatementType.BRANCH, __handle_switch),
     "if_statement":
         (StatementType.BRANCH, __handle_if),
     "try_statement":
@@ -557,6 +671,8 @@ statement_type_and_handler_map = {
         (StatementType.LOOP, __handle_for),
     "enhanced_for_statement":
         (StatementType.LOOP, __handle_for_each),
+    "synchronized_statement":
+        (StatementType.LOOP, __handle_synchronized),
     "assignment_expression":
         (StatementType.ASSIGNMENT, __handle_assignment),
     "update_expression":
@@ -774,3 +890,15 @@ def __route_control_flow(
             cdg.control_flow[entry_point] = [statement_to]
         else:
             cdg.control_flow[entry_point].append(statement_to)
+
+
+def __split_by_hook(
+        goto_statements: List[Statement],
+        hook_name: str,
+        positive_result: List[Statement],
+        negative_result: List[Statement]) -> None:
+    for goto_statement in goto_statements:
+        if goto_statement.name is None or goto_statement.name == hook_name:
+            positive_result.append(goto_statement)
+        else:
+            negative_result.append(goto_statement)

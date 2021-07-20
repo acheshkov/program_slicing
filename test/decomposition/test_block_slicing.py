@@ -46,7 +46,7 @@ class BlockSlicingTestCase(TestCase):
            url = cache.toURI().toURL();
         }'''
         manager = ProgramGraphsManager(sync_block, LANG_JAVA)
-        self.assertEqual(2, len(build_statements_in_scope(manager)))
+        self.assertEqual(3, len(build_statements_in_scope(manager)))
 
     def test_identify_unique_block_with_for(self) -> None:
         for_cycle_block = '''
@@ -307,7 +307,7 @@ class BlockSlicingTestCase(TestCase):
                 buffer.insert(0, Messages.compilation_unresolvedProblems);
                 buffer.insert(0, Messages.compilation_unresolvedProblems);
                 buffer.insert(0, Messages.compilation_unresolvedProblems);
-  
+
             } else if (count > 2) {
                 buffer.insert(0, Messages.compilation_unresolvedProblem);
                 buffer.insert(0, Messages.compilation_unresolvedProblem);

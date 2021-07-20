@@ -64,9 +64,10 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
     """
     slice_predicate = SlicePredicate(
         min_amount_of_lines=3,
-        max_amount_of_lines=45,
-        forbidden_words={"return "},
-        lang_to_check_parsing=lang)
+        max_amount_of_lines=20,
+        forbidden_words={"return ", "return;"},
+        lang_to_check_parsing=lang,
+        has_returnable_variable=True)
     slices = get_complete_computation_slices(source_code, lang, slice_predicate)
     for function_statement, variable_statement, cc_slice in slices:
         yield "\033[33m\nSlice" + \
@@ -93,7 +94,7 @@ def get_complete_computation_slices(
     cdg = manager.get_control_dependence_graph()
     function_statements = cdg.entry_points
     for function_statement in function_statements:
-        slicing_criteria = __obtain_slicing_criteria(cdg, function_statement)
+        slicing_criteria = __obtain_slicing_criteria(manager, function_statement)
         for variable_statement, seed_statements in slicing_criteria.items():
             complete_computation_slices = __obtain_complete_computation_slices(manager, seed_statements)
             variable_basic_block = manager.get_basic_block(variable_statement)
@@ -114,19 +115,19 @@ def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -
 
 
 def __obtain_seed_statements(
-        cdg: ControlDependenceGraph,
-        root: Statement,
+        manager: ProgramGraphsManager,
         variable_statement: Statement) -> Set[Statement]:
+    ddg = manager.get_data_dependence_graph()
     return {
-        statement for statement in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if __is_slicing_criterion(statement, variable_statement)
+        statement for statement in networkx.algorithms.traversal.dfs_tree(ddg, variable_statement)
+        if __is_slicing_criterion(statement, variable_statement) and manager.get_basic_block(statement) is not None
     }
 
 
-def __obtain_slicing_criteria(cdg: ControlDependenceGraph, root: Statement) -> Dict[Statement, Set[Statement]]:
-    variable_statements = __obtain_variable_statements(cdg, root)
+def __obtain_slicing_criteria(manager: ProgramGraphsManager, root: Statement) -> Dict[Statement, Set[Statement]]:
+    variable_statements = __obtain_variable_statements(manager.get_control_dependence_graph(), root)
     return {
-        variable_statement: __obtain_seed_statements(cdg, root, variable_statement)
+        variable_statement: __obtain_seed_statements(manager, variable_statement)
         for variable_statement in variable_statements
     }
 
@@ -140,7 +141,7 @@ def __obtain_common_boundary_blocks(
             result = manager.get_boundary_blocks_for_statement(seed_statement)
         else:
             result.intersection_update(manager.get_boundary_blocks_for_statement(seed_statement))
-    return result
+    return set() if result is None else result
 
 
 def __obtain_backward_slice(

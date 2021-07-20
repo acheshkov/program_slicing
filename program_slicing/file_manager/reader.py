@@ -7,7 +7,7 @@ __date__ = '2020/05/19'
 import json
 import os
 import stat
-from typing import Any, AnyStr, List, Generator, Tuple
+from typing import Any, AnyStr, List, Iterator, Tuple
 
 
 def read_json(path: str) -> Any:
@@ -30,7 +30,7 @@ def read_json(path: str) -> Any:
             return ""
 
 
-def read_file(path: str) -> str:
+def read_file(path: str) -> AnyStr:
     """
     Read any file and return the extracted data as a string.
     :param path: string with the file path.
@@ -59,13 +59,13 @@ def read_file(path: str) -> str:
 def read_files(
         path: str,
         suffix_list: List[str] = None,
-        skip_hidden_dirs: bool = True) -> Generator[Tuple[str, AnyStr], None, None]:
+        skip_hidden_dirs: bool = True) -> Iterator[Tuple[str, AnyStr]]:
     """
     Read all the files with the given suffixes from the given directory and its sub-directories.
     :param path: string with the path to the directory to search in.
     :param suffix_list: list of suffixes of files that should be obtained. All the files will be obtained if Null.
     :param skip_hidden_dirs: if True - skips hidden directories, default = True.
-    :return: generator of file sub-path to its statements pairs.
+    :return: generator of file sub-path and its content pairs.
     """
     for filename in browse_file_sub_paths(path, suffix_list, skip_hidden_dirs=skip_hidden_dirs):
         yield filename, read_file(filename)
@@ -74,7 +74,7 @@ def read_files(
 def browse_file_sub_paths(
         path: str,
         suffix_list: List[str] = None,
-        skip_hidden_dirs: bool = True) -> Generator[str, None, None]:
+        skip_hidden_dirs: bool = True) -> Iterator[str]:
     """
     Browse for files with the given suffixes in the given directory and its sub-directories.
     :param path: string with the path to the directory to search in.

@@ -259,8 +259,11 @@ class CDGTestCase(TestCase):
                 {
                     int a = 1;
                 }
-                for (int a = 2; a < 10;) {
+                for (int a = 2; a < n;) {
                     foo(a);
+                }
+                for (int a = 22; a < 10 * n; a++) {
+                    boo(a);
                 }
                 try (int a = 3) {
                 }
@@ -283,44 +286,69 @@ class CDGTestCase(TestCase):
         cfg.add_edge("2_9_beginning", "9_9_for")
         cfg.add_edge("9_9_for", "9_11_block")
         cfg.add_edge("9_11_block", "9_9_for")
-        cfg.add_edge("9_9_for", "12_12_try")
-        cfg.add_edge("12_12_try", "12_13_block")
-        cfg.add_edge("12_12_try", "14_16_finally_and_try")
-        cfg.add_edge("12_13_block", "14_16_finally_and_try")
-        cfg.add_edge("14_16_finally_and_try", "16_18_block")
-        cfg.add_edge("14_16_finally_and_try", "19_19_catch")
-        cfg.add_edge("16_18_block", "exit")
-        cfg.add_edge("19_19_catch", "exit")
-        cfg.add_edge("19_19_catch", "19_21_block")
+        cfg.add_edge("9_9_for", "12_12_for_init")
+        cfg.add_edge("12_12_for_init", "12_12_for")
+        cfg.add_edge("12_12_for", "12_14_block")
+        cfg.add_edge("12_14_block", "12_12_for")
+        cfg.add_edge("12_12_for", "15_15_try")
+        cfg.add_edge("15_15_try", "15_16_block")
+        cfg.add_edge("15_15_try", "17_19_finally_and_try")
+        cfg.add_edge("15_16_block", "17_19_finally_and_try")
+        cfg.add_edge("17_19_finally_and_try", "19_21_block")
+        cfg.add_edge("17_19_finally_and_try", "22_22_catch")
         cfg.add_edge("19_21_block", "exit")
+        cfg.add_edge("22_22_catch", "exit")
+        cfg.add_edge("22_22_catch", "22_24_block")
+        cfg.add_edge("22_24_block", "exit")
         return cfg
 
     @staticmethod
     def __get_ddg_3():
         ddg = DataDependenceGraph()
         ddg.add_edges_from([
-            ("int a = 2", "a < 10"),
-            ("int a = 2", "a from a < 10"),
-            ("int a = 2", "for"),
-            ("int a = 2", "block in for"),
+            ("int a = 2", "a < n"),
+            ("int a = 2", "a from a < n"),
+            ("int a = 2", "9_9_for"),
+            ("int a = 2", "block in 9_9_for"),
             ("int a = 2", "foo(a);"),
             ("int a = 2", "foo(a)"),
             ("int a = 2", "(a) from foo(a)"),
             ("int a = 2", "a from foo(a)"),
+            ("int a = 22", "a < 10 * n"),
+            ("int a = 22", "a from a < 10 * n"),
+            ("int a = 22", "12_12_for"),
+            ("int a = 22", "block in 12_12_for"),
+            ("int a = 22", "boo(a);"),
+            ("int a = 22", "boo(a)"),
+            ("int a = 22", "(a) from boo(a)"),
+            ("int a = 22", "a from boo(a)"),
+            ("int a = 22", "a++"),
+            ("int a = 22", "a from a++"),
+            ("a++", "a < 10 * n"),
+            ("a++", "a from a < 10 * n"),
+            ("a++", "12_12_for"),
+            ("a++", "block in 12_12_for"),
+            ("a++", "boo(a);"),
+            ("a++", "boo(a)"),
+            ("a++", "(a) from boo(a)"),
+            ("a++", "a from boo(a)"),
+            ("a++", "a++"),
+            ("a++", "a from a++"),
             ("Exception a", "catch"),
             ("Exception a", "block in catch"),
             ("Exception a", "a.printStackTrace();"),
             ("Exception a", "a.printStackTrace()"),
             ("Exception a", "a from a.printStackTrace()")
         ])
-        ddg.add_nodes_from(range(33))
+        ddg.add_nodes_from(range(39))
         return ddg
 
     @staticmethod
     def __get_pdg_3():
         pdg = CDGTestCase.__get_cdg_3()
         for variable_statement in pdg:
-            if variable_statement.statement_type != StatementType.VARIABLE:
+            if variable_statement.statement_type != StatementType.VARIABLE and \
+                    variable_statement.statement_type != StatementType.ASSIGNMENT:
                 continue
             for statement in pdg:
                 if statement.statement_type != StatementType.VARIABLE and \
@@ -328,8 +356,10 @@ class CDGTestCase(TestCase):
                         variable_statement.name in statement.affected_by and \
                         (9 <= variable_statement.start_point.line_number <= 11 and
                          9 <= statement.start_point.line_number <= 11 or
-                         19 <= variable_statement.start_point.line_number <= 21 and
-                         19 <= statement.start_point.line_number <= 21):
+                         12 <= variable_statement.start_point.line_number <= 14 and
+                         12 <= statement.start_point.line_number <= 14 or
+                         22 <= variable_statement.start_point.line_number <= 24 and
+                         22 <= statement.start_point.line_number <= 24):
                     pdg.add_edge(variable_statement, statement)
         return pdg
 
@@ -343,6 +373,7 @@ class CDGTestCase(TestCase):
         return "\n".join(result)
 
     def assertIsomorphic(self, graph1, graph2) -> None:
+        self.maxDiff = None
         if not networkx.is_isomorphic(graph1, graph2):
             self.assertEqual(CDGTestCase.graph_to_str(graph1), CDGTestCase.graph_to_str(graph2))
 

@@ -55,7 +55,9 @@ def node_name(source_code_bytes: bytes, ast: Node) -> Optional[str]:
         identifier_ast = ast.children[0].next_named_sibling
         return None if identifier_ast is None else node_name(source_code_bytes, identifier_ast)
     elif ast.type == "labeled_statement":
-        return node_name(source_code_bytes, ast.children[0])
+        return source_code_bytes[ast.children[0].start_byte: ast.children[0].end_byte].decode("utf8")
+    elif ast.parent is not None and ast.parent.type == "labeled_statement":
+        return node_name(source_code_bytes, ast.parent)
     elif ast.start_point[0] == ast.end_point[0]:
         return source_code_bytes[ast.start_byte: ast.end_byte].decode("utf8")
     return None
