@@ -190,6 +190,8 @@ class ProgramSlice:
 
     def __update_scopes(self):
         added_scopes = set()
+        if self.__start_point is None or self.__end_point is None:
+            return
         for scope in self.__scopes:
             if self.__start_point <= scope.start_point and self.__end_point >= scope.end_point:
                 self.add_range(scope.start_point, scope.end_point, RangeType.BOUNDS)
