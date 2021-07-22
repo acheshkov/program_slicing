@@ -22,6 +22,7 @@ jobs:
         pip install flake8 pytest
         git submodule update --recursive --init
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+        pip3 install ./
     - name: Lint with flake8
       run: |
         # stop the build if there are Python syntax errors or undefined names
@@ -31,3 +32,6 @@ jobs:
     - name: Test with pytest
       run: |
         python3 -m unittest discover -s test
+    - name: Integration tests
+      run: |
+        python3 integration_tests/integration_block_slicing.py

@@ -68,7 +68,6 @@ class CDGTestCase(TestCase):
             ("int n = 10", "n from i < n"),
             ("int i = 0", "i < n"),
             ("int i = 0", "i from i < n"),
-            ("int i = 0", "loop body"),
             ("int i = 0", "if (i < 4)"),
             ("int i = 0", "(i < 4)"),
             ("int i = 0", "i < 4"),
@@ -81,7 +80,6 @@ class CDGTestCase(TestCase):
             ("int i = 0", "i from i > 6"),
             ("i += 1", "i < n"),
             ("i += 1", "i from i < n"),
-            ("i += 1", "loop body"),
             ("i += 1", "if (i < 4)"),
             ("i += 1", "(i < 4)"),
             ("i += 1", "i < 4"),
@@ -93,9 +91,10 @@ class CDGTestCase(TestCase):
             ("i += 1", "i > 6"),
             ("i += 1", "i from i > 6"),
             ("int n = 10", "return n"),
-            ("int n = 10", "n from return n"),
-            ("int n = 10", "exit_point")
+            ("int n = 10", "n from return n")
         ])
+        ddg.add_node("exit_point")
+        ddg.add_node("loop body")
         ddg.add_nodes_from(range(36))
         return ddg
 
@@ -170,13 +169,12 @@ class CDGTestCase(TestCase):
     def __get_ddg_1():
         ddg = DataDependenceGraph()
         ddg.add_edges_from([
-            ("Exception e", "first catch body"),
             ("Exception e", "e.printStackTrace();"),
             ("Exception e", "e.printStackTrace()"),
             ("Exception e", "e from e.printStackTrace()"),
             ("MyException e", "catch (MyException e)"),
         ])
-        ddg.add_nodes_from(range(26))
+        ddg.add_nodes_from(range(27))
         return ddg
 
     @staticmethod
@@ -309,7 +307,6 @@ class CDGTestCase(TestCase):
             ("int a = 2", "a < n"),
             ("int a = 2", "a from a < n"),
             ("int a = 2", "9_9_for"),
-            ("int a = 2", "block in 9_9_for"),
             ("int a = 2", "foo(a);"),
             ("int a = 2", "foo(a)"),
             ("int a = 2", "(a) from foo(a)"),
@@ -317,7 +314,6 @@ class CDGTestCase(TestCase):
             ("int a = 22", "a < 10 * n"),
             ("int a = 22", "a from a < 10 * n"),
             ("int a = 22", "12_12_for"),
-            ("int a = 22", "block in 12_12_for"),
             ("int a = 22", "boo(a);"),
             ("int a = 22", "boo(a)"),
             ("int a = 22", "(a) from boo(a)"),
@@ -327,7 +323,6 @@ class CDGTestCase(TestCase):
             ("a++", "a < 10 * n"),
             ("a++", "a from a < 10 * n"),
             ("a++", "12_12_for"),
-            ("a++", "block in 12_12_for"),
             ("a++", "boo(a);"),
             ("a++", "boo(a)"),
             ("a++", "(a) from boo(a)"),
@@ -335,12 +330,11 @@ class CDGTestCase(TestCase):
             ("a++", "a++"),
             ("a++", "a from a++"),
             ("Exception a", "catch"),
-            ("Exception a", "block in catch"),
             ("Exception a", "a.printStackTrace();"),
             ("Exception a", "a.printStackTrace()"),
             ("Exception a", "a from a.printStackTrace()")
         ])
-        ddg.add_nodes_from(range(39))
+        ddg.add_nodes_from(range(42))
         return ddg
 
     @staticmethod

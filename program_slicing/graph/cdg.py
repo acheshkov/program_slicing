@@ -73,10 +73,28 @@ class ControlDependenceGraph(networkx.DiGraph):
                     scopes_for_start_point[scope.end_point] = scopes_for_end_point[interval_end]
             scopes_for_start_point[scope.start_point] = scope
             scopes_for_end_point[scope.end_point] = scope
+        self.__fill_scope_dependency(points, scopes_for_start_point, scopes_for_end_point, scope_container)
+
+    def __fill_scope_dependency(
+            self,
+            points: List[Point],
+            scopes_for_start_point: Dict[Point, Statement],
+            scopes_for_end_point: Dict[Point, Statement],
+            scope_container: Dict[Statement, Statement]):
         for statement in self:
             interval_start, interval_end = self.__obtain_interval(points, statement)
-            scope = None if (interval_start is None or interval_end is None) else \
-                scopes_for_start_point.get(interval_start, None)
+            scope = None
+            if interval_start is not None and interval_end is not None:
+                start_point_scope = scopes_for_start_point.get(interval_start, None)
+                end_point_scope = scopes_for_end_point.get(interval_end, None)
+                if start_point_scope is None or end_point_scope is None:
+                    scope = None
+                elif start_point_scope == end_point_scope or \
+                        start_point_scope.start_point <= end_point_scope.start_point and \
+                        start_point_scope.end_point >= end_point_scope.end_point:
+                    scope = start_point_scope
+                else:
+                    scope = end_point_scope
             if scope == statement:
                 scope = scope_container.get(scope, None)
             if scope is not None:
@@ -86,6 +104,6 @@ class ControlDependenceGraph(networkx.DiGraph):
     def __obtain_interval(points: List[Point], statement: Statement) -> Tuple[Optional[Point], Optional[Point]]:
         nearest_start_point_id = bisect.bisect_right(points, statement.start_point) - 1
         nearest_start_point = None if nearest_start_point_id < 0 else points[nearest_start_point_id]
-        nearest_end_point_id = bisect.bisect_left(points, statement.start_point)
+        nearest_end_point_id = bisect.bisect_left(points, statement.end_point)
         nearest_end_point = None if nearest_end_point_id >= len(points) else points[nearest_end_point_id]
         return nearest_start_point, nearest_end_point

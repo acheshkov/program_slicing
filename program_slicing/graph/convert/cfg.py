@@ -96,7 +96,8 @@ def __update_variables(old_variables: Dict[str, Set[Statement]], new_variables: 
             variable_entered_set = old_variables[variable]
             diff = variable_set.difference(variable_entered_set)
             variable_entered_set.update(diff)
-            updated = len(diff) > 0
+            if not updated:
+                updated = len(diff) > 0
     return updated
 
 
@@ -113,7 +114,8 @@ def __correct_scope_relations(ddg: DataDependenceGraph) -> None:
         for statement in remove_statements:
             remove_edges = []
             for predecessor in ddg.predecessors(statement):
-                if variable_scope.start_point <= predecessor.start_point and \
+                if predecessor.name == variable_statement.name and \
+                        variable_scope.start_point <= predecessor.start_point and \
                         variable_scope.end_point >= predecessor.end_point:
                     remove_edges.append((predecessor, statement))
             ddg.remove_edges_from(remove_edges)
