@@ -646,6 +646,33 @@ def __handle_return(
     return siblings, []
 
 
+def __handle_throw(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    if len(ast.children) > 2:
+        entry_points = []
+        siblings = __parse(
+            source_code_bytes,
+            ast.children[1],
+            cdg,
+            entry_points,
+            break_statements=break_statements,
+            continue_statements=continue_statements,
+            exit_statements=exit_statements,
+            variable_names=variable_names)
+        siblings.append(statement)
+        __route_control_flow(entry_points, statement, cdg)
+    else:
+        siblings = [statement]
+    return siblings, []
+
+
 statement_type_and_handler_map = {
     "variable_declarator":
         (StatementType.VARIABLE, __handle_variable),
@@ -690,7 +717,7 @@ statement_type_and_handler_map = {
     "return_statement":
         (StatementType.GOTO, __handle_return),
     "throw_statement":
-        (StatementType.GOTO, __handle_return)
+        (StatementType.EXIT, __handle_throw)
 }
 
 
@@ -852,6 +879,14 @@ def __parse_affected_by_recursive(
         ast: Node,
         variable_names: Set[str],
         affected_by: Set[str]) -> None:
+    if ast.type == "identifier" and \
+            ast.parent and \
+            ast.parent.type == "assignment_expression" and \
+            ast.parent.children[0] == ast and \
+            ast.parent.children[1].type == "=":
+        return
+    if ast.type == "block":
+        return
     body = ast.child_by_field_name("body")
     consequence = ast.child_by_field_name("consequence")
     alternative = ast.child_by_field_name("alternative")
@@ -859,16 +894,19 @@ def __parse_affected_by_recursive(
     if name in variable_names:
         affected_by.add(name)
     for child in ast.children:
-        if child.type == "block" or child == body or child == consequence or child == alternative:
+        if child.type == "block" or child.type == "assignment_expression" or \
+                child == body or \
+                child == consequence or \
+                child == alternative:
             continue
         __parse_affected_by_recursive(source_code_bytes, child, variable_names, affected_by)
 
 
 def __add_exit_point(cdg: ControlDependenceGraph, statement: Statement, entry_points: List[Statement]) -> Statement:
     affected_by = set()
-    for exit_point in entry_points:
-        if exit_point.statement_type == StatementType.GOTO:
-            affected_by.update(exit_point.affected_by)
+    # for exit_point in entry_points:
+    #     if exit_point.statement_type == StatementType.GOTO:
+    #         affected_by.update(exit_point.affected_by)
     exit_point = Statement(
         StatementType.EXIT,
         start_point=statement.end_point,

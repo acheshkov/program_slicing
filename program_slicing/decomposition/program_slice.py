@@ -125,7 +125,9 @@ class ProgramSlice:
         """
         range_type = \
             RangeType.BOUNDS if statement.statement_type == StatementType.SCOPE else \
-            RangeType.FULL if statement.statement_type == StatementType.UNKNOWN else \
+            RangeType.FULL if (
+                statement.statement_type == StatementType.UNKNOWN or
+                statement.statement_type == StatementType.EXIT) else \
             RangeType.BEGINNING
         if statement.statement_type == StatementType.SCOPE:
             self.__scopes.add(statement)
@@ -193,7 +195,7 @@ class ProgramSlice:
         if self.__start_point is None or self.__end_point is None:
             return
         for scope in self.__scopes:
-            if self.__start_point <= scope.start_point and self.__end_point >= scope.end_point:
+            if scope.start_point > self.__start_point or scope.end_point < self.__end_point:
                 self.add_range(scope.start_point, scope.end_point, RangeType.BOUNDS)
                 added_scopes.add(scope)
         self.__scopes.difference_update(added_scopes)

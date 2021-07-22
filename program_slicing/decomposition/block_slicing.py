@@ -38,7 +38,6 @@ def build_opportunities_filtered(
 def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=None) -> Iterable[ProgramSlice]:
     source_lines = source_code.split("\n")
     manager = ProgramGraphsManager(source_code, lang)
-    control_flow_dict = manager.get_control_dependence_graph().control_flow
     statements_in_scope = __build_statements_in_scope(manager)
     for scope, statements in statements_in_scope.items():
         dominant_statements = __build_dominant_statements(statements)
@@ -47,10 +46,6 @@ def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=Non
         ]
         for ids in id_combinations:
             current_statements = dominant_statements[ids[0]: ids[1] + 1]
-            elder_statements = {
-                s for s in manager.get_control_dependence_graph()
-                if s.start_point >= current_statements[-1].end_point
-            }
             if not current_statements:
                 continue
             if max_percentage_of_lines is not None:
@@ -62,23 +57,12 @@ def build_opportunities(source_code: str, lang: str, max_percentage_of_lines=Non
                 manager,
                 current_statements[0].start_point,
                 current_statements[-1].end_point)
-            changed_variables = __get_changed_variables(manager, extended_statements)
-            used_variables = __get_used_variables(manager, elder_statements)
-            changed_and_used_variables = changed_variables.intersection(used_variables)
-            if len(changed_and_used_variables) > 1:
-                continue
-            if len(__get_outer_goto(manager, extended_statements, scope)) > 0:
+            affecting_statements = __get_affecting_statements(manager, extended_statements)
+            if len(__get_used_variables(manager, affecting_statements)) > 1:
                 continue
             if __contain_redundant_statements(manager, extended_statements):
                 continue
-            exit_statements = set()
-            for statement in extended_statements:
-                if statement not in control_flow_dict:
-                    continue
-                for flow_statement in control_flow_dict[statement]:
-                    if flow_statement in elder_statements:
-                        exit_statements.add(flow_statement)
-            if len(exit_statements) > 1:
+            if len(__get_exit_statements(manager, extended_statements)) > 1:
                 continue
             yield ProgramSlice(source_lines).from_statements(extended_statements)
 
@@ -133,29 +117,67 @@ def __get_changed_variables(manager: ProgramGraphsManager, statements: Iterable[
 
 def __get_used_variables(manager: ProgramGraphsManager, statements: Iterable[Statement]) -> Set[Statement]:
     used_variables = set()
+    ddg = manager.get_data_dependence_graph()
     for statement in statements:
-        if statement not in manager.get_data_dependence_graph():
+        if statement not in ddg:
             continue
-        for ancestor in networkx.ancestors(manager.get_data_dependence_graph(), statement):
+        if statement.statement_type == StatementType.VARIABLE:
+            used_variables.add(statement)
+            continue
+        for ancestor in networkx.ancestors(ddg, statement):
             if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
                 used_variables.add(ancestor)
     return used_variables
 
 
-def __get_outer_goto(
+def __get_affecting_statements(manager: ProgramGraphsManager, statements: Set[Statement]) -> Set[Statement]:
+    assignment_statements = [
+        statement for statement in statements
+        if
+        statement.statement_type == StatementType.ASSIGNMENT or
+        statement.statement_type == StatementType.VARIABLE
+    ]
+    arg_statements_by_arg_name = __get_arg_statements_by_arg_name(manager, statements)
+    affecting_statements = set()
+    for assignment_statement in assignment_statements:
+        for affected_statement in manager.get_data_dependence_graph().successors(assignment_statement):
+            if affected_statement not in statements or \
+                    affected_statement.end_point <= assignment_statement.end_point and \
+                    affected_statement in arg_statements_by_arg_name.get(assignment_statement.name, set()):
+                affecting_statements.add(assignment_statement)
+                break
+    return affecting_statements
+
+
+def __get_arg_statements_by_arg_name(
         manager: ProgramGraphsManager,
-        statements: Iterable[Statement],
-        scope: Statement) -> Set[Statement]:
-    cdg = manager.get_control_dependence_graph()
-    scope = 0 if scope is None else scope
-    outer_goto = set()
+        statements: Set[Statement]) -> Dict[str, Set[Statement]]:
+    arg_statements_by_arg_name = defaultdict(set)
+    ddg = manager.get_data_dependence_graph()
     for statement in statements:
-        if statement.statement_type == StatementType.GOTO:
-            if statement in cdg.control_flow:
-                for flow_statement in cdg[statement]:
-                    if flow_statement.start_point < scope.start_point or flow_statement.end_point > scope.end_point:
-                        outer_goto.add(statement)
-    return outer_goto
+        if statement in ddg and \
+                statement.statement_type != StatementType.ASSIGNMENT and \
+                statement.statement_type != StatementType.VARIABLE:
+            for predecessor in ddg.predecessors(statement):
+                if predecessor not in statements:
+                    arg_statements_by_arg_name[predecessor.name].add(statement)
+    return arg_statements_by_arg_name
+
+
+def __get_exit_statements(
+        manager: ProgramGraphsManager,
+        statements: Iterable[Statement]) -> Set[Statement]:
+    start_point = min(statement.start_point for statement in statements)
+    end_point = max(statement.end_point for statement in statements)
+    cdg = manager.get_control_dependence_graph()
+    exit_statements = set()
+    for statement in statements:
+        if statement not in cdg.control_flow:
+            continue
+        for flow_statement in cdg.control_flow[statement]:
+            if flow_statement.start_point < start_point or flow_statement.end_point > end_point:
+                exit_statements.add(flow_statement)
+    return exit_statements
 
 
 def __contain_redundant_statements(manager: ProgramGraphsManager, statements: Set[Statement]) -> bool:

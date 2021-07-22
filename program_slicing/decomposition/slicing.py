@@ -172,8 +172,6 @@ def __obtain_backward_slice_recursive(
             result.add(statement)
         else:
             __obtain_backward_slice_recursive(manager, statement, region, result)
-    for statement in __obtain_content(root, basic_block):
-        result.add(statement)
     if root in manager.get_program_dependence_graph():
         for statement in manager.get_program_dependence_graph().predecessors(root):
             __obtain_backward_slice_recursive(manager, statement, region, result)
@@ -241,6 +239,8 @@ def __obtain_extension(
     if basic_block is not None:
         for statement in __obtain_linear_extension(root, manager.get_basic_block(root)):
             yield statement
+    for statement in __obtain_content(root, basic_block):
+        yield statement
 
 
 def __obtain_content(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
@@ -258,6 +258,8 @@ def __is_slicing_criterion(assignment_statement: Statement, variable_statement: 
 
 
 def __is_necessary_goto(statement: Statement, manager: ProgramGraphsManager, scope_statements: Set[Statement]) -> bool:
+    if statement.statement_type == StatementType.EXIT:
+        return True
     if statement.statement_type == StatementType.GOTO:
         for flow_statement in manager.get_control_dependence_graph().control_flow.get(statement, ()):
             if flow_statement not in scope_statements:

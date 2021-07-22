@@ -10,12 +10,15 @@ def run_check(expected_emos, observable_emos):
         print(filename, end="\t")
         observable_emos_set = set(observable_emos.get(filename))
         expect_emos_set = set([tuple(x) for x in ex_emos])
+        message = ""
         found_obj = observable_emos_set.difference(expect_emos_set)
         if found_obj:
-            raise Exception(f'Objects which were wrongly found: {json.dumps(tuple(found_obj))}')
+            message += f'Objects which were wrongly found: {json.dumps(tuple(found_obj))}\n'
         found_obj = expect_emos_set.difference(observable_emos_set)
         if found_obj:
-            raise Exception(f'Objects which were not found: {json.dumps(tuple(found_obj))}')
+            message += f'Objects which were not found: {json.dumps(tuple(found_obj))}\n'
+        if message:
+            raise Exception(message)
         print("OK")
 
 
