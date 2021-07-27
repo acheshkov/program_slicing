@@ -2,3 +2,4 @@ tree_sitter
 gitmodules
 networkx
 wheel
+sortedcontainers>=2.4.0

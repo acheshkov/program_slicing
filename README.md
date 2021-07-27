@@ -266,3 +266,35 @@ cdg: ControlDependenceGraph = ControlDependenceGraph()
 cfg: ControlFlowGraph = convert.cdg.to_cfg(cdg)
 new_cdg: ControlDependenceGraph = convert.cfg.to_cdg(cfg)
 ```
+
+***Block slicing***
+
+Input is a text of Java function:
+```
+public int function(int a) {
+  int b = 0;
+  b += a;
+  return b;
+}
+
+```
+
+```
+with open(java_file) as java_f:
+  code = java_f.read()
+  found_opportunities = {
+      (program_slice.ranges[0][0].line_number + 1, program_slice.ranges[-1][1].line_number + 1)
+      for program_slice in build_opportunities_filtered(
+          code, LANG_JAVA, min_amount_of_lines=6, max_percentage_of_lines=0.8)
+  }
+```
+
+`min_amount_of_lines` is the number of lines of an EMO. So, Emos with less than 
+6 lines will be ignored.
+
+`max_percentage_of_lines` is the ratio (`0.00 <= x <= 1.00`). 
+Suppose, we have `max_percentage_of_lines` = 0.3 
+and a function consists of 10 lines (not including the line with name and type declarations).
+The number of lines in an EMO is 5. Ratio is `5/10=0.2`. 
+So, everything which ratio is larger than `0.3` will be ignored.
+We have at the example above, so it won't be ignored.
