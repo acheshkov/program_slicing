@@ -1,0 +1,499 @@
+[
+	{
+		"sample_id": 96,
+		"method_id": "method_10.java",
+		"html": "examples/method_10_22_37.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 97,
+		"method_id": "method_10.java",
+		"html": "examples/method_10_23_32.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 98,
+		"method_id": "method_10.java",
+		"html": "examples/method_10_23_36.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 99,
+		"method_id": "method_10.java",
+		"html": "examples/method_10_24_32.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 100,
+		"method_id": "method_10.java",
+		"html": "examples/method_10_24_36.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 101,
+		"method_id": "method_10.java",
+		"html": "examples/method_10_25_31.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 102,
+		"method_id": "method_11.java",
+		"html": "examples/method_11_41_47.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 103,
+		"method_id": "method_11.java",
+		"html": "examples/method_11_59_73.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 104,
+		"method_id": "method_11.java",
+		"html": "examples/method_11_60_72.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 105,
+		"method_id": "method_11.java",
+		"html": "examples/method_11_62_72.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 106,
+		"method_id": "method_11.java",
+		"html": "examples/method_11_63_69.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 107,
+		"method_id": "method_11.java",
+		"html": "examples/method_11_63_71.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 108,
+		"method_id": "method_12.java",
+		"html": "examples/method_12_6_31.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 109,
+		"method_id": "method_12.java",
+		"html": "examples/method_12_8_18.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 115,
+		"method_id": "method_12.java",
+		"html": "examples/method_12_13_30.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 120,
+		"method_id": "method_12.java",
+		"html": "examples/method_12_23_29.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 121,
+		"method_id": "method_13.java",
+		"html": "examples/method_13_3_13.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 122,
+		"method_id": "method_13.java",
+		"html": "examples/method_13_16_24.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 123,
+		"method_id": "method_13.java",
+		"html": "examples/method_13_27_35.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 124,
+		"method_id": "method_13.java",
+		"html": "examples/method_13_38_48.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 127,
+		"method_id": "method_14.java",
+		"html": "examples/method_14_9_42.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 128,
+		"method_id": "method_14.java",
+		"html": "examples/method_14_10_40.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 129,
+		"method_id": "method_14.java",
+		"html": "examples/method_14_10_42.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 131,
+		"method_id": "method_14.java",
+		"html": "examples/method_14_11_42.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 134,
+		"method_id": "method_14.java",
+		"html": "examples/method_14_13_32.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 142,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_9_40.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 143,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_10_40.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 144,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_10_41.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 145,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_11_40.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 146,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_11_41.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 147,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_12_40.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 148,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_12_41.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 149,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_13_40.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 150,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_13_41.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 151,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_14_40.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 152,
+		"method_id": "method_15.java",
+		"html": "examples/method_15_14_41.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 153,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_4_44.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 154,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_5_44.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 155,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_6_17.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 156,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_7_17.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 157,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_19_30.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 158,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_20_30.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 159,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_32_41.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 160,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_33_41.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 161,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_45_60.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 162,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_46_60.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 163,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_51_60.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 164,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_52_58.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 165,
+		"method_id": "method_16.java",
+		"html": "examples/method_16_52_59.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 166,
+		"method_id": "method_17.java",
+		"html": "examples/method_17_15_69.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 167,
+		"method_id": "method_17.java",
+		"html": "examples/method_17_16_68.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 168,
+		"method_id": "method_17.java",
+		"html": "examples/method_17_49_61.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 169,
+		"method_id": "method_17.java",
+		"html": "examples/method_17_49_62.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 170,
+		"method_id": "method_17.java",
+		"html": "examples/method_17_49_67.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 171,
+		"method_id": "method_17.java",
+		"html": "examples/method_17_56_62.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 172,
+		"method_id": "method_17.java",
+		"html": "examples/method_17_56_67.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 173,
+		"method_id": "method_18.java",
+		"html": "examples/method_18_10_36.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 174,
+		"method_id": "method_18.java",
+		"html": "examples/method_18_17_35.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 175,
+		"method_id": "method_18.java",
+		"html": "examples/method_18_18_24.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 176,
+		"method_id": "method_18.java",
+		"html": "examples/method_18_37_75.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 177,
+		"method_id": "method_18.java",
+		"html": "examples/method_18_38_68.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 181,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_24_66.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 183,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_26_63.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 185,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_28_63.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 193,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_37_50.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 194,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_40_50.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 195,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_41_50.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 196,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_42_49.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 197,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_43_49.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 198,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_54_63.html",
+		"has_true_emo": false,
+		"group": "large"
+	},
+	{
+		"sample_id": 199,
+		"method_id": "method_19.java",
+		"html": "examples/method_19_55_63.html",
+		"has_true_emo": false,
+		"group": "large"
+	}
+]
