@@ -280,6 +280,8 @@ public int function(int a) {
 ```
 
 ```
+from program_slicing.decomposition.block_slicing import build_opportunities_filtered
+
 with open(java_file) as java_f:
   code = java_f.read()
   found_opportunities = {
@@ -295,6 +297,6 @@ with open(java_file) as java_f:
 `max_percentage_of_lines` is the ratio (`0.00 <= x <= 1.00`). 
 Suppose, we have `max_percentage_of_lines` = 0.3 
 and a function consists of 10 lines (not including the line with name and type declarations).
-The number of lines in an EMO is 5. Ratio is `5/10=0.2`. 
+The number of lines in an EMO is 5. Ratio is `5/10=0.5`. 
 So, everything which ratio is larger than `0.3` will be ignored.
-We have at the example above, so it won't be ignored.
+We have at the example above, so it will be ignored.
