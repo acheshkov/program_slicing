@@ -24,6 +24,8 @@ StatementColumnNumber = int
 class ProgramSlice:
 
     def __init__(self, source_lines: List[str]) -> None:
+        self.variable: Optional[Statement] = None
+        self.function: Optional[Statement] = None
         self.__source_lines: List[str] = source_lines
         self.__minimum_column: Optional[StatementLineNumber] = None
         self.__start_point: Optional[Point] = None
@@ -42,6 +44,9 @@ class ProgramSlice:
         return "ProgramSlice(ranges={ranges}, source_lines={source_lines})".format(
             ranges=self.__ranges,
             source_lines=self.__source_lines)
+
+    def __hash__(self) -> hash:
+        return hash(self.ranges)
 
     @property
     def source_lines(self) -> List[str]:

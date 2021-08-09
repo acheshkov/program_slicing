@@ -18,12 +18,16 @@ class SlicePredicate:
 
     def __init__(
             self,
+            min_amount_of_statements: int = None,
+            max_amount_of_statements: int = None,
             min_amount_of_lines: int = None,
             max_amount_of_lines: int = None,
             lines_are_full: bool = None,
             lang_to_check_parsing: str = None,
             has_returnable_variable: bool = None,
             forbidden_words: Set[str] = None):
+        self.__min_amount_of_statements = min_amount_of_statements
+        self.__max_amount_of_statements = max_amount_of_statements
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
         self.__lines_are_full = lines_are_full
@@ -35,6 +39,8 @@ class SlicePredicate:
             self.__check_max_amount_of_lines,
             self.__check_lines_are_full,
             self.__check_parsing,
+            self.__check_min_amount_of_statements,
+            self.__check_max_amount_of_statements,
             self.__check_has_returnable_variable,
             self.__check_forbidden_words
         ]
@@ -48,6 +54,25 @@ class SlicePredicate:
         for checker in self.__checkers:
             if not checker():
                 return False
+        return True
+
+    def __check_min_amount_of_statements(self) -> bool:
+        if self.__min_amount_of_statements is None:
+            return True
+        if self.__manager is None:
+            raise ValueError("lang_to_check_parsing has to be specified to check if slice has enough statements")
+        if len(self.__manager.root_statements) < self.__min_amount_of_statements:
+            return False
+        return True
+
+    def __check_max_amount_of_statements(self) -> bool:
+        if self.__max_amount_of_statements is None:
+            return True
+        if self.__manager is None:
+            raise ValueError(
+                "lang_to_check_parsing has to be specified to check if slice doesn't has too much statements")
+        if len(self.__manager.root_statements) > self.__max_amount_of_statements:
+            return False
         return True
 
     def __check_min_amount_of_lines(self) -> bool:
@@ -120,10 +145,14 @@ class SlicePredicate:
         return True
 
     def __check_has_returnable_variable(self) -> bool:
-        if self.__has_returnable_variable is None or self.__manager is None:
+        if self.__has_returnable_variable is None:
             return True
+        if self.__manager is None:
+            raise ValueError("lang_to_check_parsing has to be specified to check if slice has returnable variable")
         for statement in self.__manager.get_control_dependence_graph():
             if statement.statement_type == StatementType.VARIABLE:
+                if self.__program_slice.variable and self.__program_slice.variable.name != statement.name:
+                    continue
                 scope = self.__manager.get_scope_statement(statement)
                 lines = self.__program_slice.lines
                 if (scope.statement_type == StatementType.SCOPE or scope.statement_type == StatementType.FUNCTION) and \
@@ -143,6 +172,8 @@ class SlicePredicate:
 
 def check_slice(
         program_slice: ProgramSlice,
+        min_amount_of_statements: int = None,
+        max_amount_of_statements: int = None,
         min_amount_of_lines: int = None,
         max_amount_of_lines: int = None,
         lines_are_full: bool = None,
@@ -152,16 +183,22 @@ def check_slice(
     """
     Check a ProgramSlice if it matches specified conditions.
     :param program_slice: slice that should to be checked.
+    :param min_amount_of_statements: minimal acceptable amount of Statements.
+    Will raise Exception if lang_to_check_parsing is not specified.
+    :param max_amount_of_statements: maximal acceptable amount of Statements.
+    Will raise Exception if lang_to_check_parsing is not specified.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
-    :param lines_are_full: check if all the lines in slice are included fully.
+    :param lines_are_full: check if the slice contains only entire lines.
     :param lang_to_check_parsing: language in which slice should to be compilable.
     :param has_returnable_variable: slice should to have a declaration of variable that may be returned if needed.
-    Flag is ignored if lang_to_check_parsing is not specified.
+    Will raise Exception if lang_to_check_parsing is not specified.
     :param forbidden_words: a set of substrings that shouldn't be found in a slice code.
     :return: True if slice matches specified conditions.
     """
     return SlicePredicate(
+        min_amount_of_statements=min_amount_of_statements,
+        max_amount_of_statements=max_amount_of_statements,
         min_amount_of_lines=min_amount_of_lines,
         max_amount_of_lines=max_amount_of_lines,
         lines_are_full=lines_are_full,

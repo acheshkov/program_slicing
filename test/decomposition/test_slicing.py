@@ -88,8 +88,8 @@ class SlicingTestCase(TestCase):
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
         slices = [program_slice for program_slice in slices]
         self.assertEqual(3, len(slices))
-        for function_statement, variable_statement, program_slice in slices:
-            if variable_statement.name == "a":
+        for program_slice in slices:
+            if program_slice.variable.name == "a":
                 self.assertEqual(
                     "int n = 0;\n"
                     "int a = 10;\n"
@@ -99,14 +99,14 @@ class SlicingTestCase(TestCase):
                     "else\n"
                     "    a = n;",
                     program_slice.code)
-            elif variable_statement.name == "b":
+            elif program_slice.variable.name == "b":
                 self.assertEqual(
                     "int n = 0;\n"
                     "int b = 10;\n"
                     "if (n < 10)\n"
                     "    b = n;",
                     program_slice.code)
-            elif variable_statement.name == "n":
+            elif program_slice.variable.name == "n":
                 self.assertEqual(
                     "int n = 0;\n"
                     "int a = 10;\n"
@@ -141,7 +141,7 @@ class SlicingTestCase(TestCase):
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
-        for function_statement, variable_statement, program_slice in slices:
+        for program_slice in slices:
             self.assertEqual(
                 "int a = 10;\n"
                 "while (1) {\n"
@@ -181,7 +181,7 @@ class SlicingTestCase(TestCase):
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
         slices = [program_slice for program_slice in slices]
         self.assertEqual(1, len(slices))
-        for function_statement, variable_statement, program_slice in slices:
+        for program_slice in slices:
             self.assertEqual(
                 "char a;\n"
                 "try {\n"
@@ -224,8 +224,8 @@ class SlicingTestCase(TestCase):
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(2, len(slices))
-        for function_statement, variable_statement, program_slice in slices:
-            if variable_statement.name == "a":
+        for program_slice in slices:
+            if program_slice.variable.name == "a":
                 self.assertEqual(
                     "int a = 10;\n"
                     "for (int i = 0; i < 10; i++) {\n"
@@ -242,7 +242,7 @@ class SlicingTestCase(TestCase):
                     "    }\n"
                     "}",
                     program_slice.code)
-            elif variable_statement.name == "i":
+            elif program_slice.variable.name == "i":
                 self.assertEqual(
                     "for (int i = 0; i < 10; i++) {\n"
                     "}",
@@ -267,12 +267,12 @@ class SlicingTestCase(TestCase):
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(3, len(slices))
-        for function_statement, variable_statement, program_slice in slices:
-            if variable_statement.name == "a":
+        for program_slice in slices:
+            if program_slice.variable.name == "a":
                 self.assertEqual(
                     "int a = 0;",
                     program_slice.code)
-            elif variable_statement.name == "b":
+            elif program_slice.variable.name == "b":
                 self.assertEqual(
                     "int a = 0;\n"
                     "int b = 1;\n"
@@ -280,7 +280,7 @@ class SlicingTestCase(TestCase):
                     "    b = a;\n"
                     "}",
                     program_slice.code)
-            elif variable_statement.name == "c":
+            elif program_slice.variable.name == "c":
                 self.assertEqual(
                     "int c = 10;\n"
                     "b = a;\n"
@@ -307,12 +307,12 @@ class SlicingTestCase(TestCase):
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(2, len(slices))
-        for function_statement, variable_statement, program_slice in slices:
-            if variable_statement.name == "a":
+        for program_slice in slices:
+            if program_slice.variable.name == "a":
                 self.assertEqual(
                     "int a = 0;",
                     program_slice.code)
-            elif variable_statement.name == "b":
+            elif program_slice.variable.name == "b":
                 self.assertEqual(
                     "int b = 1;",
                     program_slice.code)
@@ -333,8 +333,8 @@ class SlicingTestCase(TestCase):
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(2, len(slices))
-        for function_statement, variable_statement, program_slice in slices:
-            if variable_statement.name == "a":
+        for program_slice in slices:
+            if program_slice.variable.name == "a":
                 self.assertEqual(
                     "for (int a = 0; a < n; a++) {\n"
                     "}",
@@ -364,7 +364,7 @@ class SlicingTestCase(TestCase):
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(1, len(slices))
-        for function_statement, variable_statement, program_slice in slices:
+        for program_slice in slices:
             self.assertEqual(
                 "int a = 10;\n"
                 "while (1) {\n"

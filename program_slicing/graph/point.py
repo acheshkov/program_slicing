@@ -23,6 +23,17 @@ class Point:
     def __str__(self) -> str:
         return "({}, {})".format(self.__line_number, self.__column_number)
 
+    def __iter__(self):
+        yield self.__line_number
+        yield self.__column_number
+
+    def __getitem__(self, key):
+        if key == 0:
+            return self.__line_number
+        if key == 1:
+            return self.__column_number
+        raise IndexError("Point index out of range")
+
     def __eq__(self, other: 'Point') -> bool:
         return \
             other is not None and \
@@ -57,6 +68,9 @@ class Point:
         return \
             self.__line_number > other.__line_number or \
             self.__line_number == other.__line_number and self.__column_number >= other.__column_number
+
+    def __neg__(self) -> 'Point':
+        return Point(-self.line_number, -self.column_number)
 
     @property
     def line_number(self) -> int:

@@ -4,7 +4,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from typing import Dict, Optional, Set
+from typing import Dict, Optional, Set, List
 
 import networkx
 
@@ -13,7 +13,7 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.pdg import ProgramDependenceGraph
-from program_slicing.graph.statement import Statement
+from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph import convert
 
@@ -29,6 +29,7 @@ class ProgramGraphsManager:
         self.__dom_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         self.__reach_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         self.__scope_dependency: Dict[Statement, Statement] = {}
+        self.__root_statements: List[Statement] = []
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
 
@@ -55,6 +56,15 @@ class ProgramGraphsManager:
         result = cls()
         result.init_by_program_dependence_graph(graph)
         return result
+
+    @property
+    def root_statements(self) -> List[Statement]:
+        """
+        Statement is a 'root' Statement if it is not SCOPE, BRANCH, LOOP, FUNCTION or EXIT and
+        it is not contained in any other non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
+        :return: list of root Statements.
+        """
+        return self.__root_statements
 
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.__cdg
@@ -140,11 +150,26 @@ class ProgramGraphsManager:
         self.__build_dependencies()
 
     def __build_dependencies(self) -> None:
+        self.__root_statements.clear()
         self.__basic_block.clear()
         for block in networkx.algorithms.traversal.dfs_tree(self.__cfg):
             for statement in block:
                 self.__basic_block[statement] = block
         self.__scope_dependency = self.__cdg.scope_dependency
+        linear_statements = (
+            statement
+            for statement in self.__cdg if
+            statement.statement_type != StatementType.SCOPE and
+            statement.statement_type != StatementType.FUNCTION and
+            statement.statement_type != StatementType.LOOP and
+            statement.statement_type != StatementType.BRANCH and
+            statement.statement_type != StatementType.EXIT)
+        for statement in sorted(linear_statements, key=lambda x: (x.start_point, -x.end_point)):
+            if self.__root_statements:
+                if statement.start_point >= self.__root_statements[-1].end_point:
+                    self.__root_statements.append(statement)
+            else:
+                self.__root_statements.append(statement)
 
     def __build_reach_blocks(self, block: BasicBlock, visited_blocks: Set[BasicBlock] = None) -> Set[BasicBlock]:
         if block in self.__reach_blocks:
