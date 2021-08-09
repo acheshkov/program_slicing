@@ -177,7 +177,9 @@ def check_slice(
     Check a ProgramSlice if it matches specified conditions.
     :param program_slice: slice that should to be checked.
     :param min_amount_of_statements: minimal acceptable amount of Statements.
+    Flag is ignored if lang_to_check_parsing is not specified.
     :param max_amount_of_statements: maximal acceptable amount of Statements.
+    Flag is ignored if lang_to_check_parsing is not specified.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
     :param lines_are_full: check if all the lines in slice are included fully.
