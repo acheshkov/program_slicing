@@ -58,7 +58,7 @@ class ProgramGraphsManager:
         return result
 
     @property
-    def root_statements(self) -> list[Statement]:
+    def root_statements(self) -> List[Statement]:
         """
         Statement is a 'root' Statement if it is not SCOPE, BRANCH, LOOP, FUNCTION or EXIT and
         it is not contained in any other non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
