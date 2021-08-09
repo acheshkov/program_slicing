@@ -18,12 +18,16 @@ class SlicePredicate:
 
     def __init__(
             self,
+            min_amount_of_statements: int = None,
+            max_amount_of_statements: int = None,
             min_amount_of_lines: int = None,
             max_amount_of_lines: int = None,
             lines_are_full: bool = None,
             lang_to_check_parsing: str = None,
             has_returnable_variable: bool = None,
             forbidden_words: Set[str] = None):
+        self.__min_amount_of_statements = min_amount_of_statements
+        self.__max_amount_of_statements = max_amount_of_statements
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
         self.__lines_are_full = lines_are_full
@@ -35,6 +39,8 @@ class SlicePredicate:
             self.__check_max_amount_of_lines,
             self.__check_lines_are_full,
             self.__check_parsing,
+            self.__check_min_amount_of_statements,
+            self.__check_max_amount_of_statements,
             self.__check_has_returnable_variable,
             self.__check_forbidden_words
         ]
@@ -48,6 +54,20 @@ class SlicePredicate:
         for checker in self.__checkers:
             if not checker():
                 return False
+        return True
+
+    def __check_min_amount_of_statements(self) -> bool:
+        if self.__min_amount_of_statements is None or self.__manager is None:
+            return True
+        if len(self.__manager.main_statements) < self.__min_amount_of_statements:
+            return False
+        return True
+
+    def __check_max_amount_of_statements(self) -> bool:
+        if self.__max_amount_of_statements is None or self.__manager is None:
+            return True
+        if len(self.__manager.main_statements) > self.__max_amount_of_statements:
+            return False
         return True
 
     def __check_min_amount_of_lines(self) -> bool:
@@ -124,6 +144,8 @@ class SlicePredicate:
             return True
         for statement in self.__manager.get_control_dependence_graph():
             if statement.statement_type == StatementType.VARIABLE:
+                if self.__program_slice.variable and self.__program_slice.variable.name != statement.name:
+                    continue
                 scope = self.__manager.get_scope_statement(statement)
                 lines = self.__program_slice.lines
                 if (scope.statement_type == StatementType.SCOPE or scope.statement_type == StatementType.FUNCTION) and \
@@ -143,6 +165,8 @@ class SlicePredicate:
 
 def check_slice(
         program_slice: ProgramSlice,
+        min_amount_of_statements: int = None,
+        max_amount_of_statements: int = None,
         min_amount_of_lines: int = None,
         max_amount_of_lines: int = None,
         lines_are_full: bool = None,
@@ -152,6 +176,8 @@ def check_slice(
     """
     Check a ProgramSlice if it matches specified conditions.
     :param program_slice: slice that should to be checked.
+    :param min_amount_of_statements: minimal acceptable amount of Statements.
+    :param max_amount_of_statements: maximal acceptable amount of Statements.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
     :param lines_are_full: check if all the lines in slice are included fully.
@@ -162,6 +188,8 @@ def check_slice(
     :return: True if slice matches specified conditions.
     """
     return SlicePredicate(
+        min_amount_of_statements=min_amount_of_statements,
+        max_amount_of_statements=max_amount_of_statements,
         min_amount_of_lines=min_amount_of_lines,
         max_amount_of_lines=max_amount_of_lines,
         lines_are_full=lines_are_full,

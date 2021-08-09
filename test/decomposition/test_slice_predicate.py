@@ -52,16 +52,18 @@ class CheckSliceTestCase(TestCase):
 
     @staticmethod
     def __get_slice_1() -> ProgramSlice:
-        source_lines = """
+        source_lines = """int n = 10;
         hook:
         for(int i = 0; i < n; i++) {
             i++;
             break hook;
         }
         """.split("\n")
-        return ProgramSlice(source_lines).from_ranges([
+        program_slice = ProgramSlice(source_lines).from_ranges([
             (Point(0, 0), Point(len(source_lines) - 1, len(source_lines[-1])))
         ])
+        program_slice.variable = Statement(StatementType.VARIABLE, Point(2, 16), Point(2, 21), name="i")
+        return program_slice
 
     @staticmethod
     def __get_slice_2() -> ProgramSlice:

@@ -5,7 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/17'
 
 import os
-from typing import Set, Dict, List, Tuple, Iterator
+from typing import Set, Dict, List, Iterator
 
 import networkx
 
@@ -69,25 +69,24 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
         lang_to_check_parsing=lang,
         has_returnable_variable=True)
     slices = get_complete_computation_slices(source_code, lang, slice_predicate)
-    for function_statement, variable_statement, cc_slice in slices:
+    for program_slice in slices:
         yield "\033[33m\nSlice" + \
-              ((" of " + function_statement.name) if function_statement.name else "") + \
-              " for variable '" + variable_statement.name + \
-              "': " + str([a[0].line_number + 1 for a in cc_slice.ranges]) + \
-              "\033[00m\n" + cc_slice.code
+              ((" of " + program_slice.function.name) if program_slice.function.name else "") + \
+              " for variable '" + program_slice.variable.name + \
+              "': " + str([a[0].line_number + 1 for a in program_slice.ranges]) + \
+              "\033[00m\n" + program_slice.code
 
 
 def get_complete_computation_slices(
         source_code: str,
         lang: str,
-        slice_predicate: SlicePredicate = None) -> Iterator[Tuple[Statement, Statement, ProgramSlice]]:
+        slice_predicate: SlicePredicate = None) -> Iterator[ProgramSlice]:
     """
     For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
-    :return: generator of the function Statement, variable Statement and a corresponding list of slices
-    (Statements)
+    :return: generator of the ProgramSlices.
     """
     code_lines = str(source_code).split("\n")
     manager = ProgramGraphsManager(source_code, lang)
@@ -103,8 +102,10 @@ def get_complete_computation_slices(
             complete_computation_slice = complete_computation_slices.get(variable_basic_block, [])
             if complete_computation_slice:
                 program_slice = ProgramSlice(code_lines).from_statements(complete_computation_slice)
+                program_slice.variable = variable_statement
+                program_slice.function = function_statement
                 if slice_predicate is None or slice_predicate(program_slice):
-                    yield function_statement, variable_statement, program_slice
+                    yield program_slice
 
 
 def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:
