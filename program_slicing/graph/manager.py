@@ -57,6 +57,10 @@ class ProgramGraphsManager:
         result.init_by_program_dependence_graph(graph)
         return result
 
+    @property
+    def main_statements(self) -> list[Statement]:
+        return self.__main_statements
+
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.__cdg
 
@@ -155,13 +159,12 @@ class ProgramGraphsManager:
             statement.statement_type != StatementType.LOOP and
             statement.statement_type != StatementType.BRANCH and
             statement.statement_type != StatementType.EXIT)
-        main_statements = []
         for statement in sorted(linear_statements, key=lambda x: (x.start_point, -x.end_point)):
-            if main_statements:
-                if statement.start_point >= main_statements[-1].end_point:
-                    main_statements.append(statement)
+            if self.__main_statements:
+                if statement.start_point >= self.__main_statements[-1].end_point:
+                    self.__main_statements.append(statement)
             else:
-                main_statements.append(statement)
+                self.__main_statements.append(statement)
 
     def __build_reach_blocks(self, block: BasicBlock, visited_blocks: Set[BasicBlock] = None) -> Set[BasicBlock]:
         if block in self.__reach_blocks:
