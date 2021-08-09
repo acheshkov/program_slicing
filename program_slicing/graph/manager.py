@@ -59,6 +59,11 @@ class ProgramGraphsManager:
 
     @property
     def main_statements(self) -> list[Statement]:
+        """
+        Statement is a 'main' Statement if it is not SCOPE, BRANCH, LOOP, FUNCTION or EXIT and
+        it is not contained in any other non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
+        :return: list of main Statements.
+        """
         return self.__main_statements
 
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
