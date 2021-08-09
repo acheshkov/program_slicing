@@ -189,7 +189,7 @@ def check_slice(
     Will raise Exception if lang_to_check_parsing is not specified.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
-    :param lines_are_full: check if all the lines in slice are included fully.
+    :param lines_are_full: check if the slice contains only entire lines.
     :param lang_to_check_parsing: language in which slice should to be compilable.
     :param has_returnable_variable: slice should to have a declaration of variable that may be returned if needed.
     Will raise Exception if lang_to_check_parsing is not specified.
