@@ -6,134 +6,13 @@ __date__ = '2021/06/01'
 
 from unittest import TestCase
 
-from program_slicing.decomposition.block_slicing import build_opportunities_filtered, __build_statements_in_scope
+from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import LANG_JAVA
-from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.point import Point
-
-build_statements_in_scope = __build_statements_in_scope
 
 
 class BlockSlicingTestCase(TestCase):
-    def test_identify_unique_block_with_if(self) -> None:
-        if_statement = '''
-        if (workspace == null) {
-            return Collections.emptySet();
-        }
-        '''
-        manager = ProgramGraphsManager(if_statement, LANG_JAVA)
-        self.assertEqual(4, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_block_with_for_each(self) -> None:
-        for_each_block = '''
-        for (LaunchConfiguration config: workspace.getLaunchConfigurations()) { int i = 0;}
-        '''
-        manager = ProgramGraphsManager(for_each_block, LANG_JAVA)
-        self.assertEqual(3, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_block_with_while(self) -> None:
-        while_block = '''
-        while (null != (line = input.readLine()) && maxLines > 0) {
-                maxLines--;
-        }'''
-        manager = ProgramGraphsManager(while_block, LANG_JAVA)
-        self.assertEqual(3, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_block_with_sync(self) -> None:
-        sync_block = '''
-        synchronized (getLock(cache)) {
-           url = cache.toURI().toURL();
-        }'''
-        manager = ProgramGraphsManager(sync_block, LANG_JAVA)
-        self.assertEqual(3, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_block_with_for(self) -> None:
-        for_cycle_block = '''
-        for (int i = 0; i < 10; ++i) {
-            foo();
-        }'''
-        manager = ProgramGraphsManager(for_cycle_block, LANG_JAVA)
-        self.assertEqual(3, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_block_without_brackets(self) -> None:
-        block_without_brackets = '''
-        for (int i = 0; i < 10; ++i)
-            foo();
-        '''
-        manager = ProgramGraphsManager(block_without_brackets, LANG_JAVA)
-        self.assertEqual(2, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_blocks_with_try(self) -> None:
-        block_without_try = '''
-            try (int resource = getResources()) {
-                tracker.waitForAll(resource);
-            } catch (Exception e) {
-                int i = 0;
-            }
-            finally {
-                int j = 0;
-            }
-        '''
-        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
-        self.assertEqual(6, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_blocks_with_anonymous_class(self) -> None:
-        block_without_try = '''
-        HelloWorld englishGreeting = new EnglishGreeting();
-
-        HelloWorld frenchGreeting = new HelloWorld() {
-            public void greet() {
-                greetSomeone("tout le monde");
-            }
-            public void greetSomeone(String someone) {
-                name = someone;
-                System.out.println("Salut " + name);
-            }
-        };
-        '''
-        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
-        self.assertEqual(5, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_blocks_with_lambda(self) -> None:
-        block_without_lambda = '''
-            MyPrinter myPrinter = (s) -> { System.out.println(s); };
-        '''
-        manager = ProgramGraphsManager(block_without_lambda, LANG_JAVA)
-        self.assertEqual(2, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_block_with_break(self) -> None:
-        while_block = '''
-        for (String s: strings) {
-             a();
-             b();
-             if (true) { break;}
-        }
-        while (i < 3 ) {
-             a();
-             b();
-             outer_loop:
-             for (;;) {
-                if (true) {
-                    if(true) {
-                       break outer_loop;
-                    }
-                 }
-            }
-        }
-        '''
-        manager = ProgramGraphsManager(while_block, LANG_JAVA)
-        self.assertEqual(13, len(build_statements_in_scope(manager)))
-
-    def test_identify_unique_block_with_continue(self) -> None:
-        while_block = '''
-        for (String s: strings) {
-             a();
-             b();
-             if (true) { continue;}
-        }
-        '''
-        manager = ProgramGraphsManager(while_block, LANG_JAVA)
-        self.assertEqual(5, len(build_statements_in_scope(manager)))
 
     def test_opportunities_ranges(self):
         expected_opportunities = {
@@ -203,11 +82,15 @@ class BlockSlicingTestCase(TestCase):
         found_opportunities = {
             ((program_slice.ranges[0][0].line_number, program_slice.ranges[0][0].column_number),
              (program_slice.ranges[-1][1].line_number, program_slice.ranges[-1][1].column_number))
-            for program_slice in build_opportunities_filtered(
+            for program_slice in get_block_slices(
                 self.t_,
                 LANG_JAVA,
-                min_amount_of_lines=5,
-                max_percentage_of_lines=0.8
+                max_percentage_of_lines=0.8,
+                slice_predicate=SlicePredicate(
+                    min_amount_of_lines=5,
+                    lang_to_check_parsing=LANG_JAVA,
+                    lines_are_full=True
+                )
             ) if program_slice.ranges}
         self.assertEqual(expected_opportunities, found_opportunities)
 
@@ -245,7 +128,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(code, LANG_JAVA)
+            for program_slice in get_block_slices(code, LANG_JAVA)
         }
         self.assertTrue((15, 16) in found_opportunities, True)
         self.assertTrue((15, 17) in found_opportunities, True)
@@ -284,16 +167,32 @@ class BlockSlicingTestCase(TestCase):
         max_percentage = 0.8
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(
-                code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=max_percentage)
+            for program_slice in get_block_slices(
+                code,
+                LANG_JAVA,
+                max_percentage_of_lines=max_percentage,
+                slice_predicate=SlicePredicate(
+                    min_amount_of_lines=5,
+                    lang_to_check_parsing=LANG_JAVA,
+                    lines_are_full=True
+                )
+            )
         }
         self.assertEqual([], [x for x in found_opportunities if x[1] - x[0] < 4])
         self.assertEqual([], [x for x in found_opportunities if (len(all_lines) / x[1] - x[0]) > max_percentage])
         max_percentage = 0
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(
-                code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=max_percentage)
+            for program_slice in get_block_slices(
+                code,
+                LANG_JAVA,
+                max_percentage_of_lines=max_percentage,
+                slice_predicate=SlicePredicate(
+                    min_amount_of_lines=5,
+                    lang_to_check_parsing=LANG_JAVA,
+                    lines_are_full=True
+                )
+            )
         }
         self.assertEqual(set(), found_opportunities)
 
@@ -324,8 +223,16 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0], program_slice.ranges[-1][1])
-            for program_slice in build_opportunities_filtered(
-                code, LANG_JAVA, min_amount_of_lines=5, max_percentage_of_lines=1.00)
+            for program_slice in get_block_slices(
+                code,
+                LANG_JAVA,
+                max_percentage_of_lines=1.00,
+                slice_predicate=SlicePredicate(
+                    min_amount_of_lines=5,
+                    lang_to_check_parsing=LANG_JAVA,
+                    lines_are_full=True
+                )
+            )
         }
         self.assertEqual({
             (Point(9, 16), Point(13, 73)),
@@ -347,7 +254,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(code, LANG_JAVA)
+            for program_slice in get_block_slices(code, LANG_JAVA)
         }
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the current scope which is depended on
@@ -375,7 +282,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(code_with_usage_inside_inner_scope, LANG_JAVA)
+            for program_slice in get_block_slices(code_with_usage_inside_inner_scope, LANG_JAVA)
         }
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the inner scope which is depended on
@@ -403,8 +310,16 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(
-                complex_objects, LANG_JAVA, min_amount_of_lines=2, max_percentage_of_lines=1.0)
+            for program_slice in get_block_slices(
+                complex_objects,
+                LANG_JAVA,
+                max_percentage_of_lines=1.0,
+                slice_predicate=SlicePredicate(
+                    min_amount_of_lines=2,
+                    lang_to_check_parsing=LANG_JAVA,
+                    lines_are_full=True
+                )
+            )
         }
         self.assertEqual({
             (1, 10),
@@ -441,7 +356,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(diff_scope, LANG_JAVA)
+            for program_slice in get_block_slices(diff_scope, LANG_JAVA)
         }
         self.assertTrue((4, 5) in found_opportunities)
         self.assertTrue((4, 6) in found_opportunities)
@@ -464,7 +379,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(diff_scope, LANG_JAVA)
+            for program_slice in get_block_slices(diff_scope, LANG_JAVA)
         }
         self.assertTrue((3, 4) not in found_opportunities)
         self.assertTrue((3, 5) not in found_opportunities)
@@ -486,7 +401,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in build_opportunities_filtered(diff_scope, LANG_JAVA)
+            for program_slice in get_block_slices(diff_scope, LANG_JAVA)
         }
         self.assertTrue((3, 4) not in found_opportunities)
         self.assertTrue((3, 5) not in found_opportunities)

@@ -4,7 +4,8 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/23'
 
-from typing import Dict, Optional, Set, List
+from collections import defaultdict
+from typing import Dict, Optional, Set, List, Iterable
 
 import networkx
 
@@ -13,6 +14,7 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.pdg import ProgramDependenceGraph
+from program_slicing.graph.point import Point
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.basic_block import BasicBlock
 from program_slicing.graph import convert
@@ -29,7 +31,8 @@ class ProgramGraphsManager:
         self.__dom_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         self.__reach_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         self.__scope_dependency: Dict[Statement, Statement] = {}
-        self.__root_statements: List[Statement] = []
+        self.__scope_dependency_backward: Dict[Statement, Set[Statement]] = {}
+        self.__general_statements: List[Statement] = []
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
 
@@ -58,13 +61,21 @@ class ProgramGraphsManager:
         return result
 
     @property
-    def root_statements(self) -> List[Statement]:
+    def general_statements(self) -> List[Statement]:
         """
-        Statement is a 'root' Statement if it is not SCOPE, BRANCH, LOOP, FUNCTION or EXIT and
-        it is not contained in any other non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
-        :return: list of root Statements.
+        Statement is a 'general' Statement if it is not contained in any
+        non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
+        :return: list of general Statements.
         """
-        return self.__root_statements
+        return self.__general_statements
+
+    @property
+    def scope_statements(self) -> Iterable[Statement]:
+        """
+        Statement is a 'scope' Statement if it is SCOPE, BRANCH, LOOP or FUNCTION.
+        :return: set of scope Statements.
+        """
+        return self.__scope_dependency_backward.keys()
 
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.__cdg
@@ -78,8 +89,36 @@ class ProgramGraphsManager:
     def get_program_dependence_graph(self) -> ProgramDependenceGraph:
         return self.__pdg
 
-    def get_scope_statement(self, statement: Statement) -> Optional[Statement]:
-        return self.__scope_dependency.get(statement, None)
+    def init_by_source_code(self, source_code: str, lang: str) -> None:
+        self.init_by_control_dependence_graph(parse.control_dependence_graph(source_code, lang))
+
+    def init_by_control_dependence_graph(self, cdg: ControlDependenceGraph) -> None:
+        self.__cdg = cdg
+        self.__cfg = convert.cdg.to_cfg(cdg)
+        self.__ddg = convert.cdg.to_ddg(cdg)
+        self.__pdg = convert.cdg.to_pdg(cdg)
+        self.__build_dependencies()
+
+    def init_by_control_flow_graph(self, cfg: ControlFlowGraph) -> None:
+        self.__cdg = convert.cfg.to_cdg(cfg)
+        self.__cfg = cfg
+        self.__ddg = convert.cfg.to_ddg(cfg)
+        self.__pdg = convert.cfg.to_pdg(cfg)
+        self.__build_dependencies()
+
+    def init_by_data_dependence_graph(self, ddg: DataDependenceGraph) -> None:
+        self.__cdg = convert.ddg.to_cdg(ddg)
+        self.__cfg = convert.ddg.to_cfg(ddg)
+        self.__ddg = ddg
+        self.__pdg = convert.ddg.to_pdg(ddg)
+        self.__build_dependencies()
+
+    def init_by_program_dependence_graph(self, pdg: ProgramDependenceGraph) -> None:
+        self.__cdg = convert.pdg.to_cdg(pdg)
+        self.__cfg = convert.pdg.to_cfg(pdg)
+        self.__ddg = convert.pdg.to_ddg(pdg)
+        self.__pdg = pdg
+        self.__build_dependencies()
 
     def get_basic_block(self, statement: Statement) -> Optional[BasicBlock]:
         return self.__basic_block.get(statement, None)
@@ -118,58 +157,120 @@ class ProgramGraphsManager:
                 boundary_blocks.add(basic_block)
         return boundary_blocks
 
-    def init_by_source_code(self, source_code: str, lang: str) -> None:
-        self.init_by_control_dependence_graph(parse.control_dependence_graph(source_code, lang))
+    def get_scope_statement(self, statement: Statement) -> Optional[Statement]:
+        return self.__scope_dependency.get(statement, None)
 
-    def init_by_control_dependence_graph(self, cdg: ControlDependenceGraph) -> None:
-        self.__cdg = cdg
-        self.__cfg = convert.cdg.to_cfg(cdg)
-        self.__ddg = convert.cdg.to_ddg(cdg)
-        self.__pdg = convert.cdg.to_pdg(cdg)
-        self.__build_dependencies()
+    def get_statements_in_scope(self, scope: Statement) -> Set[Statement]:
+        return self.__scope_dependency_backward.get(scope, set())
 
-    def init_by_control_flow_graph(self, cfg: ControlFlowGraph) -> None:
-        self.__cdg = convert.cfg.to_cdg(cfg)
-        self.__cfg = cfg
-        self.__ddg = convert.cfg.to_ddg(cfg)
-        self.__pdg = convert.cfg.to_pdg(cfg)
-        self.__build_dependencies()
+    def get_statements_in_range(
+            self,
+            start_point: Point = None,
+            end_point: Point = None) -> Set[Statement]:
+        result = set()
+        for statement in self.__cdg:
+            if (start_point is None or start_point <= statement.start_point) and \
+                    (end_point is None or end_point >= statement.end_point):
+                result.add(statement)
+        return result
 
-    def init_by_data_dependence_graph(self, ddg: DataDependenceGraph) -> None:
-        self.__cdg = convert.ddg.to_cdg(ddg)
-        self.__cfg = convert.ddg.to_cfg(ddg)
-        self.__ddg = ddg
-        self.__pdg = convert.ddg.to_pdg(ddg)
-        self.__build_dependencies()
+    def get_exit_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
+        start_point = min(statement.start_point for statement in statements)
+        end_point = max(statement.end_point for statement in statements)
+        exit_statements = set()
+        for statement in statements:
+            if statement not in self.__cdg.control_flow:
+                continue
+            for flow_statement in self.__cdg.control_flow[statement]:
+                if flow_statement.start_point < start_point or flow_statement.end_point > end_point:
+                    exit_statements.add(flow_statement)
+        return exit_statements
 
-    def init_by_program_dependence_graph(self, pdg: ProgramDependenceGraph) -> None:
-        self.__cdg = convert.pdg.to_cdg(pdg)
-        self.__cfg = convert.pdg.to_cfg(pdg)
-        self.__ddg = convert.pdg.to_ddg(pdg)
-        self.__pdg = pdg
-        self.__build_dependencies()
+    def get_affecting_statements(self, statements: Set[Statement]) -> Set[Statement]:
+        assignment_statements = [
+            statement for statement in statements
+            if
+            statement.statement_type == StatementType.ASSIGNMENT or
+            statement.statement_type == StatementType.VARIABLE
+        ]
+        arg_statements_by_arg_name = self.__get_arg_statements_by_arg_name(statements)
+        affecting_statements = set()
+        for assignment_statement in assignment_statements:
+            for affected_statement in self.__ddg.successors(assignment_statement):
+                if affected_statement not in statements or \
+                        affected_statement.end_point <= assignment_statement.end_point and \
+                        affected_statement in arg_statements_by_arg_name.get(assignment_statement.name, set()):
+                    affecting_statements.add(assignment_statement)
+                    break
+        return affecting_statements
+
+    def get_changed_variables(self, statements: Iterable[Statement]) -> Set[Statement]:
+        used_variables = set()
+        for statement in statements:
+            if statement.statement_type == StatementType.VARIABLE:
+                used_variables.add(statement)
+            if statement.statement_type == StatementType.ASSIGNMENT:
+                if statement not in self.__ddg:
+                    continue
+                for ancestor in networkx.ancestors(self.__ddg, statement):
+                    if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
+                        used_variables.add(ancestor)
+        return used_variables
+
+    def get_used_variables(self, statements: Iterable[Statement]) -> Set[Statement]:
+        used_variables = set()
+        ddg = self.get_data_dependence_graph()
+        for statement in statements:
+            if statement not in ddg:
+                continue
+            if statement.statement_type == StatementType.VARIABLE:
+                used_variables.add(statement)
+                continue
+            for ancestor in networkx.ancestors(ddg, statement):
+                if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
+                    used_variables.add(ancestor)
+        return used_variables
+
+    def contain_redundant_statements(self, statements: Set[Statement]) -> bool:
+        for statement in statements:
+            if statement.ast_node_type == "else" or statement.ast_node_type == "catch_clause":
+                for predecessor in self.__cdg.predecessors(statement):
+                    if predecessor not in statements:
+                        return True
+            elif statement.ast_node_type == "finally_clause" and self.__is_redundant_finally(statement, statements):
+                return True
+            elif statement.ast_node_type == "if_statement" and self.__is_redundant_if(statement, statements):
+                return True
+        return False
 
     def __build_dependencies(self) -> None:
-        self.__root_statements.clear()
         self.__basic_block.clear()
         for block in networkx.algorithms.traversal.dfs_tree(self.__cfg):
             for statement in block:
                 self.__basic_block[statement] = block
         self.__scope_dependency = self.__cdg.scope_dependency
-        linear_statements = (
-            statement
-            for statement in self.__cdg if
-            statement.statement_type != StatementType.SCOPE and
-            statement.statement_type != StatementType.FUNCTION and
-            statement.statement_type != StatementType.LOOP and
-            statement.statement_type != StatementType.BRANCH and
-            statement.statement_type != StatementType.EXIT)
-        for statement in sorted(linear_statements, key=lambda x: (x.start_point, -x.end_point)):
-            if self.__root_statements:
-                if statement.start_point >= self.__root_statements[-1].end_point:
-                    self.__root_statements.append(statement)
-            else:
-                self.__root_statements.append(statement)
+        self.__scope_dependency_backward = self.__build_statements_in_scope()
+        self.__general_statements = self.__build_general_statements()
+
+    def __build_general_statements(self) -> Set[Statement]:
+        statements = sorted(
+            self.__cdg,
+            key=lambda s: (s.start_point, -s.end_point))
+        result = set()
+        last_statement = None
+        for statement in statements:
+            if statement.statement_type == StatementType.EXIT:
+                continue
+            if statement.statement_type == StatementType.SCOPE or \
+                    statement.statement_type == StatementType.FUNCTION or \
+                    statement.statement_type == StatementType.LOOP or \
+                    statement.statement_type == StatementType.BRANCH:
+                result.add(statement)
+                continue
+            if not last_statement or statement.end_point > last_statement.end_point:
+                last_statement = statement
+                result.add(statement)
+        return result
 
     def __build_reach_blocks(self, block: BasicBlock, visited_blocks: Set[BasicBlock] = None) -> Set[BasicBlock]:
         if block in self.__reach_blocks:
@@ -184,3 +285,40 @@ class ProgramGraphsManager:
         self.__reach_blocks[block] = result
         visited_blocks.remove(block)
         return result
+
+    def __build_statements_in_scope(self) -> Dict[Statement, Set[Statement]]:
+        statements_in_scope = defaultdict(set)
+        cdg = self.get_control_dependence_graph()
+        for statement in cdg:
+            scope = self.get_scope_statement(statement)
+            if scope is None:
+                continue
+            statements_in_scope[scope].add(statement)
+        return statements_in_scope
+
+    def __get_arg_statements_by_arg_name(self, statements: Set[Statement]) -> Dict[str, Set[Statement]]:
+        arg_statements_by_arg_name = defaultdict(set)
+        for statement in statements:
+            if statement in self.__ddg and \
+                    statement.statement_type != StatementType.ASSIGNMENT and \
+                    statement.statement_type != StatementType.VARIABLE:
+                for predecessor in self.__ddg.predecessors(statement):
+                    if predecessor not in statements:
+                        arg_statements_by_arg_name[predecessor.name].add(statement)
+        return arg_statements_by_arg_name
+
+    def __is_redundant_finally(self, statement: Statement, statements: Set[Statement]) -> bool:
+        finally_block = self.get_basic_block(statement)
+        if finally_block is None:
+            return True
+        for predecessor_block in self.__cfg.predecessors(finally_block):
+            if predecessor_block.statements and predecessor_block.statements[-1] not in statements:
+                return True
+        return False
+
+    def __is_redundant_if(self, statement: Statement, statements: Set[Statement]) -> bool:
+        if statement in self.__cdg.control_flow:
+            for successor in self.__cdg.control_flow[statement]:
+                if successor.ast_node_type == "else" and successor not in statements:
+                    return True
+        return False

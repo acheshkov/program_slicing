@@ -61,7 +61,7 @@ class SlicePredicate:
             return True
         if self.__manager is None:
             raise ValueError("lang_to_check_parsing has to be specified to check if slice has enough statements")
-        if len(self.__manager.root_statements) < self.__min_amount_of_statements:
+        if len(self.__manager.general_statements) < self.__min_amount_of_statements:
             return False
         return True
 
@@ -71,7 +71,7 @@ class SlicePredicate:
         if self.__manager is None:
             raise ValueError(
                 "lang_to_check_parsing has to be specified to check if slice doesn't has too much statements")
-        if len(self.__manager.root_statements) > self.__max_amount_of_statements:
+        if len(self.__manager.general_statements) > self.__max_amount_of_statements:
             return False
         return True
 

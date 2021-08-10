@@ -96,20 +96,20 @@ class CheckSliceTestCase(TestCase):
             check_slice(
                 CheckSliceTestCase.__get_slice_0(),
                 lang_to_check_parsing=parse.LANG_JAVA,
-                min_amount_of_statements=6,
-                max_amount_of_statements=6))
-        self.assertFalse(
-            check_slice(
-                CheckSliceTestCase.__get_slice_0(),
-                lang_to_check_parsing=parse.LANG_JAVA,
                 min_amount_of_statements=7,
                 max_amount_of_statements=7))
         self.assertFalse(
             check_slice(
                 CheckSliceTestCase.__get_slice_0(),
                 lang_to_check_parsing=parse.LANG_JAVA,
-                min_amount_of_statements=5,
-                max_amount_of_statements=5))
+                min_amount_of_statements=8,
+                max_amount_of_statements=8))
+        self.assertFalse(
+            check_slice(
+                CheckSliceTestCase.__get_slice_0(),
+                lang_to_check_parsing=parse.LANG_JAVA,
+                min_amount_of_statements=6,
+                max_amount_of_statements=6))
 
     def test_parsing(self) -> None:
         self.assertTrue(

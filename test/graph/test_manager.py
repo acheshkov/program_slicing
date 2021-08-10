@@ -232,3 +232,123 @@ class ManagerTestCase(TestCase):
             block_with_for,
             block_with_return,
         }, mgr.get_boundary_blocks(block_with_return))
+
+    def test_identify_unique_block_with_if(self) -> None:
+        if_statement = '''
+        if (workspace == null) {
+            return Collections.emptySet();
+        }
+        '''
+        manager = ProgramGraphsManager(if_statement, LANG_JAVA)
+        self.assertEqual(4, len(list(manager.scope_statements)))
+
+    def test_identify_unique_block_with_for_each(self) -> None:
+        for_each_block = '''
+        for (LaunchConfiguration config: workspace.getLaunchConfigurations()) { int i = 0;}
+        '''
+        manager = ProgramGraphsManager(for_each_block, LANG_JAVA)
+        self.assertEqual(3, len(list(manager.scope_statements)))
+
+    def test_identify_unique_block_with_while(self) -> None:
+        while_block = '''
+        while (null != (line = input.readLine()) && maxLines > 0) {
+                maxLines--;
+        }'''
+        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        self.assertEqual(3, len(list(manager.scope_statements)))
+
+    def test_identify_unique_block_with_sync(self) -> None:
+        sync_block = '''
+        synchronized (getLock(cache)) {
+           url = cache.toURI().toURL();
+        }'''
+        manager = ProgramGraphsManager(sync_block, LANG_JAVA)
+        self.assertEqual(3, len(list(manager.scope_statements)))
+
+    def test_identify_unique_block_with_for(self) -> None:
+        for_cycle_block = '''
+        for (int i = 0; i < 10; ++i) {
+            foo();
+        }'''
+        manager = ProgramGraphsManager(for_cycle_block, LANG_JAVA)
+        self.assertEqual(3, len(list(manager.scope_statements)))
+
+    def test_identify_unique_block_without_brackets(self) -> None:
+        block_without_brackets = '''
+        for (int i = 0; i < 10; ++i)
+            foo();
+        '''
+        manager = ProgramGraphsManager(block_without_brackets, LANG_JAVA)
+        self.assertEqual(2, len(list(manager.scope_statements)))
+
+    def test_identify_unique_blocks_with_try(self) -> None:
+        block_without_try = '''
+            try (int resource = getResources()) {
+                tracker.waitForAll(resource);
+            } catch (Exception e) {
+                int i = 0;
+            }
+            finally {
+                int j = 0;
+            }
+        '''
+        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
+        self.assertEqual(6, len(list(manager.scope_statements)))
+
+    def test_identify_unique_blocks_with_anonymous_class(self) -> None:
+        block_without_try = '''
+        HelloWorld englishGreeting = new EnglishGreeting();
+
+        HelloWorld frenchGreeting = new HelloWorld() {
+            public void greet() {
+                greetSomeone("tout le monde");
+            }
+            public void greetSomeone(String someone) {
+                name = someone;
+                System.out.println("Salut " + name);
+            }
+        };
+        '''
+        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
+        self.assertEqual(5, len(list(manager.scope_statements)))
+
+    def test_identify_unique_blocks_with_lambda(self) -> None:
+        block_without_lambda = '''
+            MyPrinter myPrinter = (s) -> { System.out.println(s); };
+        '''
+        manager = ProgramGraphsManager(block_without_lambda, LANG_JAVA)
+        self.assertEqual(2, len(list(manager.scope_statements)))
+
+    def test_identify_unique_block_with_break(self) -> None:
+        while_block = '''
+        for (String s: strings) {
+             a();
+             b();
+             if (true) { break;}
+        }
+        while (i < 3 ) {
+             a();
+             b();
+             outer_loop:
+             for (;;) {
+                if (true) {
+                    if(true) {
+                       break outer_loop;
+                    }
+                 }
+            }
+        }
+        '''
+        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        self.assertEqual(13, len(list(manager.scope_statements)))
+
+    def test_identify_unique_block_with_continue(self) -> None:
+        while_block = '''
+        for (String s: strings) {
+             a();
+             b();
+             if (true) { continue;}
+        }
+        '''
+        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        self.assertEqual(5, len(list(manager.scope_statements)))
