@@ -112,3 +112,12 @@ class ProgramSliceTestCase(TestCase):
             "'        }', "
             "'        '])",
             repr(program_slice))
+
+    def test_hash(self) -> None:
+        program_slice0 = ProgramSliceTestCase.__get_program_slice_0()
+        program_slice1 = ProgramSliceTestCase.__get_program_slice_0()
+        self.assertEqual(program_slice0, program_slice1)
+        self.assertEqual(1, len({program_slice0, program_slice1}))
+        program_slice1 = ProgramSliceTestCase.__get_program_slice_1()
+        self.assertNotEqual(program_slice0, program_slice1)
+        self.assertEqual(2, len({program_slice0, program_slice1}))
