@@ -253,20 +253,15 @@ class ProgramGraphsManager:
         self.__general_statements = self.__build_general_statements()
 
     def __build_general_statements(self) -> Set[Statement]:
-        statements = sorted(
-            self.__cdg,
-            key=lambda s: (s.start_point, -s.end_point))
         result = set()
-        last_statement = None
-        for statement in statements:
-            if statement.start_point == statement.end_point:
-                continue
-            if statement.start_point.line_number != statement.end_point.line_number:
-                result.add(statement)
-                continue
-            if not last_statement or statement.end_point > last_statement.end_point:
-                last_statement = statement
-                result.add(statement)
+        for scope in self.scope_statements:
+            last_statement = None
+            for statement in sorted(self.get_statements_in_scope(scope), key=lambda s: (s.start_point, -s.end_point)):
+                if statement.start_point == statement.end_point:
+                    continue
+                if not last_statement or statement.end_point > last_statement.end_point:
+                    last_statement = statement
+                    result.add(statement)
         return result
 
     def __build_reach_blocks(self, block: BasicBlock, visited_blocks: Set[BasicBlock] = None) -> Set[BasicBlock]:
