@@ -259,9 +259,11 @@ class ProgramGraphsManager:
         result = set()
         last_statement = None
         for statement in statements:
-            if statement.statement_type == StatementType.EXIT:
+            if statement.start_point == statement.end_point:
                 continue
-            if statement.statement_type == StatementType.SCOPE or \
+            if statement.start_point.line_number != statement.end_point.line_number and \
+                    statement.statement_type == StatementType.UNKNOWN or \
+                    statement.statement_type == StatementType.SCOPE or \
                     statement.statement_type == StatementType.FUNCTION or \
                     statement.statement_type == StatementType.LOOP or \
                     statement.statement_type == StatementType.BRANCH:
