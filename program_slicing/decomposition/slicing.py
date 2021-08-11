@@ -72,8 +72,8 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
               "': " + str([a[0].line_number + 1 for a in program_slice.ranges]) + \
               "\033[00m\n" + program_slice.code
 
-    variable_slices = get_block_slices(source_code, lang, slice_predicate)
-    for program_slice in variable_slices:
+    block_slices = get_block_slices(source_code, lang, slice_predicate)
+    for program_slice in block_slices:
         yield "\033[33m\nBlock slice: " + str([a[0].line_number + 1 for a in program_slice.ranges]) + \
               "\033[00m\n" + program_slice.code
 
