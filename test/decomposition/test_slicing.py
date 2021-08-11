@@ -34,4 +34,4 @@ class SlicingTestCase(TestCase):
     def test_decompose_code(self):
         source_code = self.__get_source_code_0()
         res = [decomposition for decomposition in slicing.decompose_code(source_code, LANG_JAVA)]
-        self.assertEqual(2, len(res))
+        self.assertEqual(4, len(res))
