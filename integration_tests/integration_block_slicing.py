@@ -1,7 +1,8 @@
 import json
 from pathlib import Path
 
-from program_slicing.decomposition.block_slicing import build_opportunities_filtered
+from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import LANG_JAVA
 
 
@@ -32,8 +33,16 @@ def main():
                 code = java_f.read()
                 found_opportunities = {
                     (program_slice.ranges[0][0].line_number + 1, program_slice.ranges[-1][1].line_number + 1)
-                    for program_slice in build_opportunities_filtered(
-                        code, LANG_JAVA, min_amount_of_lines=6, max_percentage_of_lines=0.8)
+                    for program_slice in get_block_slices(
+                        code,
+                        LANG_JAVA,
+                        max_percentage_of_lines=0.8,
+                        slice_predicate=SlicePredicate(
+                            min_amount_of_lines=6,
+                            lang_to_check_parsing=LANG_JAVA,
+                            lines_are_full=True
+                        )
+                    )
                 }
             observable_emos[java_file.name] = tuple(found_opportunities)
     run_check(expected_emos, observable_emos)

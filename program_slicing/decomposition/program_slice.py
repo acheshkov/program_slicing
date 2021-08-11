@@ -46,7 +46,7 @@ class ProgramSlice:
             source_lines=self.__source_lines)
 
     def __hash__(self) -> hash:
-        return hash(self.ranges)
+        return hash(str(self.ranges))
 
     @property
     def source_lines(self) -> List[str]:
