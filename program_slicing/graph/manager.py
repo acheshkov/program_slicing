@@ -261,12 +261,7 @@ class ProgramGraphsManager:
         for statement in statements:
             if statement.start_point == statement.end_point:
                 continue
-            if statement.start_point.line_number != statement.end_point.line_number and \
-                    statement.statement_type == StatementType.UNKNOWN or \
-                    statement.statement_type == StatementType.SCOPE or \
-                    statement.statement_type == StatementType.FUNCTION or \
-                    statement.statement_type == StatementType.LOOP or \
-                    statement.statement_type == StatementType.BRANCH:
+            if statement.start_point.line_number != statement.end_point.line_number:
                 result.add(statement)
                 continue
             if not last_statement or statement.end_point > last_statement.end_point:
