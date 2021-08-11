@@ -196,6 +196,8 @@ class ProgramGraphsManager:
         arg_statements_by_arg_name = self.__get_arg_statements_by_arg_name(statements)
         affecting_statements = set()
         for assignment_statement in assignment_statements:
+            if assignment_statement not in self.__ddg:
+                continue
             for affected_statement in self.__ddg.successors(assignment_statement):
                 if affected_statement not in statements or \
                         affected_statement.end_point <= assignment_statement.end_point and \
