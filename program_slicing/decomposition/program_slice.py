@@ -48,6 +48,9 @@ class ProgramSlice:
     def __hash__(self) -> hash:
         return hash(str(self.ranges))
 
+    def __eq__(self, other) -> bool:
+        return self.ranges == other.ranges
+
     @property
     def source_lines(self) -> List[str]:
         """
