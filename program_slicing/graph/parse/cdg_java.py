@@ -680,6 +680,8 @@ statement_type_and_handler_map = {
         (StatementType.FUNCTION, __handle_method_declaration),
     "constructor_declaration":
         (StatementType.FUNCTION, __handle_method_declaration),
+    # "lambda_expression":
+    #     (StatementType.FUNCTION, __handle_method_declaration),
     "switch_statement":
         (StatementType.BRANCH, __handle_switch),
     "if_statement":
