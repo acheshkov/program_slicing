@@ -317,7 +317,7 @@ class ManagerTestCase(TestCase):
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
         manager = ProgramGraphsManager(block_without_lambda, LANG_JAVA)
-        self.assertEqual(2, len(list(manager.scope_statements)))
+        self.assertEqual(3, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_break(self) -> None:
         while_block = '''
