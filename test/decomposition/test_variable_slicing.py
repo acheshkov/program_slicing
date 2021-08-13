@@ -394,15 +394,9 @@ class SlicingTestCase(TestCase):
                     program_slice.code)
             elif program_slice.variable.name == "p":
                 self.assertEqual(
-                    "final String path = \"\";\n"
-                    "return CompletableFuture.supplyAsync(\n"
-                    "    () -> {\n"
-                    "        String p = path;\n"
-                    "        p += \"/home\";\n"
-                    "        p += \"/index.js\";\n"
-                    "        return p;\n"
-                    "    },\n"
-                    "    this.exec)",
+                    "String p = path;\n"
+                    "p += \"/home\";\n"
+                    "p += \"/index.js\";",
                     program_slice.code)
 
     def test_obtain_variable_statements(self):
