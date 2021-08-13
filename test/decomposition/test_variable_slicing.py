@@ -366,6 +366,39 @@ class SlicingTestCase(TestCase):
                 "}",
                 program_slice.code)
 
+    def test_get_complete_computation_slices_lambda(self):
+        source_code = """
+        class A {
+            public String foo() {
+            final String path = "";
+            return CompletableFuture.supplyAsync(
+                () -> {
+                    String p = path;
+                    p += "/home";
+                    p += "/index.js";
+                    return p;
+                },
+                this.exec);
+            }
+        }
+        """
+        slices = variable_slicing.get_complete_computation_slices(
+            source_code,
+            LANG_JAVA)
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(2, len(slices))
+        for program_slice in slices:
+            if program_slice.variable.name == "path":
+                self.assertEqual(
+                    "final String path = \"\";",
+                    program_slice.code)
+            elif program_slice.variable.name == "p":
+                self.assertEqual(
+                    "String p = path;\n"
+                    "p += \"/home\";\n"
+                    "p += \"/index.js\";",
+                    program_slice.code)
+
     def test_obtain_variable_statements(self):
         manager, variable_statements = self.__get_manager_and_variables_0()
         self.assertEqual(2, len(variable_statements))
