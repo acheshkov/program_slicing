@@ -32,6 +32,7 @@ class ProgramGraphsManager:
         self.__reach_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
         self.__scope_dependency: Dict[Statement, Statement] = {}
         self.__scope_dependency_backward: Dict[Statement, Set[Statement]] = {}
+        self.__function_dependency: Dict[Statement, Statement] = {}
         self.__general_statements: List[Statement] = []
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
@@ -157,6 +158,9 @@ class ProgramGraphsManager:
                 boundary_blocks.add(basic_block)
         return boundary_blocks
 
+    def get_function_statement(self, statement: Statement) -> Optional[Statement]:
+        return self.__function_dependency.get(statement, None)
+
     def get_scope_statement(self, statement: Statement) -> Optional[Statement]:
         return self.__scope_dependency.get(statement, None)
 
@@ -196,6 +200,8 @@ class ProgramGraphsManager:
         arg_statements_by_arg_name = self.__get_arg_statements_by_arg_name(statements)
         affecting_statements = set()
         for assignment_statement in assignment_statements:
+            if assignment_statement not in self.__ddg:
+                continue
             for affected_statement in self.__ddg.successors(assignment_statement):
                 if affected_statement not in statements or \
                         affected_statement.end_point <= assignment_statement.end_point and \
@@ -245,12 +251,22 @@ class ProgramGraphsManager:
 
     def __build_dependencies(self) -> None:
         self.__basic_block.clear()
-        for block in networkx.algorithms.traversal.dfs_tree(self.__cfg):
+        for block in networkx.traversal.dfs_tree(self.__cfg):
             for statement in block:
                 self.__basic_block[statement] = block
         self.__scope_dependency = self.__cdg.scope_dependency
         self.__scope_dependency_backward = self.__build_statements_in_scope()
+        self.__function_dependency = self.__build_function_dependency()
         self.__general_statements = self.__build_general_statements()
+
+    def __build_function_dependency(self) -> Dict[Statement, Statement]:
+        function_dependency = {}
+        for function_statement in sorted(
+                (s for s in self.__cdg if s.statement_type == StatementType.FUNCTION),
+                key=lambda x: (x.start_point, -x.end_point)):
+            for statement in networkx.traversal.dfs_tree(self.__cdg, function_statement):
+                function_dependency[statement] = function_statement
+        return function_dependency
 
     def __build_general_statements(self) -> Set[Statement]:
         result = set()

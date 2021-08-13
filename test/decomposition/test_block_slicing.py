@@ -17,7 +17,7 @@ class BlockSlicingTestCase(TestCase):
     def test_opportunities_ranges(self):
         expected_opportunities = {
             ((1, 8), (28, 9)), ((1, 8), (29, 59)), ((1, 8), (14, 9)),
-            ((2, 8), (14, 9)), ((2, 8), (28, 9)), ((2, 8), (29, 59)), ((2, 8), (39, 10)),
+            ((2, 8), (14, 9)), ((2, 8), (28, 9)), ((2, 8), (29, 59)),
             ((3, 8), (14, 9)), ((3, 8), (28, 9)), ((3, 8), (29, 59)), ((3, 8), (39, 10)),
             ((5, 8), (14, 9)), ((5, 8), (28, 9)), ((5, 8), (29, 59)), ((5, 8), (39, 10)),
             ((5, 8), (41, 51)),
@@ -226,7 +226,6 @@ class BlockSlicingTestCase(TestCase):
             for program_slice in get_block_slices(
                 code,
                 LANG_JAVA,
-                max_percentage_of_lines=1.00,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
                     lang_to_check_parsing=LANG_JAVA,
@@ -313,7 +312,6 @@ class BlockSlicingTestCase(TestCase):
             for program_slice in get_block_slices(
                 complex_objects,
                 LANG_JAVA,
-                max_percentage_of_lines=1.0,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=2,
                     lang_to_check_parsing=LANG_JAVA,

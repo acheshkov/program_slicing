@@ -31,6 +31,10 @@ def get_block_slices(
     source_lines = source_code.split("\n")
     manager = ProgramGraphsManager(source_code, lang)
     for scope in manager.scope_statements:
+        function_statement = manager.get_function_statement(scope)
+        if function_statement is None:
+            continue
+        function_length = function_statement.end_point.line_number - function_statement.start_point.line_number + 1
         general_statements = sorted((
             statement
             for statement in manager.get_statements_in_scope(scope)
@@ -43,11 +47,11 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
-            if max_percentage_of_lines is not None:
-                lines_n = \
-                    current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
-                if float(lines_n) / len(source_lines) > max_percentage_of_lines:
-                    continue
+            if max_percentage_of_lines is not None and __percentage_or_amount_exceeded(
+                    function_length,
+                    current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
+                    max_percentage_of_lines):
+                continue
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
                 current_statements[-1].end_point)
@@ -61,3 +65,9 @@ def get_block_slices(
             program_slice = ProgramSlice(source_lines).from_statements(extended_statements)
             if slice_predicate is None or slice_predicate(program_slice):
                 yield program_slice
+
+
+def __percentage_or_amount_exceeded(outer_number, inner_number, percentage):
+    #  (outer_number - 3) is number of lines in regular function body
+    #  so that we also check that not all the lines from body are included.
+    return float(inner_number) / outer_number > percentage or inner_number > outer_number - 4
