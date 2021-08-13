@@ -68,4 +68,6 @@ def get_block_slices(
 
 
 def __percentage_or_amount_exceeded(outer_number, inner_number, percentage):
+    #  (outer_number - 3) is number of lines in regular function body
+    #  so that we also check that not all the lines from body are included.
     return float(inner_number) / outer_number > percentage or inner_number > outer_number - 4
