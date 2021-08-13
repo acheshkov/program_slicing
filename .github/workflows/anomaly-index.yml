@@ -1,6 +1,6 @@
 # This is a basic workflow to help you get started with Actions
 
-name: CI
+name: A-Index
 
 on:
   # Triggers the workflow on push or pull request events but only for the main branch
@@ -20,6 +20,6 @@ jobs:
       - uses: docker-practice/actions-setup-docker@master
 
       # Runs a set of commands using the runners shell
-      - name: Calculat A-Index
+      - name: Calculate A-Index
         run: |
           docker run -v ${{ github.workspace }}:/${{ github.workspace }}  alexbers/anomaly python3 prototype.py /${{ github.workspace }}
