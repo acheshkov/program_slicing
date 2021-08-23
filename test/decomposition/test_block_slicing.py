@@ -487,7 +487,7 @@ class BlockSlicingTestCase(TestCase):
         self.assertTrue((1, 6) in found_opportunities)
         self.assertTrue((4, 6) not in found_opportunities)
 
-    def test_filter_block_if(self):
+    def test_filter_block_if_without_else(self):
         code = '''
             if (ammoIndex > 0) {
                         t.addEquipment(etype, nLoc, false, shotsCount);
