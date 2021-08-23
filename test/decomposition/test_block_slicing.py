@@ -545,6 +545,7 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
+        print(found_opportunities)
         self.assertTrue((11, 14) in found_opportunities)
         self.assertTrue((5, 19) not in found_opportunities)
         self.assertTrue((8, 16) not in found_opportunities)
