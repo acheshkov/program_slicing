@@ -421,7 +421,8 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
-            lines_are_full=True
+            lines_are_full=True,
+            filter_blocks=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -439,7 +440,8 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
-            lines_are_full=True
+            lines_are_full=True,
+            filter_blocks=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -459,7 +461,8 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
-            lines_are_full=True
+            lines_are_full=True,
+            filter_blocks=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -479,7 +482,8 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
-            lines_are_full=True
+            lines_are_full=True,
+            filter_blocks=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -499,7 +503,8 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             min_amount_of_lines=1,
             lang_to_check_parsing=LANG_JAVA,
-            lines_are_full=True
+            lines_are_full=True,
+            filter_blocks=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -534,7 +539,8 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             min_amount_of_lines=1,
             lang_to_check_parsing=LANG_JAVA,
-            lines_are_full=True
+            lines_are_full=True,
+            filter_blocks=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)

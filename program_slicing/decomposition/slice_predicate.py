@@ -25,7 +25,7 @@ class SlicePredicate:
             lang_to_check_parsing: str = None,
             has_returnable_variable: bool = None,
             forbidden_words: Set[str] = None,
-            filter_blocks: bool = None):
+            filter_blocks: bool = False):
         self.__min_amount_of_statements = min_amount_of_statements
         self.__filter_blocks = filter_blocks
         self.__max_amount_of_statements = max_amount_of_statements
