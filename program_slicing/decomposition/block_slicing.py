@@ -30,7 +30,6 @@ def get_block_slices(
     """
     source_lines = source_code.split("\n")
     manager = ProgramGraphsManager(source_code, lang)
-    i = 0
     for scope in manager.scope_statements:
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:
@@ -64,10 +63,6 @@ def get_block_slices(
             if len(manager.get_exit_statements(extended_statements)) > 1:
                 continue
             program_slice = ProgramSlice(source_lines).from_statements(extended_statements)
-            print(f'{i}, ##################################', program_slice)
-            i+=1
-            if i == 15:
-                print(i)
             if slice_predicate is None or slice_predicate(program_slice, blocks=manager.scope_statements):
                 yield program_slice
 
