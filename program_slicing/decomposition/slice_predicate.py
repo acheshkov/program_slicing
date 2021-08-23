@@ -24,8 +24,10 @@ class SlicePredicate:
             lines_are_full: bool = None,
             lang_to_check_parsing: str = None,
             has_returnable_variable: bool = None,
-            forbidden_words: Set[str] = None):
+            forbidden_words: Set[str] = None,
+            filter_blocks: bool = None):
         self.__min_amount_of_statements = min_amount_of_statements
+        self.__filter_blocks = filter_blocks
         self.__max_amount_of_statements = max_amount_of_statements
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
@@ -51,7 +53,7 @@ class SlicePredicate:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
-        if not self.__blocks and blocks:
+        if not self.__blocks and blocks and self.__filter_blocks:
             self.__blocks: Iterable[Statement] = {
                 (x.start_point.line_number, x.end_point.line_number) for x in blocks}
         if self.__check_if_slice_matches_block not in self.__checkers:

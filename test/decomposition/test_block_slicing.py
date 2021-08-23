@@ -315,7 +315,8 @@ class BlockSlicingTestCase(TestCase):
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=2,
                     lang_to_check_parsing=LANG_JAVA,
-                    lines_are_full=True
+                    lines_are_full=True,
+                    filter_blocks=True
                 )
             )
         }
@@ -506,3 +507,41 @@ class BlockSlicingTestCase(TestCase):
         }
         self.assertTrue((1, 5) in found_opportunities)
         self.assertTrue((3, 5) not in found_opportunities)
+
+    def test_complex_inner_blocks(self):
+        code = '''
+        EquipmentType etype = EquipmentType.get(equipName);
+        int ammoIndex = equipName.indexOf("Ammo (");
+        Protomech t;
+        if (etype != null) {
+                try {
+                    // If this is an Ammo slot, only add
+                    // the indicated number of shots.
+                    if (ammoIndex > 0) {
+                        t.addEquipment(etype, nLoc, false, shotsCount);
+                    } else {
+                        for (int i = 0; i < 5; ++i) {
+                            int b = 0;
+                            Integer a = b;
+                        }
+                        t.addEquipment(etype, nLoc);
+                    }
+                } catch (LocationFullException ex) {
+                    throw new EntityLoadingException(ex.getMessage());
+                }
+            }
+        '''
+        slice_predicate = SlicePredicate(
+            min_amount_of_lines=1,
+            lang_to_check_parsing=LANG_JAVA,
+            lines_are_full=True
+        )
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+        }
+        self.assertTrue((4, 20) in found_opportunities)
+        self.assertTrue((5, 19) not in found_opportunities)
+        self.assertTrue((8, 16) not in found_opportunities)
+        self.assertTrue((4, 20) not in found_opportunities)
+
