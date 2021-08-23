@@ -315,8 +315,7 @@ class BlockSlicingTestCase(TestCase):
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=2,
                     lang_to_check_parsing=LANG_JAVA,
-                    lines_are_full=True,
-                    filter_blocks=True
+                    lines_are_full=True
                 )
             )
         }
