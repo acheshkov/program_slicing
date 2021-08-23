@@ -51,7 +51,7 @@ class SlicePredicate:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
-        if not self.__blocks:
+        if not self.__blocks and blocks:
             self.__blocks: Iterable[Statement] = {
                 (x.start_point.line_number, x.end_point.line_number) for x in blocks}
         if self.__check_if_slice_matches_block not in self.__checkers:
