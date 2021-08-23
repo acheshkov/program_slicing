@@ -4,15 +4,14 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/03'
 
-from typing import Set
+from typing import Iterable, Set
 
 from program_slicing.decomposition.program_slice import ProgramSlice
-from program_slicing.graph.statement import StatementType
+from program_slicing.graph.statement import StatementType, Statement
 from program_slicing.graph.point import Point
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import parse
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
-
 
 class SlicePredicate:
 
@@ -34,6 +33,7 @@ class SlicePredicate:
         self.__lang_to_check_parsing = lang_to_check_parsing
         self.__has_returnable_variable = has_returnable_variable
         self.__forbidden_words = forbidden_words
+        self.__blocks = None
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
@@ -47,14 +47,29 @@ class SlicePredicate:
         self.__program_slice = None
         self.__manager = None
 
-    def __call__(self, program_slice: ProgramSlice) -> bool:
+    def __call__(self, program_slice: ProgramSlice, blocks=None) -> bool:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
+        if not self.__blocks:
+            self.__blocks: Iterable[Statement] = {
+                (x.start_point.line_number, x.end_point.line_number) for x in blocks}
+        if self.__check_if_slice_matches_block not in self.__checkers:
+            self.__checkers.append(self.__check_if_slice_matches_block)
         for checker in self.__checkers:
             if not checker():
                 return False
         return True
+
+    def __check_if_slice_matches_block(self) -> bool:
+        if self.__blocks is None:
+            return True
+        start_line = self.__program_slice.ranges[0][0].line_number
+        end_line = self.__program_slice.ranges[-1][0].line_number
+        if (start_line, end_line) in self.__blocks:
+            return True
+        else:
+            return False
 
     def __check_min_amount_of_statements(self) -> bool:
         if self.__min_amount_of_statements is None:
