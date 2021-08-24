@@ -4,14 +4,15 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/03'
 
-from typing import Iterable, Set
+from typing import Set
 
 from program_slicing.decomposition.program_slice import ProgramSlice
-from program_slicing.graph.statement import StatementType, Statement
-from program_slicing.graph.point import Point
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import parse
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
+from program_slicing.graph.point import Point
+from program_slicing.graph.statement import StatementType
+
 
 class SlicePredicate:
 
@@ -52,10 +53,6 @@ class SlicePredicate:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
-        # if not self.__scope and scope and self.__filter_blocks:
-        #     self.__check_if_slice_matches_block(scope)
-        # if self.__check_if_slice_matches_block not in self.__checkers:
-        #     self.__checkers.append(self.__check_if_slice_matches_block)
         for checker in self.__checkers:
             if not checker():
                 return False
