@@ -417,7 +417,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
-            filter_blocks=True
+            filter_by_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -434,7 +434,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
-            filter_blocks=True
+            filter_by_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -452,7 +452,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
-            filter_blocks=True
+            filter_by_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -463,15 +463,15 @@ class BlockSlicingTestCase(TestCase):
     def test_filter_block_try(self):
         code = '''
             try {
-                    String shots = equipName.substring(ammoIndex + 6, equipName.length() - 1);
-                } catch (NumberFormatException badShots) {
-                    throw new EntityLoadingException("Could not determine the number of shots in: " + equipName + ".");
-                }
+                String shots = equipName.substring(ammoIndex + 6, equipName.length() - 1);
+            } catch (NumberFormatException badShots) {
+                throw new EntityLoadingException("Could not determine the number of shots in: " + equipName + ".");
+            }
         '''
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
-            filter_blocks=True
+            filter_by_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -482,15 +482,15 @@ class BlockSlicingTestCase(TestCase):
     def test_filter_block_if_without_else(self):
         code = '''
             if (ammoIndex > 0) {
-                        t.addEquipment(etype, nLoc, false, shotsCount);
-                    } else {
-                        t.addEquipment(etype, nLoc);
-                    }
+                t.addEquipment(etype, nLoc, false, shotsCount);
+            } else {
+                t.addEquipment(etype, nLoc);
+            }
         '''
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
-            filter_blocks=True
+            filter_by_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -522,13 +522,12 @@ class BlockSlicingTestCase(TestCase):
             }
         '''
         slice_predicate = SlicePredicate(
-            min_amount_of_lines=1,
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
-            filter_blocks=True
+            filter_by_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
-        self.assertTrue({(11, 14), (5, 19), (8, 16), (4, 20)}.intersection(found_opportunities), {})
+        self.assertEqual({(11, 14), (5, 19), (8, 16), (4, 20)}, found_opportunities)
