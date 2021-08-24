@@ -63,7 +63,7 @@ def get_block_slices(
             if len(manager.get_exit_statements(extended_statements)) > 1:
                 continue
             program_slice = ProgramSlice(source_lines).from_statements(extended_statements)
-            if slice_predicate is None or slice_predicate(program_slice):
+            if slice_predicate is None or slice_predicate(program_slice, scopes=manager.scope_statements):
                 yield program_slice
 
 

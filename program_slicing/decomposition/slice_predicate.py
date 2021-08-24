@@ -4,14 +4,14 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/03'
 
-from typing import Set
+from typing import Set, Iterable
 
 from program_slicing.decomposition.program_slice import ProgramSlice
-from program_slicing.graph.statement import StatementType
-from program_slicing.graph.point import Point
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import parse
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
+from program_slicing.graph.point import Point
+from program_slicing.graph.statement import StatementType, Statement
 
 
 class SlicePredicate:
@@ -25,8 +25,10 @@ class SlicePredicate:
             lines_are_full: bool = None,
             lang_to_check_parsing: str = None,
             has_returnable_variable: bool = None,
-            forbidden_words: Set[str] = None):
+            forbidden_words: Set[str] = None,
+            filter_by_scope: bool = False):
         self.__min_amount_of_statements = min_amount_of_statements
+        self.__filter_blocks = filter_by_scope
         self.__max_amount_of_statements = max_amount_of_statements
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
@@ -47,14 +49,29 @@ class SlicePredicate:
         self.__program_slice = None
         self.__manager = None
 
-    def __call__(self, program_slice: ProgramSlice) -> bool:
+    def __call__(self, program_slice: ProgramSlice, scopes: Iterable[Statement] = None) -> bool:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
         for checker in self.__checkers:
             if not checker():
                 return False
+
+        if not self.__check_if_slice_matches_scope(scopes):
+            return False
+
         return True
+
+    def __check_if_slice_matches_scope(self, scopes: Iterable[Statement]) -> bool:
+        if not scopes or not self.__filter_blocks:
+            return True
+        start_line = self.__program_slice.ranges[0][0].line_number
+        end_line = self.__program_slice.ranges[-1][0].line_number
+        scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in scopes}
+        if (start_line, end_line) in scopes_lines:
+            return True
+        else:
+            return False
 
     def __check_min_amount_of_statements(self) -> bool:
         if self.__min_amount_of_statements is None:
@@ -124,6 +141,7 @@ class SlicePredicate:
                 for child in root.children:
                     for result in traverse(child):
                         yield result
+
         for node in traverse(ast):
             if node.type == "ERROR":
                 return False
