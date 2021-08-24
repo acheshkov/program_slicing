@@ -412,13 +412,9 @@ class BlockSlicingTestCase(TestCase):
             Integer a = b;
             if (a < 0) {
                 a = b * 2;
-                ++a;
-                --a;
-                System.out.println(a);
             }
         '''
         slice_predicate = SlicePredicate(
-            min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
             filter_blocks=True
@@ -427,17 +423,15 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
-        self.assertTrue((3, 8) in found_opportunities)
+        self.assertEqual({(3, 5)}, found_opportunities)
 
     def test_filter_block_for(self):
         code = '''
             for (int i = 0; i < 5; ++i) {
                 int b = 0;
-                Integer a = b;
             }
         '''
         slice_predicate = SlicePredicate(
-            min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
             filter_blocks=True
@@ -446,19 +440,16 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
-        self.assertTrue((1, 4) in found_opportunities)
+        self.assertEqual({(1, 3)}, found_opportunities)
 
     def test_filter_block_while(self):
         code = '''
             int i = 0;
             while (i < 5) {
                 int b = 0;
-                Integer a = b;
-                ++i;
             }
         '''
         slice_predicate = SlicePredicate(
-            min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
             filter_blocks=True
@@ -467,19 +458,17 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
-        self.assertTrue((2, 6) in found_opportunities)
+        self.assertEqual({(2, 4)}, found_opportunities)
 
     def test_filter_block_try(self):
         code = '''
             try {
                     String shots = equipName.substring(ammoIndex + 6, equipName.length() - 1);
-                    shotsCount = Integer.parseInt(shots);
                 } catch (NumberFormatException badShots) {
                     throw new EntityLoadingException("Could not determine the number of shots in: " + equipName + ".");
                 }
         '''
         slice_predicate = SlicePredicate(
-            min_amount_of_lines=2,
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
             filter_blocks=True
@@ -488,8 +477,7 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
-        self.assertTrue((1, 6) in found_opportunities)
-        self.assertTrue((4, 6) not in found_opportunities)
+        self.assertEqual({(1, 5)}, found_opportunities)
 
     def test_filter_block_if_without_else(self):
         code = '''
@@ -500,7 +488,6 @@ class BlockSlicingTestCase(TestCase):
                     }
         '''
         slice_predicate = SlicePredicate(
-            min_amount_of_lines=1,
             lang_to_check_parsing=LANG_JAVA,
             lines_are_full=True,
             filter_blocks=True
@@ -509,8 +496,7 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
-        self.assertTrue((1, 5) in found_opportunities)
-        self.assertTrue((3, 5) not in found_opportunities)
+        self.assertEqual({(1, 5)}, found_opportunities)
 
     def test_complex_inner_blocks(self):
         code = '''
@@ -545,8 +531,4 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
         }
-        self.assertTrue((11, 14) in found_opportunities)
-        self.assertTrue((5, 19) in found_opportunities)
-        self.assertTrue((8, 16) in found_opportunities)
-        self.assertTrue((4, 20) in found_opportunities)
-
+        self.assertTrue({(11, 14), (5, 19), (8, 16), (4, 20)}.intersection(found_opportunities), {})

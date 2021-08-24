@@ -35,7 +35,6 @@ class SlicePredicate:
         self.__lang_to_check_parsing = lang_to_check_parsing
         self.__has_returnable_variable = has_returnable_variable
         self.__forbidden_words = forbidden_words
-        self.__blocks = None
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
@@ -49,26 +48,30 @@ class SlicePredicate:
         self.__program_slice = None
         self.__manager = None
 
-    def __call__(self, program_slice: ProgramSlice, blocks=None) -> bool:
+    def __call__(self, program_slice: ProgramSlice, scopes=None) -> bool:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
-        if not self.__blocks and blocks and self.__filter_blocks:
-            self.__blocks: Iterable[Statement] = {
-                (x.start_point.line_number, x.end_point.line_number) for x in blocks}
-        if self.__check_if_slice_matches_block not in self.__checkers:
-            self.__checkers.append(self.__check_if_slice_matches_block)
+        # if not self.__scope and scope and self.__filter_blocks:
+        #     self.__check_if_slice_matches_block(scope)
+        # if self.__check_if_slice_matches_block not in self.__checkers:
+        #     self.__checkers.append(self.__check_if_slice_matches_block)
         for checker in self.__checkers:
             if not checker():
                 return False
+        if scopes:
+            if not self.__check_if_slice_matches_scope(scopes):
+                return False
+
         return True
 
-    def __check_if_slice_matches_block(self) -> bool:
-        if self.__blocks is None:
+    def __check_if_slice_matches_scope(self, scopes) -> bool:
+        if not self.__filter_blocks:
             return True
         start_line = self.__program_slice.ranges[0][0].line_number
         end_line = self.__program_slice.ranges[-1][0].line_number
-        if (start_line, end_line) in self.__blocks:
+        scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in scopes}
+        if (start_line, end_line) in scopes_lines:
             return True
         else:
             return False
