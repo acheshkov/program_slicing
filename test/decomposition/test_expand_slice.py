@@ -72,6 +72,13 @@ class ExpandSliceTestCase(TestCase):
                             } 
                             }'''
 
+        code_ex_multiple_vars = '''public void method() {
+                                    int a = 1;
+                                    int b = 2;
+                                    inv1(a, b);
+                                    inv2(a);
+                                }'''
+
     def test_vars_before_1(self):
         """
         output the first 3 minimal expansions from the priority queue
@@ -120,5 +127,16 @@ class ExpandSliceTestCase(TestCase):
         slice_to_expand = (2, 20)
         expected_extensions = {[22], [23], [22, 23]}
         extension_generator = expand_slices_ordered(self.code_ex_after, slice_to_expand)
+        found_extensions = {next(extension_generator) for _ in range(3)}
+        self.assertSetEqual(expected_extensions, found_extensions)
+
+    def test_multiple_vars(self):
+        """
+        expansion wrt var a and both a and b have equal cost,
+        even though b is not used in the slice
+        """
+        slice_to_expand = (5, 5)
+        expected_extensions = {[2, 4], [2, 3, 4]}
+        extension_generator = expand_slices_ordered(self.code_ex_multiple_vars, slice_to_expand)
         found_extensions = {next(extension_generator) for _ in range(3)}
         self.assertSetEqual(expected_extensions, found_extensions)
