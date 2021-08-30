@@ -524,7 +524,6 @@ class SlicingTestCase(TestCase):
         self.assertTrue(len(slices), 1)
         [slice] = slices
         self.assertTrue(len(slice.ranges_merged()), 1)
-        print(slice.ranges_merged())
         [(start, end)] =  slice.ranges_merged()
         self.assertEqual(start.line_number, 1)
         self.assertEqual(end.line_number, 7)

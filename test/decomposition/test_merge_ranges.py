@@ -20,7 +20,6 @@ class TestMergeRanges(TestCase):
        ]
        stmt_lines = [1, 3, 4]
        ranges = merge_ranges(stmt_lines, slice_ranges)
-       print('ranges', ranges)
        self.assertEqual(len(ranges), 1)
        self.assertEqual(ranges[0][0].line_number, 1)
        self.assertEqual(ranges[0][1].line_number, 3)
@@ -33,7 +32,6 @@ class TestMergeRanges(TestCase):
        ]
        stmt_lines = [1, 2, 3]
        ranges = merge_ranges(stmt_lines, slice_ranges)
-       print('ranges', ranges)
        self.assertEqual(len(ranges), 1)
        self.assertEqual(ranges[0][0].line_number, 1)
        self.assertEqual(ranges[0][1].line_number, 3)
@@ -49,7 +47,6 @@ class TestMergeRanges(TestCase):
        ]
        stmt_lines = [1, 2, 3, 4, 5, 6, 7]
        ranges = merge_ranges(stmt_lines, slice_ranges)
-       print('ranges', ranges)
        self.assertEqual(len(ranges), 2)
        range_1 = ranges[0]
        range_2 = ranges[1]
@@ -65,7 +62,6 @@ class TestMergeRanges(TestCase):
        ]
        stmt_lines = [1, 2, 3]
        ranges = merge_ranges(stmt_lines, slice_ranges)
-       print('ranges', ranges)
        self.assertEqual(len(ranges), 2)
        self.assertEqual(ranges[0][0].line_number, 1)
        self.assertEqual(ranges[1][0].line_number, 3)

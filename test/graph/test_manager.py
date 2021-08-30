@@ -386,7 +386,6 @@ class ManagerTestCase(TestCase):
 
         '''
         manager = ProgramGraphsManager(code, LANG_JAVA)
-        print(manager.statement_lines)
         self.assertEqual(manager.statement_lines, [2, 4,  6])
 
     def test_all_statements_with_inline_comments(self) -> None:
