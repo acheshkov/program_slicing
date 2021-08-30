@@ -488,32 +488,13 @@ class SlicingTestCase(TestCase):
             */
             ++a;
         '''
-        slices = list(get_variable_slices(
-            code,
-            LANG_JAVA,
-            slice_predicate=SlicePredicate(
-                min_amount_of_lines=2,
-                min_amount_of_statements=2,
-                max_amount_of_lines=45,
-                forbidden_words={"return ", "return;"},
-                lang_to_check_parsing=LANG_JAVA,
-                has_returnable_variable=True
-            ),
-            may_cause_code_duplication=False
-        ))
-        actual_lines = self.__get_lines_from_var_slices(slices)
-        self.assertEqual(
-            actual_lines,
-            {1, 2, 3, 4, 5})
-
-    def __get_lines_from_var_slices(self, slices):
-        actual_lines = set()
-        for x in slices:
-            for j in x.ranges:
-                s = set(range(j[0].line_number, j[0].line_number + 1))
-                for i in s:
-                    actual_lines.add(i)
-        return actual_lines
+        slices = list(get_variable_slices(code,LANG_JAVA))
+        self.assertTrue(len(slices), 1)
+        [slice] = slices
+        self.assertTrue(len(slice.ranges_merged()), 1)
+        [(start, end)] =  slice.ranges_merged()
+        self.assertEqual(start.line_number, 1)
+        self.assertEqual(end.line_number, 5)
 
     def test_if_slice_is_continuous_with_single_comment(self) -> None:
         code = '''
@@ -521,23 +502,13 @@ class SlicingTestCase(TestCase):
             // comment
             ++a;
         '''
-        slices = list(get_variable_slices(
-            code,
-            LANG_JAVA,
-            slice_predicate=SlicePredicate(
-                min_amount_of_lines=2,
-                min_amount_of_statements=2,
-                max_amount_of_lines=45,
-                forbidden_words={"return ", "return;"},
-                lang_to_check_parsing=LANG_JAVA,
-                has_returnable_variable=True
-            ),
-            may_cause_code_duplication=False
-        ))
-        actual_lines = self.__get_lines_from_var_slices(slices)
-        self.assertEqual(
-            actual_lines,
-            {1, 2, 3})
+        slices = list(get_variable_slices(code,LANG_JAVA))
+        self.assertTrue(len(slices), 1)
+        [slice] = slices
+        self.assertTrue(len(slice.ranges_merged()), 1)
+        [(start, end)] =  slice.ranges_merged()
+        self.assertEqual(start.line_number, 1)
+        self.assertEqual(end.line_number, 3)
 
     def test_if_slice_is_continuous_with_empty_lines(self) -> None:
         code = '''
@@ -549,20 +520,11 @@ class SlicingTestCase(TestCase):
             }
             ++a;
         '''
-        slices = list(get_variable_slices(
-            code,
-            LANG_JAVA,
-            slice_predicate=SlicePredicate(
-                min_amount_of_lines=2,
-                min_amount_of_statements=2,
-                max_amount_of_lines=45,
-                forbidden_words={"return ", "return;"},
-                lang_to_check_parsing=LANG_JAVA,
-                has_returnable_variable=True
-            ),
-            may_cause_code_duplication=False
-        ))
-        actual_lines = self.__get_lines_from_var_slices(slices)
-        self.assertEqual(
-            actual_lines,
-            {1, 2, 3, 4, 5, 6, 7})
+        slices = list(get_variable_slices(code,LANG_JAVA))
+        self.assertTrue(len(slices), 1)
+        [slice] = slices
+        self.assertTrue(len(slice.ranges_merged()), 1)
+        print(slice.ranges_merged())
+        [(start, end)] =  slice.ranges_merged()
+        self.assertEqual(start.line_number, 1)
+        self.assertEqual(end.line_number, 7)

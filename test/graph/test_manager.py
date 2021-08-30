@@ -352,3 +352,79 @@ class ManagerTestCase(TestCase):
         '''
         manager = ProgramGraphsManager(while_block, LANG_JAVA)
         self.assertEqual(5, len(list(manager.scope_statements)))
+    
+    def test_all_statements_continious(self) -> None:
+        code = '''
+            for (int i=0; i < 10; i++){
+                continue;
+            }
+        '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        self.assertEqual(list(manager.statement_lines), [1, 2, 3])
+
+    def test_all_statements_with_empty_lines_loop(self) -> None:
+        code = '''
+
+            for (int i=0; i < 10; i++){
+
+                continue;
+
+            }
+
+        '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        self.assertEqual(list(manager.statement_lines), [2, 4, 6])
+
+    def test_all_statements_with_empty_lines_branch(self) -> None:
+        code = '''
+
+            if (a < 5) {
+            
+                --a;
+
+            }
+
+        '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        print(manager.statement_lines)
+        self.assertEqual(manager.statement_lines, [2, 4,  6])
+
+    def test_all_statements_with_inline_comments(self) -> None:
+        code = '''
+            // comment
+            for (int i=0; i < 10; i++){
+                // comment
+                continue;
+                // comment
+            }
+
+        '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        self.assertEqual(list(manager.statement_lines), [2, 4, 6])
+
+    def test_all_statements_with_multiline_comments(self) -> None:
+        code = '''
+            for (int i=0; i < 10; i++){
+                /* 
+                    comment
+                */
+                continue;
+            }
+
+        '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        self.assertEqual(list(manager.statement_lines), [1, 5, 6])
+
+    def test_all_statements_comments_and_empty_lines(self) -> None:
+        code = '''
+            for (int i=0; i < 10; i++){
+
+                // abort
+                continue;
+            }
+
+        '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        self.assertEqual(list(manager.statement_lines), [1, 4, 5])
+
+    

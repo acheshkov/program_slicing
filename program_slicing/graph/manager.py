@@ -78,6 +78,20 @@ class ProgramGraphsManager:
         """
         return self.__scope_dependency_backward.keys()
 
+    @property
+    def statement_lines(self) -> Iterable[int]:
+        '''Return all line numbers in source code where there is statment'''
+        lines = set()
+        for stmt in networkx.traversal.dfs_tree(self.__cdg):
+            if stmt.statement_type in [StatementType.EXIT, StatementType.LOOP, StatementType.FUNCTION, StatementType.BRANCH]:
+                continue
+            if stmt.statement_type == StatementType.SCOPE:
+                lines |= set([stmt.start_point.line_number, stmt.end_point.line_number])
+                continue
+            lines |= set(range(stmt.start_point.line_number, stmt.end_point.line_number + 1))
+        return list(lines)
+                
+
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.__cdg
 
