@@ -90,7 +90,6 @@ class ProgramGraphsManager:
                 continue
             lines |= set(range(stmt.start_point.line_number, stmt.end_point.line_number + 1))
         return list(lines)
-                
 
     def get_control_dependence_graph(self) -> ControlDependenceGraph:
         return self.__cdg

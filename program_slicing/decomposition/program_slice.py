@@ -107,8 +107,8 @@ class ProgramSlice:
     def set_source_code_lines_with_stmts(self, source_code_lines_with_stmts: List[int]) -> None:
         self.__source_code_lines_with_stmts = source_code_lines_with_stmts
 
-    def ranges_merged(self) -> List[Tuple[Point, Point]]:
-        '''ranges, but merged with empty lines or comments between'''
+    def ranges_compact(self) -> List[Tuple[Point, Point]]:
+        '''ranges, but merged if empty lines or comments between'''
         ranges = self.ranges
         if len(self.__source_code_lines_with_stmts) == 0:
             return ranges

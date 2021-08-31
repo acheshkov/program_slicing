@@ -3,8 +3,7 @@ name: CI workflow
 on: [push]
 
 jobs:
-  build:
-
+  do_static_analysis:
     runs-on: ubuntu-latest
     strategy:
       matrix:

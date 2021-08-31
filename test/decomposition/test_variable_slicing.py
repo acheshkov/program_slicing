@@ -4,7 +4,6 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/03/22'
 
-from collections import Iterable, Set
 from unittest import TestCase
 
 from program_slicing.decomposition import variable_slicing
@@ -488,11 +487,11 @@ class SlicingTestCase(TestCase):
             */
             ++a;
         '''
-        slices = list(get_variable_slices(code,LANG_JAVA))
+        slices = list(get_variable_slices(code, LANG_JAVA))
         self.assertTrue(len(slices), 1)
         [slice] = slices
-        self.assertTrue(len(slice.ranges_merged()), 1)
-        [(start, end)] =  slice.ranges_merged()
+        self.assertTrue(len(slice.ranges_compact()), 1)
+        [(start, end)] = slice.ranges_compact()
         self.assertEqual(start.line_number, 1)
         self.assertEqual(end.line_number, 5)
 
@@ -502,28 +501,28 @@ class SlicingTestCase(TestCase):
             // comment
             ++a;
         '''
-        slices = list(get_variable_slices(code,LANG_JAVA))
+        slices = list(get_variable_slices(code, LANG_JAVA))
         self.assertTrue(len(slices), 1)
         [slice] = slices
-        self.assertTrue(len(slice.ranges_merged()), 1)
-        [(start, end)] =  slice.ranges_merged()
+        self.assertTrue(len(slice.ranges_compact()), 1)
+        [(start, end)] = slice.ranges_compact()
         self.assertEqual(start.line_number, 1)
         self.assertEqual(end.line_number, 3)
 
     def test_if_slice_is_continuous_with_empty_lines(self) -> None:
         code = '''
             int a = 0;
-            
+
             if (a < 5) {
-            
+
                 --a;
             }
             ++a;
         '''
-        slices = list(get_variable_slices(code,LANG_JAVA))
+        slices = list(get_variable_slices(code, LANG_JAVA))
         self.assertTrue(len(slices), 1)
         [slice] = slices
-        self.assertTrue(len(slice.ranges_merged()), 1)
-        [(start, end)] =  slice.ranges_merged()
+        self.assertTrue(len(slice.ranges_compact()), 1)
+        [(start, end)] = slice.ranges_compact()
         self.assertEqual(start.line_number, 1)
         self.assertEqual(end.line_number, 7)
