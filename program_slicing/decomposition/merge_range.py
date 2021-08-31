@@ -30,7 +30,7 @@ def merge(accum: Tuple[List[Range], EmptyLinesAndComments], r: Range) -> Tuple[L
 
 
 def can_be_merged(r1: Range, r2: Range, lines: EmptyLinesAndComments) -> bool:
-    # Limitation: we do not care about column, because our slicing algorithm works only on line level
+    # NOTE: we do not care about column numbers, because our slicing algorithm works only on a line level
     _, fst_point_end = r1
     snd_point_start, _ = r2
     assert fst_point_end.line_number <= snd_point_start.line_number
