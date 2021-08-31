@@ -10,8 +10,8 @@ EmptyLinesAndComments = Set[int]
 def merge_ranges(stmt_lines: List[int], ranges: List[Range]) -> List[Range]:
     '''
         Takes list of lines numbers with statments and list of line ranges.
-        Returns a new list of ranges where ranges are merged if there are no line with statements
-        between them
+        Returns a new list of ranges where ranges are merged if there are no lines with statements
+        between them.
     '''
     all_non_stmt = set(range(min(stmt_lines), max(stmt_lines) + 1)) - set(stmt_lines)
     ranges = sorted(ranges, key=lambda r: r[0].line_number)
@@ -30,6 +30,7 @@ def merge(accum: Tuple[List[Range], EmptyLinesAndComments], r: Range) -> Tuple[L
 
 
 def can_be_merged(r1: Range, r2: Range, lines: EmptyLinesAndComments) -> bool:
+    # Limitation: we do not care about column, because our slicing algorithm works only on line level
     _, fst_point_end = r1
     snd_point_start, _ = r2
     assert fst_point_end.line_number <= snd_point_start.line_number
