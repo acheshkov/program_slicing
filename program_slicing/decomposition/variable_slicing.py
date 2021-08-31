@@ -72,6 +72,7 @@ def get_complete_computation_slices(
             if len(manager.get_exit_statements(complete_computation_slice)) > 1:
                 continue
             program_slice = ProgramSlice(code_lines).from_statements(complete_computation_slice)
+            program_slice.set_source_code_lines_with_stmts(manager.statement_lines)
             program_slice.variable = variable_statement
             program_slice.function = function_statement
             if slice_predicate is None or slice_predicate(program_slice):

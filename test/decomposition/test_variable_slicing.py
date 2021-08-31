@@ -8,6 +8,7 @@ from unittest import TestCase
 
 from program_slicing.decomposition import variable_slicing
 from program_slicing.decomposition.slice_predicate import SlicePredicate
+from program_slicing.decomposition.variable_slicing import get_variable_slices
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
@@ -477,3 +478,51 @@ class SlicingTestCase(TestCase):
         for variable_statement, seed_statements in slicing_criteria.items():
             complete_computation_slices = obtain_complete_computation_slices(manager, seed_statements)
             self.assertEqual(1, len(complete_computation_slices))
+
+    def test_if_slice_is_continuous_with_block_comments(self) -> None:
+        code = '''
+            int a = 0;
+            /* Block slices
+               need to be included
+            */
+            ++a;
+        '''
+        slices = list(get_variable_slices(code, LANG_JAVA))
+        self.assertTrue(len(slices), 1)
+        [slice] = slices
+        self.assertTrue(len(slice.ranges_compact()), 1)
+        [(start, end)] = slice.ranges_compact()
+        self.assertEqual(start.line_number, 1)
+        self.assertEqual(end.line_number, 5)
+
+    def test_if_slice_is_continuous_with_single_comment(self) -> None:
+        code = '''
+            int a = 0;
+            // comment
+            ++a;
+        '''
+        slices = list(get_variable_slices(code, LANG_JAVA))
+        self.assertTrue(len(slices), 1)
+        [slice] = slices
+        self.assertTrue(len(slice.ranges_compact()), 1)
+        [(start, end)] = slice.ranges_compact()
+        self.assertEqual(start.line_number, 1)
+        self.assertEqual(end.line_number, 3)
+
+    def test_if_slice_is_continuous_with_empty_lines(self) -> None:
+        code = '''
+            int a = 0;
+
+            if (a < 5) {
+
+                --a;
+            }
+            ++a;
+        '''
+        slices = list(get_variable_slices(code, LANG_JAVA))
+        self.assertTrue(len(slices), 1)
+        [slice] = slices
+        self.assertTrue(len(slice.ranges_compact()), 1)
+        [(start, end)] = slice.ranges_compact()
+        self.assertEqual(start.line_number, 1)
+        self.assertEqual(end.line_number, 7)
