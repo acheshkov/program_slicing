@@ -1,46 +1,28 @@
 import unittest
 
-# from program_slicing.decomposition.expand_slice import expand_slices_ordered
+# from program_slicing.decomposition.expand_slice import expand_slices_ordered,\
+#                                                        InvalidBlockException
 
 
 class ExpandSliceTestCase(unittest.TestCase):
-
-    code_ex_before = '''public Operand receiveA(final AClass a, Scope s) {
-                            final int required = a.getRequired();
-                            final int opt = a.getOpt();
-                            final int rest = a.getRest();
-                                
-                            int index = 1;
-                            
-                            LClass pre = a.getPre();
-                            for (int i = 0; i < required; i++, index++) {
-                                if (condition()) {
-                                    do1(pre, index);
-                                }
-                            }
-                    
-                            if (opt > 0 || rest > -1) {
-                                LClass optA = a.getOpt();
-                                for (int j = 0; j < opt; j++, index++) {
-                                    s.addInstr(new Instr(optA), index));
-                                    System.out.println(optA);
-                                }
-                    
-                                if (rest > -1) {
-                                    s.addInstr(new Instr(new LocVar(a.getAN()), index));
-                                    index++;
-                                }
-                            }
-                        }'''
 
     @unittest.skip("not implemented")
     def test_vars_before_1(self):
         """
         output the first 3 minimal expansions from the priority queue
         """
-        slice_to_expand = (15, 26)
-        expected_extensions = {[3], [4], [3, 4]}
-        extension_generator = expand_slices_ordered(self.code_ex_before, slice_to_expand)
+        code_ex = '''public void methodEx(final AClass a) {
+                            final int opt = a.getOpt();
+                            final int rest = a.getRest();
+                            int i = 1;
+                            do1(i);
+                            if (opt > 0 || rest > -1) {
+                                do2(i);
+                            }
+                        }'''
+        slice_to_expand = (6, 8)
+        expected_extensions = {[2], [3], [2, 3]}
+        extension_generator = expand_slices_ordered(code_ex, slice_to_expand)
         found_extensions = {next(extension_generator) for _ in range(3)}
         self.assertSetEqual(expected_extensions, found_extensions)
 
@@ -49,9 +31,20 @@ class ExpandSliceTestCase(unittest.TestCase):
         """
         output the minimal expansion
         """
-        slice_to_expand = (17, 20)
-        expected_extension = [16]
-        extension_generator = expand_slices_ordered(self.code_ex_before, slice_to_expand)
+        code_ex = '''public void methodEx(final AClass a) {
+                    final int opt = a.getOpt();
+                    int i = 1;
+                    do1(i);
+                    if (opt > 0) {
+                        LClass optA = a.getOpt();
+                        for (int j = 0; j < opt; j++, i++) {
+                            System.out.println(optA);
+                        }
+                    }
+                }'''
+        slice_to_expand = (7, 9)
+        expected_extension = [6]
+        extension_generator = expand_slices_ordered(code_ex, slice_to_expand)
         found_extension = next(extension_generator)
         self.assertListEqual(expected_extension, found_extension)
 
@@ -60,11 +53,14 @@ class ExpandSliceTestCase(unittest.TestCase):
         """
         slice not finished in the end
         """
-        slice_to_expand = (17, 18)
-        expected_extension = [19]
-        extension_generator = expand_slices_ordered(self.code_ex_before, slice_to_expand)
-        found_extension = next(extension_generator)
-        self.assertListEqual(expected_extension, found_extension)
+        code_ex = '''public void methodEx(final AClass a) {
+                    if (cond()) {
+                        do2(a);
+                        do3(a);
+                    }
+                }'''
+        slice_to_expand = (2, 3)
+        self.assertRaises(InvalidBlockException, expand_slices_ordered(code_ex, slice_to_expand))
 
     @unittest.skip("not implemented")
     def test_expand_invalid_slice_2(self):
@@ -94,30 +90,20 @@ class ExpandSliceTestCase(unittest.TestCase):
         output first 3 minimal expansions from the priority queue
         (they reduce the number of IN)
         """
-        code_ex_after = '''public void entry(EClass entry, boolean r, long duration){
-                                RClass rospl = getRospl();
-                                if (r) {
-                                    if (cond()) {
-                                        String s;
-                                        if (cond2()) {
-                                            s = "for " + duration;
-                                        } else {
-                                            s = "indefinitely";
-                                        }
-                                    }
-                                    entry.update(duration);
-                                } else {
-                                    rospl.dropEntry();
-                                }
-                                System.out.println('Message');
-                                notifyWaitingThread(rospl);
-                                someCommand(r);
-                            }'''
-        slice_to_expand = (2, 15)
-        expected_extensions = {[17], [18], [17, 18]}
+        code_ex_after = '''public void methodEx(boolean a){
+                            RClass r = getR();
+                            if (a) {
+                                r.update();
+                            }
+                            System.out.println('Message');
+                            do1(r);
+                            do2(a);
+                        }'''
+        slice_to_expand = (2, 4)
+        expected_extension = [6]
         extension_generator = expand_slices_ordered(code_ex_after, slice_to_expand)
-        found_extensions = {next(extension_generator) for _ in range(3)}
-        self.assertSetEqual(expected_extensions, found_extensions)
+        found_extension = next(extension_generator)
+        self.assertSetEqual(expected_extension, found_extension)
 
     @unittest.skip("not implemented")
     def test_multiple_vars(self):
