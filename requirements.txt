@@ -2,3 +2,6 @@ tree_sitter
 gitmodules
 networkx
 wheel
+numpy
+numpy==1.18.1
+tqdm==4.32.1
