@@ -4,9 +4,11 @@ __credits__ = ['lyriccoder, kuyaki']
 __maintainer__ = 'lyriccoder'
 __date__ = '2021/05/20'
 
-from itertools import combinations_with_replacement
+from itertools import combinations_with_replacement, filterfalse
 from typing import Iterable
 
+from program_slicing.decomposition.filter_for_block_slicing_algorithm import check_all_lines_are_full, check_parsing, \
+    check_min_amount_of_lines
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.manager import ProgramGraphsManager
@@ -15,14 +17,14 @@ from program_slicing.graph.manager import ProgramGraphsManager
 def get_block_slices(
         source_code: str,
         lang: str,
-        slice_predicate: SlicePredicate = None,
+        min_lines_number = 1,
+        min_statements_number = 1,
         max_percentage_of_lines: float = None,
         may_cause_code_duplication: bool = False) -> Iterable[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
-    :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :param max_percentage_of_lines: number of lines in each slice shouldn't exceed a corresponding
     share of source lines specified by float number [0.0, 1.0].
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
@@ -30,6 +32,7 @@ def get_block_slices(
     """
     source_lines = source_code.split("\n")
     manager = ProgramGraphsManager(source_code, lang)
+    all_block_slices = []
     for scope in manager.scope_statements:
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:
@@ -62,9 +65,20 @@ def get_block_slices(
                     continue
             if len(manager.get_exit_statements(extended_statements)) > 1:
                 continue
-            program_slice = ProgramSlice(source_lines).from_statements(extended_statements)
-            if slice_predicate is None or slice_predicate(program_slice, scopes=manager.scope_statements):
-                yield program_slice
+            all_block_slices.append(
+                ProgramSlice(source_lines).from_statements(
+                    extended_statements,
+                    # general_statements=manager.general_statements,
+                    cdg=manager.get_control_dependence_graph(),
+                ))
+
+    filtered_block_slices = list(filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
+    # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)
+    filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
+    filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
+    return filtered_block_slices
+            # if slice_predicate is None or slice_predicate(program_slice, scopes=manager.scope_statements):
+            #     yield program_slice
 
 
 def __percentage_or_amount_exceeded(outer_number, inner_number, percentage):
