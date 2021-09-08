@@ -74,4 +74,4 @@ if __name__ == '__main__':
           f'quantile 95% {quantile(arr_with_time_in_seconds, 0.95):0.10f} secs')
 
     previous_best_time = 0.17  # in secs for laptop
-    assert avg_sec > 0.18
+    assert avg_sec < 0.18
