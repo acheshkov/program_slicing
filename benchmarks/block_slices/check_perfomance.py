@@ -2,6 +2,8 @@ import argparse
 import datetime
 from pathlib import Path
 from time import time
+import traceback
+import sys
 
 import tqdm
 from numpy import mean, median, quantile
@@ -48,20 +50,25 @@ if __name__ == '__main__':
             text = read_text_with_autodetected_encoding(str(java_file))
             start_time = time()
             start_datetime = datetime.datetime.now()
-            prof = get_block_slices
-            slices = get_block_slices(
-                text,
-                LANG_JAVA,
-                max_percentage_of_lines=0.8,
-                slice_predicate=sc)
-            a = list(slices)
-            end_time = time()
-            end_datetime = datetime.datetime.now()
-            diff = end_time - start_time
-            diff_datetime = end_datetime - start_datetime
+            try:
+                slices = get_block_slices(
+                    text,
+                    LANG_JAVA,
+                    max_percentage_of_lines=0.8,
+                    slice_predicate=sc)
+                a = list(slices)
+                end_time = time()
+                end_datetime = datetime.datetime.now()
+                diff = end_time - start_time
+                diff_datetime = end_datetime - start_datetime
 
-            arr_with_datetime_in_seconds.append(diff_datetime.microseconds)
-            arr_with_time_in_seconds.append(diff)
+                arr_with_datetime_in_seconds.append(diff_datetime.microseconds)
+                arr_with_time_in_seconds.append(diff)
+            except:
+                print(f'Error while reading {java_file}')
+                exc_type, exc_value, exc_traceback = sys.exc_info()
+                #traceback.print_tb(exc_traceback, file=sys.stdout)
+                traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
 
     avg_sec = mean(arr_with_time_in_seconds)
     print(f'Average time: {avg_sec:0.10f} secs '
