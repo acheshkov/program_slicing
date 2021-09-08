@@ -1,1 +1,0 @@
-protected abstract ObjectNode getChartData() throws Exception;
