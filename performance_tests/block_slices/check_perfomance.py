@@ -87,5 +87,3 @@ if __name__ == '__main__':
           f'median: {median(arr_with_datetime_in_seconds):0.3f} secs, \n'
           f'quantile 75%: {quantile(arr_with_datetime_in_seconds, 0.75):0.3f} secs, \n'
           f'quantile 95%: {quantile(arr_with_datetime_in_seconds, 0.95):0.3f} secs')
-
-    previous_best_time = 0.17  # in secs for laptop
