@@ -10,6 +10,7 @@ FilesystemHandler_svnMoveImplementation_100.0_45.0_90.0_162.java,162,90,45,Files
 MakeNBM_createInfoXml_100.0_46.0_48.0_128.java,128,48,46,MakeNBM,createInfoXml,100
 Parser_variable_100.0_56.0_97.0_135.java,135,97,56,Parser,variable,100
 Controller_createDirectories_100.0_71.0_136.0_168.java,168,136,71,Controller,createDirectories,100
-EditorCaret_runTransaction_100.0_31.0_94.0_2.java,2,94,31,EditorCaret,runTransaction,100
 SanitizingParser_sanitizeSource_100.0_32.0_126.0_131.java,131,126,32,SanitizingParser,sanitizeSource,100
 BaseTransport_internalProcessMessage_100.0_32.0_86.0_170.java,170,86,32,BaseTransport,internalProcessMessage,100
+MetaDataBuilder_emit_100.0_41.0_66.0_127.java,127,66,41,MetaDataBuilder,emit,100
+SQLExecutionHelper_initialDataLoad_100.0_7.0_58.0_188.java,188,58,7,SQLExecutionHelper,initialDataLoad,100
