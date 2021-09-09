@@ -78,8 +78,9 @@ if __name__ == '__main__':
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
 
+    total_time_for_one_iteration = mean(arr_with_datetime_in_seconds) * len(java_files)
     print(f'Total time of running {len(java_files)} java methods (script was executed {args.iterations} times)'
-          f' is {sum(arr_with_datetime_in_seconds)} secs.\n'
+          f' is {total_time_for_one_iteration} secs.\n'
           f'Average time for 1 method: {mean(arr_with_datetime_in_seconds):0.3f} secs. \n'
           f'Min time of 1 method: {min(arr_with_datetime_in_seconds):0.3f} secs, \n'
           f'max time of 1 method: : {max(arr_with_datetime_in_seconds):0.3f} secs, \n'

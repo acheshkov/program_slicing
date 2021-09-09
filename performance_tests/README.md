@@ -19,3 +19,14 @@ Python 3.8 with corresponding C compiler is required.
 Run Python Console to check the version of C compiler.
 
 ___
+#### Last reported result
+
+PC info:
+
+`RAM 64GiB` 
+
+`CPU Intel(R) Xeon(R) Gold 6266C CPU @ 3.00GHz`:
+
+
+
+
