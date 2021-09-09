@@ -1,9 +1,8 @@
 import argparse
 import datetime
-from pathlib import Path
-from time import time
-import traceback
 import sys
+import traceback
+from pathlib import Path
 
 import tqdm
 from cchardet import detect
@@ -41,15 +40,18 @@ if __name__ == '__main__':
         "-i",
         type=int,
         default=1,
-        help="Number of iterations to run benchmark script for all files. "
+        help="Number of iterations to run benchmark script for all files. Default is 1"
     )
 
     args = parser.parse_args()
 
-    arr_with_time_in_seconds = []
     arr_with_datetime_in_seconds = []
 
     java_files = list(Path(args.dir).glob('*.java'))
+    
+    print(f'We are going to run performance tests for Block Slicing algorithm. '
+          f'The algorithm will run {len(java_files)} java files with 100 ncss.'
+          f'The procedure will be run {args.iterations} time(s) for more accurate calculations.')
     sc = SlicePredicate(
         min_amount_of_lines=6,
         lang_to_check_parsing=LANG_JAVA,
@@ -60,7 +62,6 @@ if __name__ == '__main__':
         for java_file in tqdm.tqdm(java_files):
             text = read_text_with_autodetected_encoding(str(java_file))
             try:
-                start_time = time()
                 start_datetime = datetime.datetime.now()
                 slices = get_block_slices(
                     text,
@@ -68,26 +69,22 @@ if __name__ == '__main__':
                     max_percentage_of_lines=0.8,
                     slice_predicate=sc)
                 a = list(slices)
-                end_time = time()
                 end_datetime = datetime.datetime.now()
-                diff = end_time - start_time
                 diff_datetime = end_datetime - start_datetime
 
-                arr_with_datetime_in_seconds.append(diff_datetime.microseconds)
-                arr_with_time_in_seconds.append(diff)
+                arr_with_datetime_in_seconds.append(diff_datetime.seconds)
             except:
                 print(f'Error while reading {java_file}')
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
 
-    avg_sec = mean(arr_with_time_in_seconds)
-    print(f'Average time: {avg_sec:0.10f} secs '
-          f'or {mean(arr_with_datetime_in_seconds):0.10f} microseconds '
-          f'for {len(java_files)} methods  (script was executed {args.iterations} times). \n'
-          f'Min time {min(arr_with_time_in_seconds):0.10f} secs, \n'
-          f'max time: {max(arr_with_time_in_seconds):0.10f} secs, \n'
-          f'median: {median(arr_with_time_in_seconds):0.10f} secs, \n'
-          f'quantile 75% {quantile(arr_with_time_in_seconds, 0.75):0.10f} secs, \n'
-          f'quantile 95% {quantile(arr_with_time_in_seconds, 0.95):0.10f} secs')
+    print(f'Total time of running {len(java_files)} java methods (script was executed {args.iterations} times)'
+          f' is {sum(arr_with_datetime_in_seconds)} secs.\n'
+          f'Average time for 1 method: {mean(arr_with_datetime_in_seconds):0.3f} secs. \n'
+          f'Min time of 1 method: {min(arr_with_datetime_in_seconds):0.3f} secs, \n'
+          f'max time of 1 method: : {max(arr_with_datetime_in_seconds):0.3f} secs, \n'
+          f'median: {median(arr_with_datetime_in_seconds):0.3f} secs, \n'
+          f'quantile 75%: {quantile(arr_with_datetime_in_seconds, 0.75):0.3f} secs, \n'
+          f'quantile 95%: {quantile(arr_with_datetime_in_seconds, 0.95):0.3f} secs')
 
     previous_best_time = 0.17  # in secs for laptop
