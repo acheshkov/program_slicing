@@ -39,12 +39,7 @@ if __name__ == '__main__':
     arr_with_datetime_in_seconds = []
 
     java_files = list(Path(args.dir).glob('*.java'))
-    sc = SlicePredicate(
-        min_amount_of_lines=6,
-        lang_to_check_parsing=LANG_JAVA,
-        lines_are_full=True,
-        filter_by_scope=False
-    )
+    print(java_files)
     for _ in tqdm.tqdm(range(args.iterations)):
         for java_file in tqdm.tqdm(java_files):
             text = read_text_with_autodetected_encoding(str(java_file))
@@ -55,7 +50,7 @@ if __name__ == '__main__':
                     text,
                     LANG_JAVA,
                     max_percentage_of_lines=0.8,
-                    slice_predicate=sc)
+                    min_lines_number=6)
                 a = list(slices)
                 end_time = time()
                 end_datetime = datetime.datetime.now()
@@ -67,7 +62,6 @@ if __name__ == '__main__':
             except:
                 print(f'Error while reading {java_file}')
                 exc_type, exc_value, exc_traceback = sys.exc_info()
-                #traceback.print_tb(exc_traceback, file=sys.stdout)
                 traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
 
     avg_sec = mean(arr_with_time_in_seconds)
