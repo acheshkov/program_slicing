@@ -3,7 +3,7 @@
 ### Usage
 
 1. ```$ pip3 install ./program_slicing```
-2. ```$ cd performance_tests/block_slices```
+2. ```$ cd scripts/performance_benchmarks/block_slices```
 3. Script parameters: 
 
 `--dir` folder with java files
