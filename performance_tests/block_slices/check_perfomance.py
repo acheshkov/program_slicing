@@ -83,7 +83,7 @@ if __name__ == '__main__':
           f' is {total_time_for_one_iteration} secs.\n'
           f'Average time for 1 method: {mean(arr_with_datetime_in_seconds):0.3f} secs. \n'
           f'Min time of 1 method: {min(arr_with_datetime_in_seconds):0.3f} secs, \n'
-          f'max time of 1 method: : {max(arr_with_datetime_in_seconds):0.3f} secs, \n'
+          f'max time of 1 method: {max(arr_with_datetime_in_seconds):0.3f} secs, \n'
           f'median: {median(arr_with_datetime_in_seconds):0.3f} secs, \n'
           f'quantile 75%: {quantile(arr_with_datetime_in_seconds, 0.75):0.3f} secs, \n'
           f'quantile 95%: {quantile(arr_with_datetime_in_seconds, 0.95):0.3f} secs')
