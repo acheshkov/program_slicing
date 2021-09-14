@@ -7,9 +7,9 @@ __date__ = '2021/05/20'
 from itertools import combinations_with_replacement, filterfalse
 from typing import Iterable
 
-from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algorithm import check_all_lines_are_full, \
-    check_parsing, \
-    check_min_amount_of_lines
+from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algorithm import (
+    check_all_lines_are_full, check_parsing, check_min_amount_of_lines,
+    filter_if_slice_do_not_match_scope)
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 
@@ -20,9 +20,11 @@ def get_block_slices(
         min_lines_number=1,
         min_statements_number=1,
         max_percentage_of_lines: float = None,
-        may_cause_code_duplication: bool = False) -> Iterable[ProgramSlice]:
+        may_cause_code_duplication: bool = False,
+        filter_by_scope: bool = False) -> Iterable[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
+    :param filter_by_scope: filters scopes if they do not match block (if block, while block, etc.)
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :param max_percentage_of_lines: number of lines in each slice shouldn't exceed a corresponding
@@ -71,11 +73,22 @@ def get_block_slices(
                 # general_statements=manager.general_statements,
             ))
 
+    return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
+
+
+def run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang):
+    """
+    Run all needed filters
+
+    """
     filtered_block_slices = list(
         filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
     # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)
     filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
     filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
+    if filter_by_scope:
+        filtered_block_slices = list(filter(lambda x: filter_if_slice_do_not_match_scope(manager.scope_statements, x), filtered_block_slices))
+
     return filtered_block_slices
 
 

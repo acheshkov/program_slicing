@@ -1,12 +1,10 @@
-from program_slicing.decomposition.program_slice import ProgramSlice
-from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.manager import ProgramGraphsManager
-from program_slicing.graph.parse import parse, control_flow_graph
-from program_slicing.graph.parse.tree_sitter_parsers import node_name
-from program_slicing.graph.statement import StatementType
+from typing import Iterable
 
-from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.parse import control_dependence_graph, LANG_JAVA
+from program_slicing.decomposition.program_slice import ProgramSlice
+from program_slicing.graph.parse import control_dependence_graph
+from program_slicing.graph.parse import parse
+from program_slicing.graph.parse.tree_sitter_parsers import node_name
+from program_slicing.graph.statement import StatementType, Statement
 
 
 def check_all_lines_are_full(program_slice: ProgramSlice) -> bool:
@@ -32,6 +30,11 @@ def check_all_lines_are_full(program_slice: ProgramSlice) -> bool:
             if char != ' ' and char != '\t' and char != '\r':
                 return False
     return True
+
+
+def filter_if_slice_do_not_match_scope(scopes: Iterable[Statement], program_slice: ProgramSlice) -> bool:
+    scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in scopes}
+    return (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][0].line_number) in scopes_lines
 
 
 def check_parsing(program_slice: ProgramSlice, lang: str) -> bool:
