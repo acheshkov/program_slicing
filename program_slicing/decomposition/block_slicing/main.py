@@ -52,10 +52,13 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
-            if max_percentage_of_lines is not None and __percentage_or_amount_exceeded(
+            emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
+            if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
-                    current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
+                    emos_lines_number,
                     max_percentage_of_lines):
+                continue
+            if emos_lines_number < min_lines_number:
                 continue
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
@@ -73,26 +76,28 @@ def get_block_slices(
                 # general_statements=manager.general_statements,
             ))
 
-    return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
+    return run_filters(all_block_slices, manager, filter_by_scope, lang)
 
 
-def run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang):
+def run_filters(
+        all_block_slices,
+        manager,
+        filter_by_scope,
+        lang):
     """
     Run all needed filters
 
     """
-    filtered_block_slices = list(
-        filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
     # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)
-    filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
-    filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
+    filtered_block_slices = filter(lambda x: check_all_lines_are_full(x), all_block_slices)
+    filtered_block_slices = filter(lambda x: check_parsing(x, lang), filtered_block_slices)
     if filter_by_scope:
-        filtered_block_slices = list(filter(lambda x: filter_if_slice_do_not_match_scope(manager.scope_statements, x), filtered_block_slices))
+        filtered_block_slices = filter(lambda x: filter_if_slice_do_not_match_scope(manager.scope_statements, x), filtered_block_slices)
 
     return filtered_block_slices
 
 
-def __percentage_or_amount_exceeded(outer_number, inner_number, percentage):
+def percentage_or_amount_exceeded(outer_number, inner_number, percentage):
     #  (outer_number - 3) is number of lines in regular function body
     #  so that we also check that not all the lines from body are included.
     return float(inner_number) / outer_number > percentage or inner_number > outer_number - 4

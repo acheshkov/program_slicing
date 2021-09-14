@@ -29,7 +29,7 @@ class BlockSlicingTestCase(TestCase):
             ((29, 8), (47, 17)),
             ((31, 8), (39, 10)), ((31, 8), (41, 51)), ((31, 8), (43, 34)), ((31, 8), (46, 34)),
             ((31, 8), (47, 17)),
-            ((41, 8), (46, 34)), ((41, 8), (47, 17)), ((42, 8), (47, 17))}
+            ((41, 8), (46, 34)), ((41, 8), (47, 17)), ((42, 8), (47, 17)), ((42, 8), (46, 34))}
         self.t_ = '''
         int t = 12;
         fImage= loadImage("logo.gif");
@@ -92,6 +92,13 @@ class BlockSlicingTestCase(TestCase):
                 # )
                 min_lines_number=5
             ) if program_slice.ranges}
+        res = sorted({((x.ranges[0][0].line_number, x.ranges[-1][1].line_number), x) for x in
+               get_block_slices(
+                   self.t_,
+                   LANG_JAVA,
+                   max_percentage_of_lines=0.8,
+                   min_lines_number=5
+               ) if x.ranges}, key=lambda x: (x[0][0], x[0][1]))
         self.assertEqual(expected_opportunities, found_opportunities)
 
     def test_else_blocks(self) -> None:
