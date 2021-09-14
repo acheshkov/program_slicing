@@ -58,7 +58,7 @@ def get_block_slices(
                     emos_lines_number,
                     max_percentage_of_lines):
                 continue
-            if emos_lines_number < min_lines_number:
+            if emos_lines_number <= min_lines_number:
                 continue
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
