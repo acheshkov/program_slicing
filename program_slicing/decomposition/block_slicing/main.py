@@ -52,13 +52,19 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
+            cur_lines = (
+            current_statements[0].start_point.line_number + 1, current_statements[-1].start_point.line_number + 1)
             emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
+            print(cur_lines,
+                  current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
+                  min_lines_number)
+
             if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
                     emos_lines_number,
                     max_percentage_of_lines):
                 continue
-            if emos_lines_number <= min_lines_number:
+            if emos_lines_number < min_lines_number:
                 continue
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
