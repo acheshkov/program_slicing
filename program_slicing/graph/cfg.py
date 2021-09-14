@@ -24,9 +24,10 @@ class ControlFlowGraph(networkx.DiGraph):
     def entry_points(self) -> Set[BasicBlock]:
         return self.__entry_points
 
-    @property
-    def forward_dominance(self) -> Dict[BasicBlock, List[BasicBlock]]:
-        return self.__forward_dominance
+    # UNUSED SHIT
+    # @property
+    # def forward_dominance(self) -> Dict[BasicBlock, List[BasicBlock]]:
+    #     return self.__forward_dominance
 
     @property
     def scope_dependency(self) -> Dict[Statement, Statement]:
@@ -37,3 +38,22 @@ class ControlFlowGraph(networkx.DiGraph):
 
     def set_scope_dependency(self, scope_dependency: Dict[Statement, Statement]) -> None:
         self.__scope_dependency = scope_dependency
+
+    @scope_dependency.setter
+    def scope_dependency(self, scope_dependency: Dict[Statement, Statement]):
+        self.__scope_dependency = scope_dependency
+
+    def copy_subgraph(self, statements: List[Statement]) -> ControlFlowGraph:
+        new_cfg = ControlFlowGraph()
+        for x in self.__entry_points:
+            if x in statements:
+                new_cfg.add_entry_point(x)
+
+        # unused_shit = [x for x in statements if x in self.__forward_dominance.keys()]
+        # self.__forward_dominance = dict.fromkeys(unused_shit, [])
+
+        new_cfg.scope_dependency = {
+            st: lst for st, lst in self.__scope_dependency.items()
+            if st in statements
+        }
+        return new_cfg

@@ -56,14 +56,13 @@ def check_parsing(program_slice: ProgramSlice, lang: str) -> bool:
             # this code may be removed if tree sitter will fix this issue
             if node_name(code_bytes, node) == "else":
                 return False
-    return check_no_broken_goto(program_slice.code)
+    return check_no_broken_goto(program_slice)
 
 
-def check_no_broken_goto(source_code: str) -> bool:
-    cdg: ControlDependenceGraph = control_dependence_graph(source_code, LANG_JAVA)
-    for statement in cdg:
+def check_no_broken_goto(program_slice: ProgramSlice) -> bool:
+    for statement in program_slice.cfg:
         if statement.statement_type == StatementType.GOTO:
-            if not cdg.control_flow.get(statement, None):
+            if not program_slice.cfg.control_flow.get(statement, None):
                 return False
     return True
 
