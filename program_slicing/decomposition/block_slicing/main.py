@@ -52,14 +52,16 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
-            # cur_lines = (
-            # current_statements[0].start_point.line_number + 1, current_statements[-1].end_point.line_number + 1)
+            cur_lines = (
+            current_statements[0].start_point.line_number + 1, current_statements[-1].end_point.line_number + 1)
             emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
-
+            if cur_lines == (61, 75):
+                print(1)
             if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
                     emos_lines_number,
                     max_percentage_of_lines):
+                print(f'percentage_or_amount_exceeded {function_length} {emos_lines_number} {cur_lines}')
                 continue
             # print(cur_lines,
             #       current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
@@ -75,8 +77,8 @@ def get_block_slices(
                 # general_statements=manager.general_statements,
             )
             #
-            # if ps.ranges[0][0].line_number + 1 == 75 and ps.ranges[-1][1].line_number + 1 == 79:
-            #     print(ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1)
+            if ps.ranges[0][0].line_number + 1 == 61 and ps.ranges[-1][1].line_number + 1 == 75:
+                print(ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1)
             all_block_slices.append(ps)
 
     return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
@@ -91,7 +93,9 @@ def is_invalid_output_params(manager, ps: ProgramSlice):
 
 
 def is_multiple_return(manager, ps: ProgramSlice):
-    return len(manager.get_exit_statements(ps.statements))
+    if (ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1) == (61, 75):
+        print(2)
+    return len(manager.get_exit_statements(ps.statements)) > 1
 
 
 def run_filters(
@@ -110,7 +114,10 @@ def run_filters(
     if filter_by_scope:
         filtered_block_slices = list(filter(lambda x: does_slice_match_scope(manager.scope_statements, x),
                                        filtered_block_slices))
+    filtered_block_slices = list(filterfalse(
+        lambda x: is_multiple_return(manager, x), filtered_block_slices))
     filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
+
     filtered_block_slices = list(filterfalse(
         lambda x: is_invalid_output_params(manager, x), filtered_block_slices))
 
