@@ -9,7 +9,7 @@ from typing import Iterable
 
 from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algorithm import (
     check_all_lines_are_full, check_parsing, check_min_amount_of_lines,
-    filter_if_slice_do_not_match_scope)
+    does_slice_match_scope)
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 
@@ -52,42 +52,52 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
-            cur_lines = (
-            current_statements[0].start_point.line_number + 1, current_statements[-1].start_point.line_number + 1)
+            # cur_lines = (
+            # current_statements[0].start_point.line_number + 1, current_statements[-1].end_point.line_number + 1)
             emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
-            print(cur_lines,
-                  current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
-                  min_lines_number)
 
             if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
                     emos_lines_number,
                     max_percentage_of_lines):
                 continue
-            if emos_lines_number < min_lines_number:
-                continue
+            # print(cur_lines,
+            #       current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
+            #       min_lines_number)
+            # if cur_lines == (74, 74):
+            #     print(1)
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
                 current_statements[-1].end_point)
-            if not may_cause_code_duplication:
-                affecting_statements = manager.get_affecting_statements(extended_statements)
-                if len(manager.get_used_variables(affecting_statements)) > 1 or \
-                        manager.contain_redundant_statements(extended_statements):
-                    continue
-            if len(manager.get_exit_statements(extended_statements)) > 1:
-                continue
 
-            all_block_slices.append(ProgramSlice(source_lines).from_statements(
+            ps = ProgramSlice(source_lines).from_statements(
                 extended_statements,
                 # general_statements=manager.general_statements,
-            ))
+            )
+            #
+            # if ps.ranges[0][0].line_number + 1 == 75 and ps.ranges[-1][1].line_number + 1 == 79:
+            #     print(ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1)
+            all_block_slices.append(ps)
 
-    return run_filters(all_block_slices, manager, filter_by_scope, lang)
+    return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
+
+
+def is_invalid_output_params(manager, ps: ProgramSlice):
+    affecting_statements = manager.get_affecting_statements(ps.statements)
+    if len(manager.get_used_variables(affecting_statements)) > 1 or \
+            manager.contain_redundant_statements(ps.statements):
+        return True
+    return False
+
+
+def is_multiple_return(manager, ps: ProgramSlice):
+    return len(manager.get_exit_statements(ps.statements))
 
 
 def run_filters(
         all_block_slices,
         manager,
+        min_lines_number,
         filter_by_scope,
         lang):
     """
@@ -95,10 +105,14 @@ def run_filters(
 
     """
     # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)
-    filtered_block_slices = filter(lambda x: check_all_lines_are_full(x), all_block_slices)
-    filtered_block_slices = filter(lambda x: check_parsing(x, lang), filtered_block_slices)
+    filtered_block_slices = list(filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
+    filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
     if filter_by_scope:
-        filtered_block_slices = filter(lambda x: filter_if_slice_do_not_match_scope(manager.scope_statements, x), filtered_block_slices)
+        filtered_block_slices = list(filter(lambda x: does_slice_match_scope(manager.scope_statements, x),
+                                       filtered_block_slices))
+    filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
+    filtered_block_slices = list(filterfalse(
+        lambda x: is_invalid_output_params(manager, x), filtered_block_slices))
 
     return filtered_block_slices
 

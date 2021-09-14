@@ -32,7 +32,7 @@ def check_all_lines_are_full(program_slice: ProgramSlice) -> bool:
     return True
 
 
-def filter_if_slice_do_not_match_scope(scopes: Iterable[Statement], program_slice: ProgramSlice) -> bool:
+def does_slice_match_scope(scopes: Iterable[Statement], program_slice: ProgramSlice) -> bool:
     scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in scopes}
     return (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][0].line_number) in scopes_lines
 
