@@ -7,10 +7,10 @@ __date__ = '2021/05/20'
 from itertools import combinations_with_replacement, filterfalse
 from typing import Iterable
 
-from program_slicing.decomposition.filter_for_block_slicing_algorithm import check_all_lines_are_full, check_parsing, \
+from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algorithm import check_all_lines_are_full, \
+    check_parsing, \
     check_min_amount_of_lines
 from program_slicing.decomposition.program_slice import ProgramSlice
-from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.manager import ProgramGraphsManager
 
 
@@ -66,17 +66,11 @@ def get_block_slices(
             if len(manager.get_exit_statements(extended_statements)) > 1:
                 continue
 
-            pg = ProgramSlice(source_lines).from_statements(
+            all_block_slices.append(ProgramSlice(source_lines).from_statements(
                 extended_statements,
                 # general_statements=manager.general_statements,
                 cfg=manager.get_control_flow_graph(),
-            )
-            if pg.cfg:
-                print(1)
-            else:
-                print(2)
-            all_block_slices.append(pg)
-
+            ))
 
     filtered_block_slices = list(
         filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
@@ -84,8 +78,6 @@ def get_block_slices(
     filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
     filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
     return filtered_block_slices
-    # if slice_predicate is None or slice_predicate(program_slice, scopes=manager.scope_statements):
-    #     yield program_slice
 
 
 def __percentage_or_amount_exceeded(outer_number, inner_number, percentage):

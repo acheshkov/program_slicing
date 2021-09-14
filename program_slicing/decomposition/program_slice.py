@@ -38,7 +38,7 @@ class ProgramSlice:
         self.__lines = None
         self.__ranges = None
         self.__general_statements = None
-        self.__cdg = None
+        self.__cfg = None
         self.__source_code_lines_with_stmts: List[int] = []
 
     def __str__(self) -> str:
@@ -106,6 +106,10 @@ class ProgramSlice:
                 Point(line_number, end_column)))
         return self.__ranges
 
+    @property
+    def cfg(self):
+        return self.__cfg
+
     def set_source_code_lines_with_stmts(self, source_code_lines_with_stmts: List[int]) -> None:
         self.__source_code_lines_with_stmts = source_code_lines_with_stmts
 
@@ -116,18 +120,18 @@ class ProgramSlice:
             return ranges
         return merge_ranges(self.__source_code_lines_with_stmts, ranges)
 
-    def from_statements(self, statements: Iterable[Statement], cdg=None) -> 'ProgramSlice':
+    def from_statements(self, statements: Iterable[Statement], cfg=None) -> 'ProgramSlice':
         """
         Build a slice based on the given Statements.
         If slice has already been built, it will be extended.
-        :param cdg: Cdg of function where PS was located
+        :param cfg: Cdg of function where PS was located
         :param statements: an Iterable object of Statements on which the slice should to be based.
         :return: ProgramSlice that corresponds to a given set of Statements.
         """
         for statement in statements:
             self.add_statement(statement)
-        if cdg:
-            self.__cdg = cdg.copy_subgraph(statements)
+        if cfg:
+            self.__cfg = cfg.get_subgraph(statements)
 
         return self
 

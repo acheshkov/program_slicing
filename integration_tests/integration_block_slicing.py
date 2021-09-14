@@ -1,8 +1,7 @@
 import json
 from pathlib import Path
 
-from program_slicing.decomposition.block_slicing import get_block_slices
-from program_slicing.decomposition.slice_predicate import SlicePredicate
+from program_slicing.decomposition.block_slicing.block_slicing import get_block_slices
 from program_slicing.graph.parse import LANG_JAVA
 
 

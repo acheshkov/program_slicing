@@ -21,21 +21,6 @@ class ControlDependenceGraph(networkx.DiGraph):
         self.__control_flow: Dict[Statement, List[Statement]] = {}
         self.__scope_dependency: Dict[Statement, Statement] = {}
 
-    def copy_subgraph(self, statements: List[Statement]):
-        new_cdg = ControlDependenceGraph()
-        for x in self.__entry_points:
-            if x in statements:
-                new_cdg.add_entry_point(x)
-
-        new_cdg.control_flow = {
-            st: lst for st, lst in self.__control_flow.items()
-            if st in statements
-        }
-        new_cdg.scope_dependency = {
-            st: lst for st, lst in self.__scope_dependency.items()
-            if st in statements
-        }
-
     @property
     def entry_points(self) -> Set[Statement]:
         return self.__entry_points
@@ -44,17 +29,9 @@ class ControlDependenceGraph(networkx.DiGraph):
     def control_flow(self) -> Dict[Statement, List[Statement]]:
         return self.__control_flow
 
-    @control_flow.setter
-    def control_flow(self, control_flow: Dict[Statement, List[Statement]]):
-        self.__control_flow = control_flow
-
     @property
     def scope_dependency(self) -> Dict[Statement, Statement]:
         return self.__scope_dependency
-
-    @scope_dependency.setter
-    def scope_dependency(self, scope_dependency: Dict[Statement, Statement]):
-        self.__scope_dependency = scope_dependency
 
     def add_entry_point(self, root: Statement) -> None:
         self.__entry_points.add(root)

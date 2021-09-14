@@ -43,7 +43,7 @@ class ControlFlowGraph(networkx.DiGraph):
     def scope_dependency(self, scope_dependency: Dict[Statement, Statement]):
         self.__scope_dependency = scope_dependency
 
-    def copy_subgraph(self, statements: List[Statement]) -> ControlFlowGraph:
+    def get_subgraph(self, statements: List[Statement]):
         new_cfg = ControlFlowGraph()
         for x in self.__entry_points:
             if x in statements:
