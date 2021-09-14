@@ -69,7 +69,6 @@ def get_block_slices(
             all_block_slices.append(ProgramSlice(source_lines).from_statements(
                 extended_statements,
                 # general_statements=manager.general_statements,
-                cfg=manager.get_control_flow_graph(),
             ))
 
     filtered_block_slices = list(

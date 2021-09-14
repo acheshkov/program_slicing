@@ -1,6 +1,7 @@
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.parse import parse
+from program_slicing.graph.manager import ProgramGraphsManager
+from program_slicing.graph.parse import parse, control_flow_graph
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
 from program_slicing.graph.statement import StatementType
 
@@ -35,7 +36,6 @@ def check_all_lines_are_full(program_slice: ProgramSlice) -> bool:
 
 def check_parsing(program_slice: ProgramSlice, lang: str) -> bool:
     code_bytes = bytes(program_slice.code, "utf-8")
-    # self.__manager = ProgramGraphsManager(self.__program_slice.code, self.__lang_to_check_parsing)
     # TODO: manager may contain ast info, no need to parse it twice
     ast = parse.tree_sitter_ast(program_slice.code, lang).root_node
 
@@ -56,13 +56,15 @@ def check_parsing(program_slice: ProgramSlice, lang: str) -> bool:
             # this code may be removed if tree sitter will fix this issue
             if node_name(code_bytes, node) == "else":
                 return False
-    return check_no_broken_goto(program_slice)
+
+    cdg = control_dependence_graph(program_slice.code, lang)
+    return check_no_broken_goto(cdg)
 
 
-def check_no_broken_goto(program_slice: ProgramSlice) -> bool:
-    for statement in program_slice.cfg:
+def check_no_broken_goto(cdg) -> bool:
+    for statement in cdg:
         if statement.statement_type == StatementType.GOTO:
-            if not program_slice.cfg.control_flow.get(statement, None):
+            if not cdg.control_flow.get(statement, None):
                 return False
     return True
 

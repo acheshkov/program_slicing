@@ -7,9 +7,10 @@ __date__ = '2021/05/20'
 from enum import Enum
 from typing import List, Tuple, Dict, Set, Optional, Iterable
 
-from program_slicing.graph.statement import Statement, StatementType
-from program_slicing.graph.point import Point
 from program_slicing.decomposition.merge_range import merge_ranges
+from program_slicing.graph.parse import control_flow_graph
+from program_slicing.graph.point import Point
+from program_slicing.graph.statement import Statement, StatementType
 
 
 class RangeType(Enum):
@@ -38,7 +39,7 @@ class ProgramSlice:
         self.__lines = None
         self.__ranges = None
         self.__general_statements = None
-        self.__cfg = None
+        self.__statements = set()
         self.__source_code_lines_with_stmts: List[int] = []
 
     def __str__(self) -> str:
@@ -120,7 +121,7 @@ class ProgramSlice:
             return ranges
         return merge_ranges(self.__source_code_lines_with_stmts, ranges)
 
-    def from_statements(self, statements: Iterable[Statement], cfg=None) -> 'ProgramSlice':
+    def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':
         """
         Build a slice based on the given Statements.
         If slice has already been built, it will be extended.
@@ -130,8 +131,6 @@ class ProgramSlice:
         """
         for statement in statements:
             self.add_statement(statement)
-        if cfg:
-            self.__cfg = cfg.get_subgraph(statements)
 
         return self
 
@@ -148,6 +147,10 @@ class ProgramSlice:
             self.add_range(position_range[0], position_range[1], RangeType.FULL)
         return self
 
+    @property
+    def statements(self):
+        return self.__statements
+
     def add_statement(self, statement: Statement) -> None:
         """
         Add a specified Statement to the current slice.
@@ -163,6 +166,7 @@ class ProgramSlice:
             self.__scopes.add(statement)
         else:
             self.add_range(statement.start_point, statement.end_point, range_type)
+        self.__statements.add(statement)
 
     def add_range(
             self,
