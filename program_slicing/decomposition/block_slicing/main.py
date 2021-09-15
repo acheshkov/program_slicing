@@ -61,7 +61,7 @@ def get_block_slices(
                     function_length,
                     emos_lines_number,
                     max_percentage_of_lines):
-                print(f'percentage_or_amount_exceeded {function_length} {emos_lines_number} {cur_lines}')
+                # print(f'percentage_or_amount_exceeded {function_length} {emos_lines_number} {cur_lines}')
                 continue
             # print(cur_lines,
             #       current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
@@ -77,8 +77,8 @@ def get_block_slices(
                 # general_statements=manager.general_statements,
             )
             #
-            if ps.ranges[0][0].line_number + 1 == 61 and ps.ranges[-1][1].line_number + 1 == 75:
-                print(ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1)
+            # if ps.ranges[0][0].line_number + 1 == 61 and ps.ranges[-1][1].line_number + 1 == 75:
+            #     print(ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1)
             all_block_slices.append(ps)
 
     return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
