@@ -55,8 +55,8 @@ def get_block_slices(
             cur_lines = (
             current_statements[0].start_point.line_number + 1, current_statements[-1].end_point.line_number + 1)
             emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
-            if cur_lines == (61, 75):
-                print(1)
+            # if cur_lines == (61, 75):
+            #     print(1)
             if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
                     emos_lines_number,
@@ -93,8 +93,8 @@ def is_invalid_output_params(manager, ps: ProgramSlice):
 
 
 def is_multiple_return(manager, ps: ProgramSlice):
-    if (ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1) == (61, 75):
-        print(2)
+    # if (ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1) == (61, 75):
+    #     print(2)
     return len(manager.get_exit_statements(ps.statements)) > 1
 
 
@@ -112,8 +112,8 @@ def run_filters(
     filtered_block_slices = list(filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
     filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
     if filter_by_scope:
-        filtered_block_slices = list(filter(lambda x: does_slice_match_scope(manager.scope_statements, x),
-                                       filtered_block_slices))
+        filtered_block_slices = list(
+            filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices))
     filtered_block_slices = list(filterfalse(
         lambda x: is_multiple_return(manager, x), filtered_block_slices))
     filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
