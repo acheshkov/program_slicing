@@ -50,6 +50,7 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
+
             emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1  # noqa: E50
             if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
@@ -100,17 +101,14 @@ def run_filters(
 
     """
     # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)  # noqa: E50
-    filtered_block_slices = list(
-        filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
-    filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
+    filtered_block_slices = filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices)
     if filter_by_scope:
-        filtered_block_slices = list(
-            filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices))
-    filtered_block_slices = list(filterfalse(
-        lambda x: does_have_multiple_return(manager, x), filtered_block_slices))
-    filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
-
-    filtered_block_slices = list(filterfalse(
-        lambda x: is_invalid_output_params(manager, x), filtered_block_slices))
+        filtered_block_slices = filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices)
+    filtered_block_slices = filterfalse(
+        lambda x: does_have_multiple_return(manager, x), filtered_block_slices)
+    filtered_block_slices = filterfalse(
+        lambda x: is_invalid_output_params(manager, x), filtered_block_slices)
+    filtered_block_slices = filter(lambda x: check_all_lines_are_full(x), filtered_block_slices)
+    filtered_block_slices = filter(lambda x: check_parsing(x, lang), filtered_block_slices)
 
     return filtered_block_slices
