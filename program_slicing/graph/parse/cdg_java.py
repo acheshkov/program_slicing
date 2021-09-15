@@ -774,7 +774,9 @@ def __parse(
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, ast, variable_names),
         name=tree_sitter_parsers.node_name(source_code_bytes, ast),
-        ast_node_type=ast.type)
+        ast_node_type=ast.type,
+        start_byte=ast.start_byte,
+        end_byte=ast.end_byte)
     cdg.add_node(statement)
     siblings, exit_points = statement_handler(
         statement,

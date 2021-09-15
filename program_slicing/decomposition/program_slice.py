@@ -24,7 +24,7 @@ StatementColumnNumber = int
 
 class ProgramSlice:
 
-    def __init__(self, source_lines: List[str]) -> None:
+    def __init__(self, source_lines: List[str] = None, source_code_bytes=None) -> None:
         self.variable: Optional[Statement] = None
         self.function: Optional[Statement] = None
         self.__source_lines: List[str] = source_lines
@@ -40,6 +40,8 @@ class ProgramSlice:
         self.__general_statements = None
         self.__statements = set()
         self.__source_code_lines_with_stmts: List[int] = []
+        self.__source_code_bytes = source_code_bytes
+        self.__lines_number = None
 
     def __str__(self) -> str:
         return self.code
@@ -74,6 +76,10 @@ class ProgramSlice:
         return self.__code
 
     @property
+    def lines_number(self):
+        return self.__lines_number
+
+    @property
     def lines(self) -> List[str]:
         """
         Get source code lines for the current slice.
@@ -106,10 +112,6 @@ class ProgramSlice:
                 Point(line_number, end_column)))
         return self.__ranges
 
-    @property
-    def cfg(self):
-        return self.__cfg
-
     def set_source_code_lines_with_stmts(self, source_code_lines_with_stmts: List[int]) -> None:
         self.__source_code_lines_with_stmts = source_code_lines_with_stmts
 
@@ -119,6 +121,24 @@ class ProgramSlice:
         if len(self.__source_code_lines_with_stmts) == 0:
             return ranges
         return merge_ranges(self.__source_code_lines_with_stmts, ranges)
+
+    def from_statements_lightweight(self, statements: Iterable[Statement]) -> 'ProgramSlice':
+        """
+        Build a slice based on the given Statements.
+        If slice has already been built, it will be extended.
+        :param cfg: Cdg of function where PS was located
+        :param statements: an Iterable object of Statements on which the slice should to be based.
+        :return: ProgramSlice that corresponds to a given set of Statements.
+        """
+        min_st = min(statements, key=lambda x: (x.start_point.line_number, x.start_point.column_number))
+        max_st = max(statements, key=lambda x: (x.start_point.line_number, x.end_point.column_number))
+        self.__code = self.__source_code_bytes[min_st.start_byte: max_st.end_byte].decode("utf8")
+        self.__statements = statements
+        self.__ranges = [
+            [Point(min_st.start_point.line_number, min(min_st.start_point.column_number, min_st.end_point.column_number)),
+             Point(max_st.start_point.line_number, max_st.end_point.column_number)]]
+        self.__lines_number = len(self.code.split('\n'))
+        return self
 
     def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':
         """
@@ -130,7 +150,7 @@ class ProgramSlice:
         """
         for statement in statements:
             self.add_statement(statement)
-
+        self.__lines_number = len(self.lines)
         return self
 
     def from_ranges(

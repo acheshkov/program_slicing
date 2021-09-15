@@ -35,13 +35,17 @@ class Statement:
             end_point: Point,
             affected_by: Set[VariableName] = None,
             name: Optional[VariableName] = None,
-            ast_node_type: str = None) -> None:
+            ast_node_type: str = None,
+            start_byte: int = None,
+            end_byte: int = None) -> None:
         self.__statement_type: StatementType = statement_type
         self.__start_point: Point = start_point
         self.__end_point: Point = end_point
         self.__affected_by: Set[VariableName] = set() if affected_by is None else affected_by
         self.__name: Optional[VariableName] = name
         self.__ast_node_type: str = ast_node_type
+        self.__start_byte = start_byte
+        self.__end_byte = end_byte
 
     def __repr__(self) -> str:
         return \
@@ -78,6 +82,14 @@ class Statement:
                 start_point=self.__start_point,
                 end_point=self.__end_point
             )
+
+    @property
+    def start_byte(self):
+        return self.__start_byte
+
+    @property
+    def end_byte(self):
+        return self.__end_byte
 
     @property
     def statement_type(self) -> StatementType:
