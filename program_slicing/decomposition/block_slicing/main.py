@@ -9,7 +9,7 @@ from typing import Iterable
 
 from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algorithm import (
     check_all_lines_are_full, check_parsing, check_min_amount_of_lines,
-    does_slice_match_scope)
+    does_slice_match_scope, does_have_multiple_return)
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 
@@ -20,7 +20,6 @@ def get_block_slices(
         min_lines_number=1,
         min_statements_number=1,
         max_percentage_of_lines: float = None,
-        may_cause_code_duplication: bool = False,
         filter_by_scope: bool = False) -> Iterable[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
@@ -29,7 +28,6 @@ def get_block_slices(
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :param max_percentage_of_lines: number of lines in each slice shouldn't exceed a corresponding
     share of source lines specified by float number [0.0, 1.0].
-    :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
     source_lines = source_code.split("\n")
@@ -52,22 +50,12 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
-            cur_lines = (
-            current_statements[0].start_point.line_number + 1, current_statements[-1].end_point.line_number + 1)
-            emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1
-            # if cur_lines == (61, 75):
-            #     print(1)
+            emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1  # noqa: E50
             if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
                     emos_lines_number,
                     max_percentage_of_lines):
-                # print(f'percentage_or_amount_exceeded {function_length} {emos_lines_number} {cur_lines}')
                 continue
-            # print(cur_lines,
-            #       current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
-            #       min_lines_number)
-            # if cur_lines == (74, 74):
-            #     print(1)
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
                 current_statements[-1].end_point)
@@ -76,15 +64,18 @@ def get_block_slices(
                 extended_statements,
                 # general_statements=manager.general_statements,
             )
-            #
-            # if ps.ranges[0][0].line_number + 1 == 61 and ps.ranges[-1][1].line_number + 1 == 75:
-            #     print(ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1)
             all_block_slices.append(ps)
 
     return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
 
 
 def is_invalid_output_params(manager, ps: ProgramSlice):
+    """
+    Checks if program slice will have to return 2 variables if we extract it
+    :param manager: ProgramGraphsManager
+    :param ps: program slice to extract
+    :return: True if it is invalid, false otherwise
+    """
     affecting_statements = manager.get_affecting_statements(ps.statements)
     if len(manager.get_used_variables(affecting_statements)) > 1 or \
             manager.contain_redundant_statements(ps.statements):
@@ -92,39 +83,34 @@ def is_invalid_output_params(manager, ps: ProgramSlice):
     return False
 
 
-def is_multiple_return(manager, ps: ProgramSlice):
-    # if (ps.ranges[0][0].line_number + 1, ps.ranges[-1][1].line_number + 1) == (61, 75):
-    #     print(2)
-    return len(manager.get_exit_statements(ps.statements)) > 1
+def percentage_or_amount_exceeded(outer_number: int, inner_number: int, percentage: float):
+    #  (outer_number - 3) is number of lines in regular function body
+    #  so that we also check that not all the lines from body are included.
+    return float(inner_number) / outer_number > percentage or inner_number > outer_number - 4
 
 
 def run_filters(
-        all_block_slices,
-        manager,
-        min_lines_number,
-        filter_by_scope,
-        lang):
+        all_block_slices: Iterable[ProgramSlice],
+        manager: ProgramGraphsManager,
+        min_lines_number: int,
+        filter_by_scope: bool,
+        lang: str):
     """
-    Run all needed filters
+    Run all needed filters.
 
     """
-    # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)
-    filtered_block_slices = list(filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
+    # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)  # noqa: E50
+    filtered_block_slices = list(
+        filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
     filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
     if filter_by_scope:
         filtered_block_slices = list(
             filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices))
     filtered_block_slices = list(filterfalse(
-        lambda x: is_multiple_return(manager, x), filtered_block_slices))
+        lambda x: does_have_multiple_return(manager, x), filtered_block_slices))
     filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
 
     filtered_block_slices = list(filterfalse(
         lambda x: is_invalid_output_params(manager, x), filtered_block_slices))
 
     return filtered_block_slices
-
-
-def percentage_or_amount_exceeded(outer_number, inner_number, percentage):
-    #  (outer_number - 3) is number of lines in regular function body
-    #  so that we also check that not all the lines from body are included.
-    return float(inner_number) / outer_number > percentage or inner_number > outer_number - 4

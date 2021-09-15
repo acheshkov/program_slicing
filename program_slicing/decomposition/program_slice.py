@@ -8,7 +8,6 @@ from enum import Enum
 from typing import List, Tuple, Dict, Set, Optional, Iterable
 
 from program_slicing.decomposition.merge_range import merge_ranges
-from program_slicing.graph.parse import control_flow_graph
 from program_slicing.graph.point import Point
 from program_slicing.graph.statement import Statement, StatementType
 
