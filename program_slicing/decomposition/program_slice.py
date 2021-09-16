@@ -5,6 +5,7 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/05/20'
 
 import operator
+import re
 from enum import Enum
 from functools import reduce
 from typing import List, Tuple, Dict, Set, Optional, Iterable
@@ -139,7 +140,7 @@ class ProgramSlice:
         self.__ranges = [
             [Point(min_st.start_point.line_number, min(min_st.start_point.column_number, min_st.end_point.column_number)),
              Point(max_st.end_point.line_number, max_st.end_point.column_number)]]
-        self.__lines_number = len([x for x in self.code.split('\n') if x.strip()])
+        self.__lines_number = len(set([x.start_point.line_number for x in statements]))
         return self
 
     def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':
