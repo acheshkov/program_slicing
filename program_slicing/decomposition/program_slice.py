@@ -4,7 +4,9 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/05/20'
 
+import operator
 from enum import Enum
+from functools import reduce
 from typing import List, Tuple, Dict, Set, Optional, Iterable
 
 from program_slicing.decomposition.merge_range import merge_ranges
@@ -131,13 +133,13 @@ class ProgramSlice:
         :return: ProgramSlice that corresponds to a given set of Statements.
         """
         min_st = min(statements, key=lambda x: (x.start_point.line_number, x.start_point.column_number))
-        max_st = max(statements, key=lambda x: (x.start_point.line_number, x.end_point.column_number))
+        max_st = max(statements, key=lambda x: (x.end_point.line_number, x.end_point.column_number))
         self.__code = self.__source_code_bytes[min_st.start_byte: max_st.end_byte].decode("utf8")
         self.__statements = statements
         self.__ranges = [
             [Point(min_st.start_point.line_number, min(min_st.start_point.column_number, min_st.end_point.column_number)),
-             Point(max_st.start_point.line_number, max_st.end_point.column_number)]]
-        self.__lines_number = len(self.code.split('\n'))
+             Point(max_st.end_point.line_number, max_st.end_point.column_number)]]
+        self.__lines_number = len([x for x in self.code.split('\n') if x.strip()])
         return self
 
     def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':

@@ -47,7 +47,7 @@ def check_all_lines_are_full(program_slice: ProgramSlice) -> bool:
     return True
 
 
-def does_slice_match_scope(scopes: Iterable[Statement], program_slices):
+def does_slice_match_scope(scopes: Iterable[Statement], program_slice: ProgramSlice):
     """
     Returns true if lines of slice match with lines of scope (if, while, for scopes)
     :param scopes: List of scopes to check
@@ -55,8 +55,8 @@ def does_slice_match_scope(scopes: Iterable[Statement], program_slices):
     :return: True if program slice matches at least one scope
     """
     scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in scopes}
-    slices_lines = {(p.ranges[0][0].line_number, p.ranges[-1][1].line_number) for p in program_slices}
-    return list(scopes_lines.intersection(slices_lines))
+    # print(f'{(program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)} in {scopes_lines}')
+    return (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number) in scopes_lines
 
 
 def traverse(root: tree_sitter.Node):
@@ -109,4 +109,4 @@ def check_no_broken_goto(cdg: ControlDependenceGraph) -> bool:
 
 
 def check_min_amount_of_lines(program_slice: ProgramSlice, min_amount_of_lines: int) -> bool:
-    return program_slice.lines_number < min_amount_of_lines
+    return program_slice.lines_number >= min_amount_of_lines
