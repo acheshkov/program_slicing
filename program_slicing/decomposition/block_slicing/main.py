@@ -63,7 +63,6 @@ def get_block_slices(
                 current_statements[-1].end_point)
 
             ps = ProgramSlice(source_lines, source_code_bytes=source_code_bytes).from_statements_lightweight(
-            # ps=ProgramSlice(source_lines).from_statements(
                 extended_statements,
                 # general_statements=manager.general_statements,
             )
