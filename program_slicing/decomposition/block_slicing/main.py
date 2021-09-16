@@ -51,22 +51,29 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
-
+            cur_lines = (current_statements[0].start_point.line_number + 1, current_statements[-1].end_point.line_number + 1)
+            print(cur_lines)
+            if cur_lines[0]==16 and cur_lines[1] == 24:
+                print(1)
             emos_lines_number = current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1  # noqa: E50
             if max_percentage_of_lines is not None and percentage_or_amount_exceeded(
                     function_length,
                     emos_lines_number,
                     max_percentage_of_lines):
                 continue
+
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
                 current_statements[-1].end_point)
-
-            ps = ProgramSlice(source_lines, source_code_bytes=source_code_bytes).from_statements_lightweight(
-                extended_statements,
-                # general_statements=manager.general_statements,
-            )
-            all_block_slices.append(ps)
+            # extended_statements = list(filter(lambda x: x.ast_node_type == 'block', extended_statements))
+            if extended_statements:
+                # need to filter shitty emos surrounded by brackets like { for (String s: asrgs) {} }
+                ps = ProgramSlice(source_lines, source_code_bytes=source_code_bytes).from_statements_lightweight(
+                    extended_statements,
+                    # general_statements=manager.general_statements,
+                )
+                # print(ps.ranges[0][0].line_number, ps.ranges[-1][1].line_number)
+                all_block_slices.append(ps)
 
     return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
 

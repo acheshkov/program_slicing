@@ -133,6 +133,7 @@ class ProgramSlice:
         :param statements: an Iterable object of Statements on which the slice should to be based.
         :return: ProgramSlice that corresponds to a given set of Statements.
         """
+        statements = [x for x in statements if x.ast_node_type != 'block']
         min_st = min(statements, key=lambda x: (x.start_point.line_number, x.start_point.column_number))
         max_st = max(statements, key=lambda x: (x.end_point.line_number, x.end_point.column_number))
         self.__code = self.__source_code_bytes[min_st.start_byte: max_st.end_byte].decode("utf8")
@@ -140,7 +141,7 @@ class ProgramSlice:
         self.__ranges = [
             [Point(min_st.start_point.line_number, min(min_st.start_point.column_number, min_st.end_point.column_number)),
              Point(max_st.end_point.line_number, max_st.end_point.column_number)]]
-        self.__lines_number = len(set([x.start_point.line_number for x in statements]))
+        self.__lines_number = len(set([x.start_point.line_number for x in statements if x.statement_type != StatementType.SCOPE]))
         return self
 
     def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':

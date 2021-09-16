@@ -109,4 +109,6 @@ def check_no_broken_goto(cdg: ControlDependenceGraph) -> bool:
 
 
 def check_min_amount_of_lines(program_slice: ProgramSlice, min_amount_of_lines: int) -> bool:
+    if program_slice.ranges[0][0].line_number == 16 and program_slice.ranges[-1][1].line_number == 24:
+        print(1)
     return program_slice.lines_number >= min_amount_of_lines
