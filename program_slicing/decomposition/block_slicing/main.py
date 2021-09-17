@@ -12,7 +12,7 @@ from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algori
     does_slice_match_scope, has_multiple_exit_nodes)
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
-
+from datetime import datetime
 
 def get_block_slices(
         source_code: str,
@@ -62,8 +62,7 @@ def get_block_slices(
                 current_statements[-1].end_point)
 
             ps = ProgramSlice(source_lines).from_statements(
-                extended_statements,
-                # general_statements=manager.general_statements,
+                extended_statements
             )
             all_block_slices.append(ps)
 
@@ -100,15 +99,36 @@ def run_filters(
     Run all needed filters.
 
     """
+    filters_used = {}
     # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)  # noqa: E50
+    start_absolute = datetime.now()
     filtered_block_slices = filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices)
+    end = datetime.now()
+    filters_used['check_min_amount_of_lines'] = \
+        (len(all_block_slices) - filtered_block_slices, (end - start_absolute).microseconds)
     if filter_by_scope:
+        start = datetime.now()
         filtered_block_slices = filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices)
+        end = datetime.now()
+        filters_used['does_slice_match_scope'] = (filters_used['check_min_amount_of_lines'] - len(filtered_block_slices), (end - start).microseconds)
+
+    start = datetime.now()
     filtered_block_slices = filterfalse(
         lambda x: has_multiple_exit_nodes(manager, x), filtered_block_slices)
+    end = datetime.now()
+    filters_used['has_multiple_exit_nodes'] = (filters_used['does_slice_match_scope'] - len(filtered_block_slices), (end - start).microseconds)
+    start = datetime.now()
     filtered_block_slices = filterfalse(
         lambda x: has_multiple_output_params(manager, x), filtered_block_slices)
+    end = datetime.now()
+    filters_used['has_multiple_output_params'] = (filters_used['has_multiple_exit_nodes'] - len(filtered_block_slices), (end - start).microseconds)
+    start = datetime.now()
     filtered_block_slices = filter(lambda x: check_all_lines_are_full(x), filtered_block_slices)
+    end = datetime.now()
+    filters_used['check_all_lines_are_full'] = (filters_used['has_multiple_output_params'] - len(filtered_block_slices), (end - start).microseconds)
+    start = datetime.now()
     filtered_block_slices = filter(lambda x: check_parsing(x, lang), filtered_block_slices)
+    end = datetime.now()
+    filters_used['check_parsing'] = (filters_used['check_all_lines_are_full'] - len(filtered_block_slices), (end - start).microseconds)
 
-    return filtered_block_slices
+    return filters_used, filtered_block_slices

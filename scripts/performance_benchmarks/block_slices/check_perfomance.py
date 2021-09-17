@@ -45,6 +45,18 @@ if __name__ == '__main__':
     args = parser.parse_args()
 
     arr_with_datetime_in_seconds = []
+    df = pd.DataFrame(columns=[
+        'filename',
+        'emos_number',
+        'has_multiple_exit_nodes',
+        'check_min_amount_of_lines',
+        'does_slice_match_scope'
+        'has_multiple_output_params'
+        'has_multiple_exit_nodes'
+        'check_all_lines_are_full'
+        'has_multiple_output_params'
+        'check_parsing'
+        'check_all_lines_are_full'])
 
     java_files = list(Path(args.dir).glob('*.java'))
     print(f'We are going to run performance tests for Block Slicing algorithm. '
@@ -55,7 +67,7 @@ if __name__ == '__main__':
             text = read_text_with_autodetected_encoding(str(java_file))
             try:
                 start_datetime = datetime.datetime.now()
-                slices = get_block_slices(
+                time_dict, slices = get_block_slices(
                     text,
                     LANG_JAVA,
                     max_percentage_of_lines=0.8,
@@ -65,6 +77,9 @@ if __name__ == '__main__':
                 diff_datetime = end_datetime - start_datetime
 
                 arr_with_datetime_in_seconds.append(diff_datetime.seconds)
+                t = {'filename': (java_file).name, 'emos_number': len(a), 'total_time': sum(t.values()[1]), 'total_emos_counted': sum(t.values()[0])}
+                total_dict = {**t, **time_dict}
+                df = df.append(total_dict, ignore_index=True)
             except:
                 print(f'Error while reading {java_file}')
                 exc_type, exc_value, exc_traceback = sys.exc_info()

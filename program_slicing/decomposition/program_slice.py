@@ -37,7 +37,6 @@ class ProgramSlice:
         self.__code = None
         self.__lines = None
         self.__ranges = None
-        self.__general_statements = None
         self.__statements = set()
         self.__source_code_lines_with_stmts: List[int] = []
 
