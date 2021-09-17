@@ -9,7 +9,7 @@ from typing import Iterable
 
 from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algorithm import (
     check_all_lines_are_full, check_parsing, check_min_amount_of_lines,
-    does_slice_match_scope, does_have_multiple_return)
+    does_slice_match_scope, has_multiple_exit_nodes)
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 
@@ -70,7 +70,7 @@ def get_block_slices(
     return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
 
 
-def is_invalid_output_params(manager, ps: ProgramSlice):
+def has_multiple_output_params(manager, ps: ProgramSlice):
     """
     Checks if program slice will have to return 2 variables if we extract it
     :param manager: ProgramGraphsManager
@@ -105,9 +105,9 @@ def run_filters(
     if filter_by_scope:
         filtered_block_slices = filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices)
     filtered_block_slices = filterfalse(
-        lambda x: does_have_multiple_return(manager, x), filtered_block_slices)
+        lambda x: has_multiple_exit_nodes(manager, x), filtered_block_slices)
     filtered_block_slices = filterfalse(
-        lambda x: is_invalid_output_params(manager, x), filtered_block_slices)
+        lambda x: has_multiple_output_params(manager, x), filtered_block_slices)
     filtered_block_slices = filter(lambda x: check_all_lines_are_full(x), filtered_block_slices)
     filtered_block_slices = filter(lambda x: check_parsing(x, lang), filtered_block_slices)
 
