@@ -79,7 +79,11 @@ if __name__ == '__main__':
                 diff_datetime = end_datetime - start_datetime
 
                 arr_with_datetime_in_seconds.append(diff_datetime.seconds)
-                t = {'filename': (java_file).name, 'emos_number': len(a), 'total_time': sum(t.values()[1]), 'total_emos_counted': sum(t.values()[0])}
+                t = {
+                    'filename': (java_file).name,
+                    'emos_number_final': len(a),
+                    'total_time': sum([x[1] for x in list(time_dict.values())]),
+                    'total_emos_counted': sum([x[0] for x in list(time_dict.values())])}
                 total_dict = {**t, **time_dict}
                 df = df.append(total_dict, ignore_index=True)
             except:
