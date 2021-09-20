@@ -11,7 +11,7 @@ from program_slicing.graph.parse.tree_sitter_parsers import node_name
 from program_slicing.graph.statement import StatementType, Statement
 
 
-def does_have_multiple_return(manager: ProgramGraphsManager, ps: ProgramSlice):
+def does_have_multiple_return(manager: ProgramGraphsManager, ps: ProgramSlice) -> bool:
     """
     Does slice have multiple return statements
 

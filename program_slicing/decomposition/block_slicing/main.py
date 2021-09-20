@@ -7,7 +7,7 @@ __date__ = '2021/05/20'
 from itertools import combinations_with_replacement, filterfalse
 from typing import Iterable
 
-from program_slicing.decomposition.block_slicing.filter_for_block_slicing_algorithm import (
+from program_slicing.decomposition.block_slicing.filters import (
     check_all_lines_are_full, check_parsing, check_min_amount_of_lines,
     does_slice_match_scope, does_have_multiple_return)
 from program_slicing.decomposition.program_slice import ProgramSlice
