@@ -105,7 +105,7 @@ def run_filters(
     filtered_block_slices = list(filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
     end = datetime.now()
     filters_used['check_min_amount_of_lines'] = \
-        (len(all_block_slices) - len(filtered_block_slices), (end - start_absolute).microseconds)
+        (len(all_block_slices) - len(filtered_block_slices), (end - start_absolute).seconds)
     if filter_by_scope:
         # start = datetime.now()
         filtered_block_slices = list(filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices))
@@ -113,22 +113,27 @@ def run_filters(
         # filters_used['does_slice_match_scope'] = (filters_used['check_min_amount_of_lines'] - len(filtered_block_slices), (end - start).microseconds)
 
     start = datetime.now()
+    prev = len(filtered_block_slices)
     filtered_block_slices = list(filterfalse(
         lambda x: has_multiple_exit_nodes(manager, x), filtered_block_slices))
     end = datetime.now()
-    filters_used['has_multiple_exit_nodes'] = (filters_used['check_min_amount_of_lines'][0] - len(filtered_block_slices), (end - start).microseconds)
+    filters_used['has_multiple_exit_nodes'] = (prev - len(filtered_block_slices), (end - start).seconds)
+
+    prev = len(filtered_block_slices)
     start = datetime.now()
     filtered_block_slices = list(filterfalse(
         lambda x: has_multiple_output_params(manager, x), filtered_block_slices))
     end = datetime.now()
-    filters_used['has_multiple_output_params'] = (filters_used['has_multiple_exit_nodes'][0] - len(filtered_block_slices), (end - start).microseconds)
+    filters_used['has_multiple_output_params'] = (prev - len(filtered_block_slices), (end - start).seconds)
+    prev = len(filtered_block_slices)
     start = datetime.now()
     filtered_block_slices = list(filter(lambda x: check_all_lines_are_full(x), filtered_block_slices))
     end = datetime.now()
-    filters_used['check_all_lines_are_full'] = (filters_used['has_multiple_output_params'][0] - len(filtered_block_slices), (end - start).microseconds)
+    filters_used['check_all_lines_are_full'] = (prev - len(filtered_block_slices), (end - start).seconds)
+    prev = len(filtered_block_slices)
     start = datetime.now()
     filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
     end = datetime.now()
-    filters_used['check_parsing'] = (filters_used['check_all_lines_are_full'][0] - len(filtered_block_slices), (end - start).microseconds)
+    filters_used['check_parsing'] = (prev - len(filtered_block_slices), (end - start).seconds)
 
     return filters_used, filtered_block_slices

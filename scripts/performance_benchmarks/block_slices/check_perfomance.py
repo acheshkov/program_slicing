@@ -48,19 +48,17 @@ if __name__ == '__main__':
     arr_with_datetime_in_seconds = []
     df = pd.DataFrame(columns=[
         'filename',
-        'emos_number',
+        'emos_number_final',
         'all_non_filtered_emos',
         'has_multiple_exit_nodes',
         'check_min_amount_of_lines',
-        'does_slice_match_scope'
-        'has_multiple_output_params'
-        'has_multiple_exit_nodes'
-        'check_all_lines_are_full'
-        'has_multiple_output_params'
-        'check_parsing'
+        # 'does_slice_match_scope'
+        'has_multiple_output_params',
+        'check_parsing',
         'check_all_lines_are_full'])
 
     java_files = list(Path(args.dir).glob('*.java'))
+    java_files = [Path(r'D:\git\program_slicing2\scripts\performance_benchmarks\block_slices\dataset\SubCommonRdbmsWriter_fillPreparedStatementColumnType_100.0_43.0_34.0_138.java')]
     print(f'We are going to run performance tests for Block Slicing algorithm. '
           f'The algorithm will run {len(java_files)} java files with 100 ncss.'
           f'The procedure will be run {args.iterations} time(s) for more accurate calculations.')
@@ -77,20 +75,19 @@ if __name__ == '__main__':
                 a = list(slices)
                 end_datetime = datetime.datetime.now()
                 diff_datetime = end_datetime - start_datetime
-
                 arr_with_datetime_in_seconds.append(diff_datetime.seconds)
                 t = {
                     'filename': (java_file).name,
                     'emos_number_final': len(a),
                     'total_time': sum([x[1] for x in list(time_dict.values())])}
-                total_dict = {**t, **time_dict}
-                df = df.append(total_dict, ignore_index=True)
+                df = df.append({**t, **time_dict}, ignore_index=True)
             except:
                 print(f'Error while reading {java_file}')
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
 
     total_time_for_one_iteration = mean(arr_with_datetime_in_seconds) * len(java_files)
+    df.to_csv('df.csv')
     print(f'Total time of running {len(java_files)} java methods is '
           f'{total_time_for_one_iteration} secs for 1 iteration. \n'
           f'Script was executed {args.iterations} times.\n'
