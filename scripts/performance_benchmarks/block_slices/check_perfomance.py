@@ -82,8 +82,7 @@ if __name__ == '__main__':
                 t = {
                     'filename': (java_file).name,
                     'emos_number_final': len(a),
-                    'total_time': sum([x[1] for x in list(time_dict.values())]),
-                    'total_emos_counted': sum([x[0] for x in list(time_dict.values())])}
+                    'total_time': sum([x[1] for x in list(time_dict.values())])}
                 total_dict = {**t, **time_dict}
                 df = df.append(total_dict, ignore_index=True)
             except:
