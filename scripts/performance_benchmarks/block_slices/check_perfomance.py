@@ -49,13 +49,16 @@ if __name__ == '__main__':
     df = pd.DataFrame(columns=[
         'filename',
         'emos_number_final',
+        'total_time_filtration',
         'all_non_filtered_emos',
         'has_multiple_exit_nodes',
         'check_min_amount_of_lines',
         # 'does_slice_match_scope'
         'has_multiple_output_params',
         'check_parsing',
-        'check_all_lines_are_full'])
+        'check_all_lines_are_full',
+        'emos_generation_time',
+    ])
 
     java_files = list(Path(args.dir).glob('*.java'))
     print(f'We are going to run performance tests for Block Slicing algorithm. '
@@ -78,7 +81,7 @@ if __name__ == '__main__':
                 t = {
                     'filename': (java_file).name,
                     'emos_number_final': len(a),
-                    'total_time': sum([x[1] for x in list(time_dict.values())])}
+                    'total_time_filtration': sum([x[1] for x in list(time_dict.values())])}
                 df = df.append({**t, **time_dict}, ignore_index=True)
             except:
                 print(f'Error while reading {java_file}')

@@ -32,6 +32,7 @@ def get_block_slices(
     """
     source_lines = source_code.split("\n")
     manager = ProgramGraphsManager(source_code, lang)
+    start_time = datetime.now()
     all_block_slices = []
     for scope in manager.scope_statements:
         function_statement = manager.get_function_statement(scope)
@@ -66,7 +67,8 @@ def get_block_slices(
             )
             all_block_slices.append(ps)
 
-    return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang)
+    d = {'emos_generation_time': (len(all_block_slices), (datetime.now() - start_time).seconds)}
+    return run_filters(all_block_slices, manager, min_lines_number, filter_by_scope, lang, d)
 
 
 def has_multiple_output_params(manager, ps: ProgramSlice):
@@ -94,12 +96,13 @@ def run_filters(
         manager: ProgramGraphsManager,
         min_lines_number: int,
         filter_by_scope: bool,
-        lang: str):
+        lang: str,
+        filters_used):
     """
     Run all needed filters.
 
     """
-    filters_used = {'all_non_filtered_emos': (len(all_block_slices), 0.00)}
+    filters_used['all_non_filtered_emos'] = (len(all_block_slices), 0.00)
     # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)  # noqa: E50
     start_absolute = datetime.now()
     filtered_block_slices = list(filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
@@ -135,5 +138,5 @@ def run_filters(
     filtered_block_slices = list(filter(lambda x: check_parsing(x, lang), filtered_block_slices))
     end = datetime.now()
     filters_used['check_parsing'] = (prev - len(filtered_block_slices), (end - start).seconds)
-
+    # filters_used['total_time_filtration']
     return filters_used, filtered_block_slices
