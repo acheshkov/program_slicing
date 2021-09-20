@@ -99,8 +99,7 @@ def run_filters(
     Run all needed filters.
 
     """
-    filters_used = {}
-    filters_used['all_non_filtered_emos'] = (len(all_block_slices), 0.00)
+    filters_used = {'all_non_filtered_emos': (len(all_block_slices), 0.00)}
     # filtered_block_slices = filter(lambda x: check_min_amount_of_statements(x, min_statements_number), filtered_block_slices)  # noqa: E50
     start_absolute = datetime.now()
     filtered_block_slices = list(filterfalse(lambda x: check_min_amount_of_lines(x, min_lines_number), all_block_slices))
@@ -108,16 +107,16 @@ def run_filters(
     filters_used['check_min_amount_of_lines'] = \
         (len(all_block_slices) - len(filtered_block_slices), (end - start_absolute).microseconds)
     if filter_by_scope:
-        start = datetime.now()
+        # start = datetime.now()
         filtered_block_slices = list(filter(lambda x: does_slice_match_scope(manager.scope_statements, x), filtered_block_slices))
-        end = datetime.now()
-        filters_used['does_slice_match_scope'] = (filters_used['check_min_amount_of_lines'] - len(filtered_block_slices), (end - start).microseconds)
+        # end = datetime.now()
+        # filters_used['does_slice_match_scope'] = (filters_used['check_min_amount_of_lines'] - len(filtered_block_slices), (end - start).microseconds)
 
     start = datetime.now()
     filtered_block_slices = list(filterfalse(
         lambda x: has_multiple_exit_nodes(manager, x), filtered_block_slices))
     end = datetime.now()
-    filters_used['has_multiple_exit_nodes'] = (filters_used['does_slice_match_scope'] - len(filtered_block_slices), (end - start).microseconds)
+    filters_used['has_multiple_exit_nodes'] = (filters_used['check_min_amount_of_lines'] - len(filtered_block_slices), (end - start).microseconds)
     start = datetime.now()
     filtered_block_slices = list(filterfalse(
         lambda x: has_multiple_output_params(manager, x), filtered_block_slices))
