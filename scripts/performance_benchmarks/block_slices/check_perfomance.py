@@ -10,6 +10,7 @@ from numpy import mean, median, quantile
 
 from program_slicing.decomposition.block_slicing.main import get_block_slices
 from program_slicing.graph.parse import LANG_JAVA
+import pandas as pd
 
 
 def detect_encoding_of_data(data: bytes):
@@ -48,6 +49,7 @@ if __name__ == '__main__':
     df = pd.DataFrame(columns=[
         'filename',
         'emos_number',
+        'all_non_filtered_emos',
         'has_multiple_exit_nodes',
         'check_min_amount_of_lines',
         'does_slice_match_scope'
