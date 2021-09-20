@@ -58,7 +58,6 @@ if __name__ == '__main__':
         'check_all_lines_are_full'])
 
     java_files = list(Path(args.dir).glob('*.java'))
-    java_files = [Path(r'D:\git\program_slicing2\scripts\performance_benchmarks\block_slices\dataset\SubCommonRdbmsWriter_fillPreparedStatementColumnType_100.0_43.0_34.0_138.java')]
     print(f'We are going to run performance tests for Block Slicing algorithm. '
           f'The algorithm will run {len(java_files)} java files with 100 ncss.'
           f'The procedure will be run {args.iterations} time(s) for more accurate calculations.')
