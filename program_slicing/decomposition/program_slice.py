@@ -7,9 +7,9 @@ __date__ = '2021/05/20'
 from enum import Enum
 from typing import List, Tuple, Dict, Set, Optional, Iterable
 
-from program_slicing.graph.statement import Statement, StatementType
-from program_slicing.graph.point import Point
 from program_slicing.decomposition.merge_range import merge_ranges
+from program_slicing.graph.point import Point
+from program_slicing.graph.statement import Statement, StatementType
 
 
 class RangeType(Enum):
@@ -37,6 +37,8 @@ class ProgramSlice:
         self.__code = None
         self.__lines = None
         self.__ranges = None
+        self.__general_statements = None
+        self.__statements = set()
         self.__source_code_lines_with_stmts: List[int] = []
 
     def __str__(self) -> str:
@@ -104,6 +106,10 @@ class ProgramSlice:
                 Point(line_number, end_column)))
         return self.__ranges
 
+    @property
+    def cfg(self):
+        return self.__cfg
+
     def set_source_code_lines_with_stmts(self, source_code_lines_with_stmts: List[int]) -> None:
         self.__source_code_lines_with_stmts = source_code_lines_with_stmts
 
@@ -118,11 +124,13 @@ class ProgramSlice:
         """
         Build a slice based on the given Statements.
         If slice has already been built, it will be extended.
+        :param cfg: Cdg of function where PS was located
         :param statements: an Iterable object of Statements on which the slice should to be based.
         :return: ProgramSlice that corresponds to a given set of Statements.
         """
         for statement in statements:
             self.add_statement(statement)
+
         return self
 
     def from_ranges(
@@ -137,6 +145,10 @@ class ProgramSlice:
         for position_range in position_ranges:
             self.add_range(position_range[0], position_range[1], RangeType.FULL)
         return self
+
+    @property
+    def statements(self):
+        return self.__statements
 
     def add_statement(self, statement: Statement) -> None:
         """
@@ -153,6 +165,7 @@ class ProgramSlice:
             self.__scopes.add(statement)
         else:
             self.add_range(statement.start_point, statement.end_point, range_type)
+        self.__statements.add(statement)
 
     def add_range(
             self,

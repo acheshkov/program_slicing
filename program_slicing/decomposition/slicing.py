@@ -10,7 +10,7 @@ from typing import List, Iterator
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.decomposition.block_slicing.main import get_block_slices
 from program_slicing.decomposition.variable_slicing import get_variable_slices
 
 
@@ -72,7 +72,7 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
               "': " + str([a[0].line_number + 1 for a in program_slice.ranges]) + \
               "\033[00m\n" + program_slice.code
 
-    block_slices = get_block_slices(source_code, lang, slice_predicate)
+    block_slices = get_block_slices(source_code, lang, min_lines_number=3)
     for program_slice in block_slices:
         yield "\033[33m\nBlock slice: " + str([a[0].line_number + 1 for a in program_slice.ranges]) + \
               "\033[00m\n" + program_slice.code

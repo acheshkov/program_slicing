@@ -8,8 +8,7 @@ import tqdm
 from cchardet import detect
 from numpy import mean, median, quantile
 
-from program_slicing.decomposition.block_slicing import get_block_slices
-from program_slicing.decomposition.slice_predicate import SlicePredicate
+from program_slicing.decomposition.block_slicing.main import get_block_slices
 from program_slicing.graph.parse import LANG_JAVA
 
 
@@ -48,16 +47,9 @@ if __name__ == '__main__':
     arr_with_datetime_in_seconds = []
 
     java_files = list(Path(args.dir).glob('*.java'))
-    
     print(f'We are going to run performance tests for Block Slicing algorithm. '
           f'The algorithm will run {len(java_files)} java files with 100 ncss.'
           f'The procedure will be run {args.iterations} time(s) for more accurate calculations.')
-    sc = SlicePredicate(
-        min_amount_of_lines=6,
-        lang_to_check_parsing=LANG_JAVA,
-        lines_are_full=True,
-        filter_by_scope=False
-    )
     for _ in tqdm.tqdm(range(args.iterations)):
         for java_file in tqdm.tqdm(java_files):
             text = read_text_with_autodetected_encoding(str(java_file))
@@ -67,7 +59,7 @@ if __name__ == '__main__':
                     text,
                     LANG_JAVA,
                     max_percentage_of_lines=0.8,
-                    slice_predicate=sc)
+                    min_lines_number=6)
                 a = list(slices)
                 end_datetime = datetime.datetime.now()
                 diff_datetime = end_datetime - start_datetime
