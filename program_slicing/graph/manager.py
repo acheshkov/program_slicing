@@ -33,6 +33,7 @@ class ProgramGraphsManager:
         self.__scope_dependency: Dict[Statement, Statement] = {}
         self.__scope_dependency_backward: Dict[Statement, Set[Statement]] = {}
         self.__function_dependency: Dict[Statement, Statement] = {}
+        self.__statement_line_numbers: Dict[Statement, Set[int]] = {}
         self.__general_statements: List[Statement] = []
         if source_code is not None and lang is not None:
             self.init_by_source_code(source_code=source_code, lang=lang)
@@ -158,8 +159,34 @@ class ProgramGraphsManager:
                 boundary_blocks.add(basic_block)
         return boundary_blocks
 
+    def get_statement_line_numbers(self, statement: Statement) -> Set[int]:
+        if statement in self.__statement_line_numbers:
+            return self.__statement_line_numbers[statement]
+        inner_statements = self.get_statements_in_scope(statement)
+        if inner_statements:
+            result = set()
+            if statement.statement_type in {StatementType.SCOPE, StatementType.BRANCH, StatementType.LOOP}:
+                result.add(statement.start_point.line_number)
+            if statement.statement_type == StatementType.SCOPE:
+                result.add(statement.end_point.line_number)
+            for inner_statement in inner_statements:
+                result.update(self.get_statement_line_numbers(inner_statement))
+            self.__statement_line_numbers[statement] = result
+        else:
+            result = {
+                number
+                for number in range(statement.start_point.line_number, statement.end_point.line_number + 1)
+            }
+            self.__statement_line_numbers[statement] = result
+        return result
+
     def get_function_statement(self, statement: Statement) -> Optional[Statement]:
         return self.__function_dependency.get(statement, None)
+
+    def get_function_statement_by_range(self, start_point: Point, end_point: Point) -> Optional[Statement]:
+        # TODO: this function may be significantly faster if we will maintain sorted list of Statements.
+        statements = sorted(self.get_statements_in_range(start_point, end_point), key=lambda x: x.start_point)
+        return self.get_function_statement(statements[0]) if statements else None
 
     def get_scope_statement(self, statement: Statement) -> Optional[Statement]:
         return self.__scope_dependency.get(statement, None)
@@ -171,6 +198,7 @@ class ProgramGraphsManager:
             self,
             start_point: Point = None,
             end_point: Point = None) -> Set[Statement]:
+        # TODO: this function may be optimized
         result = set()
         for statement in self.__cdg:
             if (start_point is None or start_point <= statement.start_point) and \
@@ -250,6 +278,7 @@ class ProgramGraphsManager:
         return False
 
     def __build_dependencies(self) -> None:
+        self.__statement_line_numbers.clear()
         self.__basic_block.clear()
         for block in networkx.traversal.dfs_tree(self.__cfg):
             for statement in block:

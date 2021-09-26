@@ -16,15 +16,14 @@ def get_block_slices(
         source_code: str,
         lang: str,
         slice_predicate: SlicePredicate = None,
-        max_percentage_of_lines: float = None,
+        include_noneffective: bool = True,
         may_cause_code_duplication: bool = False) -> Iterable[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
-    :param max_percentage_of_lines: number of lines in each slice shouldn't exceed a corresponding
-    share of source lines specified by float number [0.0, 1.0].
+    :param include_noneffective: include comments and blank lines to a slice if True.
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
@@ -34,7 +33,6 @@ def get_block_slices(
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:
             continue
-        function_length = function_statement.end_point.line_number - function_statement.start_point.line_number + 1
         general_statements = sorted((
             statement
             for statement in manager.get_statements_in_scope(scope)
@@ -47,11 +45,6 @@ def get_block_slices(
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
                 continue
-            if max_percentage_of_lines is not None and __percentage_or_amount_exceeded(
-                    function_length,
-                    current_statements[-1].end_point.line_number - current_statements[0].start_point.line_number + 1,
-                    max_percentage_of_lines):
-                continue
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
                 current_statements[-1].end_point)
@@ -62,12 +55,9 @@ def get_block_slices(
                     continue
             if len(manager.get_exit_statements(extended_statements)) > 1:
                 continue
-            program_slice = ProgramSlice(source_lines).from_statements(extended_statements)
-            if slice_predicate is None or slice_predicate(program_slice):
+            program_slice = ProgramSlice(
+                source_lines,
+                context=manager if include_noneffective else None
+            ).from_statements(extended_statements)
+            if slice_predicate is None or slice_predicate(program_slice, context=manager):
                 yield program_slice
-
-
-def __percentage_or_amount_exceeded(outer_number, inner_number, percentage):
-    #  (outer_number - 3) is number of lines in regular function body
-    #  so that we also check that not all the lines from body are included.
-    return float(inner_number) / outer_number > percentage or inner_number > outer_number - 4

@@ -9,6 +9,7 @@ from typing import List, Tuple, Dict, Set, Optional, Iterable
 
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
+from program_slicing.graph.manager import ProgramGraphsManager
 
 
 class RangeType(Enum):
@@ -23,7 +24,14 @@ StatementColumnNumber = int
 
 class ProgramSlice:
 
-    def __init__(self, source_lines: List[str]) -> None:
+    def __init__(self, source_lines: List[str], context: ProgramGraphsManager = None) -> None:
+        """
+        Program slice represent slice in different formats:
+        code string, list of code lines, list of ranges in an original source lines or list of Statements.
+        :param source_lines: list of the original source code lines.
+        :param context: ProgramGraphsManager that describes context of the slice.
+        If not specified - comments and empty strings will be ignored while forming the slice.
+        """
         self.variable: Optional[Statement] = None
         self.function: Optional[Statement] = None
         self.__source_lines: List[str] = source_lines
@@ -33,9 +41,11 @@ class ProgramSlice:
         self.__start_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.__end_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.__scopes: Set[Statement] = set()
+        self.__context: ProgramGraphsManager = context
         self.__code = None
         self.__lines = None
         self.__ranges = None
+        self.__ranges_compact = None
 
     def __str__(self) -> str:
         return self.code
@@ -91,6 +101,16 @@ class ProgramSlice:
         if self.__ranges is not None:
             return self.__ranges
         self.__update_scopes()
+        if self.__context:
+            last_point = None
+            for line_number in sorted(self.__end_points.keys()):
+                current_point = Point(
+                    line_number,
+                    self.__start_points[line_number] if line_number in self.__start_points else
+                    self.__minimum_column)
+                if last_point and not self.__context.get_statements_in_range(last_point, current_point):
+                    self.add_range(last_point, current_point, RangeType.FULL)
+                last_point = Point(line_number, self.__end_points[line_number])
         self.__ranges = []
         for line_number in sorted(self.__end_points.keys()):
             start_column = self.__start_point.column_number if line_number == self.__start_point.line_number else (
@@ -101,6 +121,33 @@ class ProgramSlice:
                 Point(line_number, min(start_column, end_column)),
                 Point(line_number, end_column)))
         return self.__ranges
+
+    @property
+    def ranges_compact(self) -> List[Tuple[Point, Point]]:
+        """
+        Get compact ranges of lines and columns for the current slice.
+        Range is compact when there is no two neighbour ranges without information between them.
+        :return: list of tuples of start and end points (point is a tuple of two integers).
+        """
+        if self.__ranges_compact is not None:
+            return self.__ranges_compact
+        ranges = self.ranges
+        self.__ranges_compact = []
+        start_point = None
+        end_point = None
+        for current_range in ranges:
+            if start_point is None:
+                start_point, end_point = current_range
+            else:
+                if self.__has_information(end_point, current_range[0]):
+                    self.__ranges_compact.append((start_point, end_point))
+                    start_point = None
+                    end_point = None
+                else:
+                    end_point = current_range[1]
+        if start_point is not None:
+            self.__ranges_compact.append((start_point, end_point))
+        return self.__ranges_compact
 
     def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':
         """
@@ -158,6 +205,7 @@ class ProgramSlice:
         self.__code = None
         self.__ranges = None
         self.__lines = None
+        self.__ranges_compact = None
         self.__update_minimal_column(start_point, end_point)
         if self.__start_point is None or self.__start_point > start_point:
             self.__start_point = start_point
@@ -207,3 +255,18 @@ class ProgramSlice:
                 self.add_range(scope.start_point, scope.end_point, RangeType.BOUNDS)
                 added_scopes.add(scope)
         self.__scopes.difference_update(added_scopes)
+
+    def __has_information(self, start_point, end_point):
+        for line_number in range(start_point.line_number, end_point.line_number+1):
+            current_line = self.source_lines[line_number]
+            if line_number == start_point.line_number:
+                start_column = start_point.column_number
+            else:
+                start_column = 0
+            if line_number == end_point.line_number:
+                end_column = end_point.column_number
+            else:
+                end_column = len(current_line)
+            if any(c != ' ' and c != '\t' and c != '\n' and c != '\r' for c in current_line[start_column: end_column]):
+                return True
+        return False

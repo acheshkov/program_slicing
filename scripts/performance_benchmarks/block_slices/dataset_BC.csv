@@ -1,0 +1,16 @@
+File,Line,cognitive,cyclo,filename,method_name,ncss
+STSWizardCreator_generateProviderImplClass_100.0_6.0_16.0_242.java,242,16,6,STSWizardCreator,generateProviderImplClass,100
+NbWelcomePanel_initComponents_100.0_25.0_43.0_256.java,256,43,25,NbWelcomePanel,initComponents,100
+InstanceController_doSrvIPXT_100.0_26.0_38.0_165.java,165,38,26,InstanceController,doSrvIPXT,100
+QMUIQQFaceView_onDrawText_100.0_27.0_118.0_124.java,124,118,27,QMUIQQFaceView,onDrawText,100
+ASTUtils_getRange_100.0_27.0_56.0_144.java,144,56,27,ASTUtils,getRange,100
+AddressTable_createSwitchTable_100.0_42.0_73.0_193.java,193,73,42,AddressTable,createSwitchTable,100
+SubCommonRdbmsWriter_fillPreparedStatementColumnType_100.0_43.0_34.0_138.java,138,34,43,SubCommonRdbmsWriter,fillPreparedStatementColumnType,100
+FilesystemHandler_svnMoveImplementation_100.0_45.0_90.0_162.java,162,90,45,FilesystemHandler,svnMoveImplementation,100
+MakeNBM_createInfoXml_100.0_46.0_48.0_128.java,128,48,46,MakeNBM,createInfoXml,100
+Parser_variable_100.0_56.0_97.0_135.java,135,97,56,Parser,variable,100
+Controller_createDirectories_100.0_71.0_136.0_168.java,168,136,71,Controller,createDirectories,100
+SanitizingParser_sanitizeSource_100.0_32.0_126.0_131.java,131,126,32,SanitizingParser,sanitizeSource,100
+BaseTransport_internalProcessMessage_100.0_32.0_86.0_170.java,170,86,32,BaseTransport,internalProcessMessage,100
+MetaDataBuilder_emit_100.0_41.0_66.0_127.java,127,66,41,MetaDataBuilder,emit,100
+SQLExecutionHelper_initialDataLoad_100.0_7.0_58.0_188.java,188,58,7,SQLExecutionHelper,initialDataLoad,100

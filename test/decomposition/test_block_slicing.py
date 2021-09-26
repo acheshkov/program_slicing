@@ -30,7 +30,7 @@ class BlockSlicingTestCase(TestCase):
             ((29, 8), (47, 17)),
             ((31, 8), (39, 10)), ((31, 8), (41, 51)), ((31, 8), (43, 34)), ((31, 8), (46, 34)),
             ((31, 8), (47, 17)),
-            ((41, 8), (46, 34)), ((41, 8), (47, 17)), ((42, 8), (47, 17))}
+            ((41, 8), (46, 34)), ((41, 8), (47, 17)), ((42, 8), (46, 34)), ((42, 8), (47, 17))}
         self.t_ = '''
         int t = 12;
         fImage= loadImage("logo.gif");
@@ -85,9 +85,9 @@ class BlockSlicingTestCase(TestCase):
             for program_slice in get_block_slices(
                 self.t_,
                 LANG_JAVA,
-                max_percentage_of_lines=0.8,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
+                    max_percentage_of_lines=0.8,
                     lang_to_check_parsing=LANG_JAVA,
                     lines_are_full=True
                 )
@@ -170,9 +170,9 @@ class BlockSlicingTestCase(TestCase):
             for program_slice in get_block_slices(
                 code,
                 LANG_JAVA,
-                max_percentage_of_lines=max_percentage,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
+                    max_percentage_of_lines=max_percentage,
                     lang_to_check_parsing=LANG_JAVA,
                     lines_are_full=True
                 )
@@ -186,9 +186,9 @@ class BlockSlicingTestCase(TestCase):
             for program_slice in get_block_slices(
                 code,
                 LANG_JAVA,
-                max_percentage_of_lines=max_percentage,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
+                    max_percentage_of_lines=max_percentage,
                     lang_to_check_parsing=LANG_JAVA,
                     lines_are_full=True
                 )
@@ -405,3 +405,129 @@ class BlockSlicingTestCase(TestCase):
         self.assertTrue((3, 5) not in found_opportunities)
         self.assertTrue((3, 6) not in found_opportunities)
         self.assertTrue((3, 7) not in found_opportunities)
+
+    def test_filter_block_if(self):
+        code = '''
+            int b = 0;
+            Integer a = b;
+            if (a < 0) {
+                a = b * 2;
+            }
+        '''
+        slice_predicate = SlicePredicate(
+            lang_to_check_parsing=LANG_JAVA,
+            lines_are_full=True,
+            is_whole_scope=False
+        )
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+        }
+        self.assertEqual({(3, 5)}, found_opportunities)
+
+    def test_filter_block_for(self):
+        code = '''
+            for (int i = 0; i < 5; ++i) {
+                int b = 0;
+            }
+        '''
+        slice_predicate = SlicePredicate(
+            lang_to_check_parsing=LANG_JAVA,
+            lines_are_full=True,
+            is_whole_scope=False
+        )
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+        }
+        self.assertEqual({(1, 3)}, found_opportunities)
+
+    def test_filter_block_while(self):
+        code = '''
+            int i = 0;
+            while (i < 5) {
+                int b = 0;
+            }
+        '''
+        slice_predicate = SlicePredicate(
+            lang_to_check_parsing=LANG_JAVA,
+            lines_are_full=True,
+            is_whole_scope=False
+        )
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+        }
+        self.assertEqual({(2, 4)}, found_opportunities)
+
+    def test_filter_block_try(self):
+        code = '''
+            try {
+                String shots = equipName.substring(ammoIndex + 6, equipName.length() - 1);
+            } catch (NumberFormatException badShots) {
+                throw new EntityLoadingException("Could not determine the number of shots in: " + equipName + ".");
+            }
+        '''
+        slice_predicate = SlicePredicate(
+            lang_to_check_parsing=LANG_JAVA,
+            lines_are_full=True,
+            is_whole_scope=False
+        )
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+        }
+        self.assertEqual({(1, 5)}, found_opportunities)
+
+    def test_filter_block_if_without_else(self):
+        code = '''
+            if (ammoIndex > 0) {
+                t.addEquipment(etype, nLoc, false, shotsCount);
+            } else {
+                t.addEquipment(etype, nLoc);
+            }
+        '''
+        slice_predicate = SlicePredicate(
+            lang_to_check_parsing=LANG_JAVA,
+            lines_are_full=True,
+            is_whole_scope=False
+        )
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+        }
+        self.assertEqual({(1, 5)}, found_opportunities)
+
+    def test_complex_inner_blocks(self):
+        code = '''
+        EquipmentType etype = EquipmentType.get(equipName);
+        int ammoIndex = equipName.indexOf("Ammo (");
+        Protomech t;
+        if (etype != null) {
+                try {
+                    // If this is an Ammo slot, only add
+                    // the indicated number of shots.
+                    if (ammoIndex > 0) {
+                        t.addEquipment(etype, nLoc, false, shotsCount);
+                    } else {
+                        for (int i = 0; i < 5; ++i) {
+                            int b = 0;
+                            Integer a = b;
+                        }
+                        t.addEquipment(etype, nLoc);
+                    }
+                } catch (LocationFullException ex) {
+                    throw new EntityLoadingException(ex.getMessage());
+                }
+            }
+        '''
+        slice_predicate = SlicePredicate(
+            lang_to_check_parsing=LANG_JAVA,
+            lines_are_full=True,
+            is_whole_scope=False
+        )
+        found_opportunities = {
+            (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
+            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+        }
+        self.assertEqual({(11, 14), (5, 19), (8, 16), (4, 20)}, found_opportunities)

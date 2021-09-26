@@ -20,12 +20,14 @@ def get_variable_slices(
         source_code: str,
         lang: str,
         slice_predicate: SlicePredicate = None,
+        include_noneffective: bool = True,
         may_cause_code_duplication: bool = True) -> Iterator[ProgramSlice]:
     """
     For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
+    :param include_noneffective: include comments and blank lines to a slice if True.
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
@@ -33,6 +35,7 @@ def get_variable_slices(
         source_code,
         lang,
         slice_predicate=slice_predicate,
+        include_noneffective=include_noneffective,
         may_cause_code_duplication=may_cause_code_duplication)
 
 
@@ -40,12 +43,14 @@ def get_complete_computation_slices(
         source_code: str,
         lang: str,
         slice_predicate: SlicePredicate = None,
+        include_noneffective: bool = True,
         may_cause_code_duplication: bool = True) -> Iterator[ProgramSlice]:
     """
     For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
     :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
+    :param include_noneffective: include comments and blank lines to a slice if True.
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
@@ -71,10 +76,13 @@ def get_complete_computation_slices(
                     continue
             if len(manager.get_exit_statements(complete_computation_slice)) > 1:
                 continue
-            program_slice = ProgramSlice(code_lines).from_statements(complete_computation_slice)
+            program_slice = ProgramSlice(
+                code_lines,
+                context=manager if include_noneffective else None
+            ).from_statements(complete_computation_slice)
             program_slice.variable = variable_statement
             program_slice.function = function_statement
-            if slice_predicate is None or slice_predicate(program_slice):
+            if slice_predicate is None or slice_predicate(program_slice, context=manager):
                 yield program_slice
 
 
