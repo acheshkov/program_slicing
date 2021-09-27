@@ -212,7 +212,7 @@ class SlicePredicate:
         return self.__check_no_broken_goto()
 
     def __check_no_broken_goto(self, **kwargs) -> bool:
-        cdg = self.__manager.get_control_dependence_graph()
+        cdg = self.__manager.control_dependence_graph
         for statement in cdg:
             if statement.statement_type == StatementType.GOTO:
                 if not cdg.control_flow.get(statement, None):
@@ -224,7 +224,7 @@ class SlicePredicate:
             return True
         if self.__manager is None:
             raise ValueError("lang_to_check_parsing has to be specified to check if slice has returnable variable")
-        for statement in self.__manager.get_control_dependence_graph():
+        for statement in self.__manager.control_dependence_graph:
             if statement.statement_type == StatementType.VARIABLE:
                 if self.__program_slice.variable and self.__program_slice.variable.name != statement.name:
                     continue
