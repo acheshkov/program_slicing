@@ -6,21 +6,21 @@ __date__ = '2021/03/22'
 
 from unittest import TestCase
 
-from program_slicing.decomposition import variable_slicing
+from program_slicing.decomposition import variable
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.decomposition.variable_slicing import get_variable_slices
+from program_slicing.decomposition.variable.slicing import get_variable_slices
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
 from program_slicing.graph.manager import ProgramGraphsManager
 
-is_slicing_criterion = variable_slicing.__is_slicing_criterion
-obtain_variable_statements = variable_slicing.__obtain_variable_statements
-obtain_seed_statements = variable_slicing.__obtain_seed_statements
-obtain_slicing_criteria = variable_slicing.__obtain_slicing_criteria
-obtain_common_boundary_blocks = variable_slicing.__obtain_common_boundary_blocks
-obtain_backward_slice = variable_slicing.__obtain_backward_slice
-obtain_complete_computation_slices = variable_slicing.__obtain_complete_computation_slices
+is_slicing_criterion = variable.slicing.__is_slicing_criterion
+obtain_variable_statements = variable.slicing.__obtain_variable_statements
+obtain_seed_statements = variable.slicing.__obtain_seed_statements
+obtain_slicing_criteria = variable.slicing.__obtain_slicing_criteria
+obtain_common_boundary_blocks = variable.slicing.__obtain_common_boundary_blocks
+obtain_backward_slice = variable.slicing.__obtain_backward_slice
+obtain_complete_computation_slices = variable.slicing.__obtain_complete_computation_slices
 
 
 class SlicingTestCase(TestCase):
@@ -72,7 +72,7 @@ class SlicingTestCase(TestCase):
         n = a + b;
         return a;
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
@@ -127,7 +127,7 @@ class SlicingTestCase(TestCase):
         }
         return a;
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
@@ -165,7 +165,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
@@ -209,7 +209,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -252,7 +252,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -292,7 +292,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -318,7 +318,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -349,7 +349,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -383,7 +383,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]

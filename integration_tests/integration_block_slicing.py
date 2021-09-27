@@ -4,7 +4,7 @@ from pathlib import Path
 import tqdm
 
 from program_slicing.file_manager.reader import read_file, read_json
-from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import LANG_JAVA
 

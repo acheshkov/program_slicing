@@ -10,8 +10,8 @@ from typing import List, Iterator
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.decomposition.block_slicing import get_block_slices
-from program_slicing.decomposition.variable_slicing import get_variable_slices
+from program_slicing.decomposition.block.slicing import get_block_slices
+from program_slicing.decomposition.variable.slicing import get_variable_slices
 
 
 def decompose_dir(dir_path: str, work_dir: str = None) -> None:

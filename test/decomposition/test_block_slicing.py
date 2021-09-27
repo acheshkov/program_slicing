@@ -6,7 +6,7 @@ __date__ = '2021/06/01'
 
 from unittest import TestCase
 
-from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.point import Point

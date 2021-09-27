@@ -8,7 +8,7 @@ import tqdm
 from numpy import mean, median, quantile
 
 from program_slicing.file_manager.reader import read_file
-from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import LANG_JAVA
 
@@ -37,7 +37,7 @@ def main():
     print(f'\rWe are going to run performance tests for Block Slicing algorithm. '
           f'The algorithm will run {len(java_files)} java files with 100 ncss. '
           f'The procedure will be run {args.iterations} time(s) for more accurate calculations.')
-    sc = SlicePredicate(
+    sp = SlicePredicate(
         min_amount_of_lines=6,
         min_amount_of_statements=5,
         max_percentage_of_lines=0.8,
@@ -53,7 +53,7 @@ def main():
                 list(get_block_slices(
                     text,
                     LANG_JAVA,
-                    slice_predicate=sc
+                    slice_predicate=sp
                 ))
                 end_datetime = datetime.datetime.now()
                 diff_datetime = end_datetime - start_datetime

@@ -29,18 +29,18 @@ PC info:
 
 `CPU Intel(R) Xeon(R) Gold 6266C CPU @ 3.00GHz`:
 
-The algorithm was run for 15 java files with 100 ncss. The procedure was run 10 time(s) for more accurate calculations.
+The algorithm was run for 15 java files with 100 ncss. The procedure was run 1 time(s) for more accurate calculations.
 
-Total time of running 15 java methods (script was executed 10 times) is 28.0 secs.
+Total time of running 15 java methods is 32.0 secs.
 
-Average time for 1 method: 1.867 secs. 
+Average time for 1 method: 1.667 secs.
 
-Min time of 1 method: 0.000 secs, 
+Min time of 1 method: 0.000 secs,
 
-max time of 1 method: 12.000 secs, 
+max time of 1 method: 11.000 secs,
 
-median: 0.000 secs, 
+median: 0.000 secs,
 
-quantile 75%: 2.000 secs, 
+quantile 75%: 1.500 secs,
 
-quantile 95%: 12.000 secs
+quantile 95%: 7.500 secs
