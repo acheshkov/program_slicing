@@ -4,13 +4,12 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/03'
 
-from typing import Set
+from typing import Set, Optional
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import parse
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
-from program_slicing.graph.point import Point
 from program_slicing.graph.statement import StatementType
 
 
@@ -49,36 +48,36 @@ class SlicePredicate:
             self.__check_max_amount_of_lines,
             self.__check_min_percentage_of_lines,
             self.__check_max_percentage_of_lines,
-            self.__check_lines_are_full,
-            self.__check_parsing,
             self.__check_min_amount_of_statements,
             self.__check_max_amount_of_statements,
             self.__check_min_percentage_of_statements,
             self.__check_max_percentage_of_statements,
             self.__check_has_returnable_variable,
             self.__check_is_whole_scope,
-            self.__check_forbidden_words
+            self.__check_lines_are_full,
+            self.__check_forbidden_words,
+            self.__check_parsing
         ]
         self.__program_slice = None
-        self.__manager = None
+        self.__generated_manager = None
 
     def __call__(self, program_slice: ProgramSlice, **kwargs) -> bool:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
+        self.__generated_manager = None
         for checker in self.__checkers:
             if not checker(**kwargs):
                 return False
         return True
 
-    def __check_is_whole_scope(self, context: ProgramGraphsManager, **kwargs) -> bool:
+    def __check_is_whole_scope(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__is_whole_scope is None:
             return True
         if context is None:
-            if self.__manager is None:
-                raise ValueError(
-                    "context or at least lang_to_check_parsing has to be specified to check if slice is a whole scope")
-            context = self.__manager
+            context = self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check if slice is a whole scope")
         if not context.scope_statements:
             return not self.__is_whole_scope
         start_line = self.__program_slice.ranges[0][0].line_number
@@ -91,30 +90,34 @@ class SlicePredicate:
     def __check_min_amount_of_statements(self, **kwargs) -> bool:
         if self.__min_amount_of_statements is None:
             return True
-        if self.__manager is None:
-            raise ValueError("lang_to_check_parsing has to be specified to check if slice has enough statements")
-        if len(self.__manager.general_statements) < self.__min_amount_of_statements:
+        general_statements = self.__program_slice.general_statements
+        if not general_statements and self.__program_slice.ranges:
+            general_statements = [statement for statement in self.__get_generated_manager().general_statements]
+        if len(general_statements) < self.__min_amount_of_statements:
             return False
         return True
 
     def __check_max_amount_of_statements(self, **kwargs) -> bool:
         if self.__max_amount_of_statements is None:
             return True
-        if self.__manager is None:
-            raise ValueError(
-                "lang_to_check_parsing has to be specified to check if slice doesn't has too much statements")
-        if len(self.__manager.general_statements) > self.__max_amount_of_statements:
+        general_statements = self.__program_slice.general_statements
+        if not general_statements and self.__program_slice.ranges:
+            general_statements = [statement for statement in self.__get_generated_manager().general_statements]
+        if len(general_statements) > self.__max_amount_of_statements:
             return False
         return True
 
     def __check_min_percentage_of_statements(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__min_percentage_of_statements is None:
             return True
-        if self.__manager is None:
-            raise ValueError("lang_to_check_parsing has to be specified to check if slice has enough statements")
         if context is None:
-            raise ValueError("context has to be specified to check percentage of statements")
-        if len(self.__manager.general_statements)/self.__get_number_of_statements(context) < \
+            context = self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check percentage of statements")
+        general_statements = self.__program_slice.general_statements
+        if not general_statements and self.__program_slice.ranges:
+            general_statements = [statement for statement in self.__get_generated_manager().general_statements]
+        if len(general_statements)/self.__get_number_of_statements(context) < \
                 self.__min_percentage_of_statements:
             return False
         return True
@@ -122,12 +125,14 @@ class SlicePredicate:
     def __check_max_percentage_of_statements(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__max_percentage_of_statements is None:
             return True
-        if self.__manager is None:
-            raise ValueError(
-                "lang_to_check_parsing has to be specified to check if slice doesn't has too much statements")
         if context is None:
-            raise ValueError("context has to be specified to check percentage of statements")
-        if len(self.__manager.general_statements)/self.__get_number_of_statements(context) > \
+            context = self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check percentage of statements")
+        general_statements = self.__program_slice.general_statements
+        if not general_statements and self.__program_slice.ranges:
+            general_statements = [statement for statement in self.__get_generated_manager().general_statements]
+        if len(general_statements)/self.__get_number_of_statements(context) > \
                 self.__max_percentage_of_statements:
             return False
         return True
@@ -150,7 +155,9 @@ class SlicePredicate:
         if self.__min_percentage_of_lines is None:
             return True
         if context is None:
-            raise ValueError("context has to be specified to check percentage of lines")
+            context = self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check percentage of lines")
         if len(self.__program_slice.lines)/self.__get_number_of_lines(context) < self.__min_percentage_of_lines:
             return False
         return True
@@ -159,7 +166,9 @@ class SlicePredicate:
         if self.__max_percentage_of_lines is None:
             return True
         if context is None:
-            raise ValueError("context has to be specified to check percentage of lines")
+            context = self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check percentage of lines")
         if len(self.__program_slice.lines)/self.__get_number_of_lines(context) > self.__max_percentage_of_lines:
             return False
         return True
@@ -189,7 +198,7 @@ class SlicePredicate:
         if self.__lang_to_check_parsing is None:
             return True
         code_bytes = bytes(self.__program_slice.code, "utf-8")
-        self.__manager = ProgramGraphsManager(self.__program_slice.code, self.__lang_to_check_parsing)
+        manager = self.__get_generated_manager()
         # TODO: manager may contain ast info, no need to parse it twice
         ast = parse.tree_sitter_ast(self.__program_slice.code, self.__lang_to_check_parsing).root_node
 
@@ -209,29 +218,35 @@ class SlicePredicate:
                 # this code may be removed if tree sitter will fix this issue
                 if node_name(code_bytes, node) == "else":
                     return False
-        return self.__check_no_broken_goto()
-
-    def __check_no_broken_goto(self, **kwargs) -> bool:
-        cdg = self.__manager.control_dependence_graph
+        cdg = manager.control_dependence_graph
         for statement in cdg:
             if statement.statement_type == StatementType.GOTO:
                 if not cdg.control_flow.get(statement, None):
                     return False
         return True
 
-    def __check_has_returnable_variable(self, **kwargs) -> bool:
+    def __check_has_returnable_variable(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__has_returnable_variable is None:
             return True
-        if self.__manager is None:
-            raise ValueError("lang_to_check_parsing has to be specified to check if slice has returnable variable")
-        for statement in self.__manager.control_dependence_graph:
+        if context is None:
+            context = self.__program_slice.context
+            if context is None:
+                if self.__lang_to_check_parsing:
+                    context = ProgramGraphsManager(self.__program_slice.code, self.__lang_to_check_parsing)
+                    if context is None:
+                        raise ValueError("context has to be specified to check if slice has returnable variable")
+        ranges = self.__program_slice.ranges
+        if not ranges:
+            return not self.__has_returnable_variable
+        start_point = ranges[0][0]
+        end_point = ranges[-1][1]
+        for statement in self.__program_slice.statements:
             if statement.statement_type == StatementType.VARIABLE:
                 if self.__program_slice.variable and self.__program_slice.variable.name != statement.name:
                     continue
-                scope = self.__manager.get_scope_statement(statement)
-                lines = self.__program_slice.lines
+                scope = context.get_scope_statement(statement)
                 if (scope.statement_type == StatementType.SCOPE or scope.statement_type == StatementType.FUNCTION) and \
-                        scope.start_point == Point(0, 0) and scope.end_point == Point(len(lines) - 1, len(lines[-1])):
+                        scope.start_point <= start_point and scope.end_point >= end_point:
                     return self.__has_returnable_variable
         return not self.__has_returnable_variable
 
@@ -265,6 +280,12 @@ class SlicePredicate:
         return max(1, len([
             statement for statement in context.general_statements if statement in statements_in_function
         ]))
+
+    def __get_generated_manager(self) -> Optional[ProgramGraphsManager]:
+        if self.__generated_manager is None:
+            if self.__lang_to_check_parsing is not None:
+                self.__generated_manager = ProgramGraphsManager(self.__program_slice.code, self.__lang_to_check_parsing)
+        return self.__generated_manager
 
 
 def check_slice(
