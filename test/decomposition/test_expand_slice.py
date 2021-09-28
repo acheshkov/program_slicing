@@ -1,7 +1,6 @@
 import unittest
 
-# from program_slicing.decomposition.expand_slice import expand_slices_ordered,\
-#                                                        InvalidBlockException
+# from program_slicing.decomposition.expand_slice import expand_slices_ordered
 
 
 class ExpandSliceTestCase(unittest.TestCase):
@@ -20,9 +19,9 @@ class ExpandSliceTestCase(unittest.TestCase):
                                 do2(i);
                             }
                         }'''
-        slice_to_expand = (6, 8)
-        expected_extensions = {[2], [3], [2, 3]}
-        extension_generator = expand_slices_ordered(code_ex, slice_to_expand)
+        slice_to_expand = (5, 7)
+        expected_extensions = {[(1, 1), (5, 7)], [(2, 2), (5, 7)], [(1, 2), (5, 7)]}
+        extension_generator = expand_slices_ordered(code_ex, slice_to_expand, cost='basic')
         found_extensions = {next(extension_generator) for _ in range(3)}
         self.assertSetEqual(expected_extensions, found_extensions)
 
@@ -42,16 +41,18 @@ class ExpandSliceTestCase(unittest.TestCase):
                         }
                     }
                 }'''
-        slice_to_expand = (7, 9)
-        expected_extension = [6]
-        extension_generator = expand_slices_ordered(code_ex, slice_to_expand)
-        found_extension = next(extension_generator)
-        self.assertListEqual(expected_extension, found_extension)
+        slice_to_expand = (6, 8)
+        expected_extension_best = [(6, 8)]
+        expected_extension_second_best = [(1, 1), (4, 9)]
+        extension_generator = expand_slices_ordered(code_ex, slice_to_expand, cost='basic')
+        self.assertListEqual(expected_extension_best, next(extension_generator))
+        self.assertListEqual(expected_extension_second_best, next(extension_generator))
 
     @unittest.skip("not implemented")
     def test_expand_invalid_slice_1(self):
         """
         slice not finished in the end
+        not including this functionality for now
         """
         code_ex = '''public void methodEx(final AClass a) {
                     if (cond()) {
@@ -59,8 +60,8 @@ class ExpandSliceTestCase(unittest.TestCase):
                         do3(a);
                     }
                 }'''
-        slice_to_expand = (2, 3)
-        self.assertRaises(InvalidBlockException, expand_slices_ordered(code_ex, slice_to_expand))
+        slice_to_expand = (1, 2)
+        self.assertRaises(Exception, expand_slices_ordered(code_ex, slice_to_expand))
 
     @unittest.skip("not implemented")
     def test_expand_invalid_slice_2(self):
@@ -78,8 +79,8 @@ class ExpandSliceTestCase(unittest.TestCase):
                             System.out.println(a);
                         }
                     }'''
-        slice_to_expand = (7, 9)
-        expected_extensions = {[4, 5, 6], [3, 4, 5, 6], [2, 3, 4, 5, 6]}
+        slice_to_expand = (6, 8)
+        expected_extensions = {[(3, 8)], [(2, 8)], [(1, 8)]}
         extension_generator = expand_slices_ordered(code_ex, slice_to_expand)
         found_extensions = {next(extension_generator) for _ in range(3)}
         self.assertSetEqual(expected_extensions, found_extensions)
@@ -99,27 +100,8 @@ class ExpandSliceTestCase(unittest.TestCase):
                             do1(r);
                             do2(a);
                         }'''
-        slice_to_expand = (2, 4)
-        expected_extension = [6]
-        extension_generator = expand_slices_ordered(code_ex_after, slice_to_expand)
-        found_extension = next(extension_generator)
-        self.assertSetEqual(expected_extension, found_extension)
-
-    @unittest.skip("not implemented")
-    def test_multiple_vars(self):
-        """
-        expansion wrt var a and both a and b have equal cost,
-        even though b is not used in the slice
-        """
-        code_ex_multiple_vars = '''public void method() {
-                                    int a = 1;
-                                    int b = 2;
-                                    inv1(a, b);
-                                    inv2(a);
-                                }'''
-        slice_to_expand = (5, 5)
-        expected_extensions = {[2, 4], [2, 3, 4]}
-        extension_generator = expand_slices_ordered(code_ex_multiple_vars, slice_to_expand)
-        extension_generator = expand_slices_ordered(code_ex_multiple_vars, slice_to_expand)
-        found_extensions = {next(extension_generator) for _ in range(3)}
+        slice_to_expand = (1, 4)
+        expected_extensions = {[(1, 4)], [(1, 4), (5, 5)]}
+        extension_generator = expand_slices_ordered(code_ex_after, slice_to_expand, cost='basic')
+        found_extensions = {next(extension_generator) for _ in range(2)}
         self.assertSetEqual(expected_extensions, found_extensions)
