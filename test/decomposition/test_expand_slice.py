@@ -19,6 +19,9 @@ from program_slicing.graph.statement import Statement
 get_incoming_variables = extended_blocks.__get_incoming_variables
 get_outgoing_variables = extended_blocks.__get_outgoing_variables
 extend_block_singleton = extended_blocks.__extend_block_singleton
+filter_anti_dependence = extended_blocks.__filter_anti_dependence
+filter_more_than_one_outgoing = extended_blocks.__filter_more_than_one_outgoing
+filter_control_dependence = extended_blocks.__filter_control_dependence
 
 
 class ExpandSliceTestCase(unittest.TestCase):
@@ -356,3 +359,120 @@ class ExpandSliceTestCase(unittest.TestCase):
                                        expected_out=set(),
                                        source_code=code
                                        )
+
+
+    def test_filter_anti_dependence_negative(self):
+        '''
+        extended slice [(1, 1), (3,3)] -- we should filter such examples
+        '''
+        code = '''public void methodEx() {
+                    int a = 1;
+                    do(a);
+                    do2(a);
+                }
+                '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(3, 0), Point(3, 10000))
+        block_slice = ProgramSlice(code).from_statements(block)
+        extension = manager.get_statements_in_range(Point(1, 0), Point(1, 10000))
+        extended_block = block.union(extension)
+        self.assertFalse(filter_anti_dependence(extension, block_slice, manager))
+
+    def test_filter_anti_dependence_positive(self):
+        '''
+        extended slice [(1,3)] from (2,2) -- this one does not violate
+        '''
+        code = '''public void methodEx() {
+                            int a = 1;
+                            do(a);
+                            do2(a);
+                    }
+                        '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
+        block_slice = ProgramSlice(code).from_statements(block)
+        extension_1 = manager.get_statements_in_range(Point(1, 0), Point(1, 10000))
+        extension_2 = manager.get_statements_in_range(Point(3, 0), Point(3, 10000))
+        self.assertTrue(filter_anti_dependence(extension_1.union(extension_2), block_slice, manager))
+
+    def test_filter_more_than_one_outgoing_negative_1(self):
+        code = '''public void methodEx() {
+                    int i = 1;
+                    int b = 2;
+                    do(i, b);
+                    do(b);
+                }
+               '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        slice_candidate = manager.get_statements_in_range(Point(1, 0), Point(2, 10000))
+        self.assertFalse(filter_more_than_one_outgoing(slice_candidate, manager))
+
+    def test_filter_more_than_one_outgoing_negative_2(self):
+        code = '''public void methodEx() {
+                    int i = 1;
+                    int b = 2;
+                    i = b + 2;
+                    do(i, b);
+                    do(b);
+                }
+               '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        slice_candidate = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
+        self.assertFalse(filter_more_than_one_outgoing(slice_candidate, manager))
+
+    def test_filter_more_than_one_outgoing_positive(self):
+        code = '''public void methodEx() {
+                            int i = 1;
+                            int b = 2;
+                            i = b + 2;
+                        }
+                       '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        slice_candidate = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
+        self.assertTrue(filter_more_than_one_outgoing(slice_candidate, manager))
+
+    @unittest.skip('bug in ProgramManager')
+    def test_filter_control_dependence_negative_1(self):
+        code = '''public void methodEx() {
+                    int a = 1;
+                    for (int i=1; i < 10 ; i++) {
+                        System.out.println('Something');
+                        do(a);
+                    }
+                '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(4, 0), Point(4, 10000))
+        block_slice = ProgramSlice(code).from_statements(block)
+        extension_1 = manager.get_statements_in_range(Point(1, 0), Point(2, 10000))
+        extension_2 = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
+        self.assertFalse(filter_control_dependence(extension_1.union(extension_2), block, block_slice, manager))
+
+    @unittest.skip('bug in ProgramManager')
+    def test_filter_control_dependence_negative_2(self):
+        code = '''public void methodEx() {
+                    int a = 1;
+                    for (int i=1; i < 10 ; i++) {
+                        System.out.println('Something');
+                        do(a);
+                    }
+                '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(1, 0), Point(1, 10000))
+        block_slice = ProgramSlice(code).from_statements(block)
+        extension = manager.get_statements_in_range(Point(4, 0), Point(4, 10000))
+        self.assertFalse(filter_control_dependence(extension, block, block_slice, manager))
+
+    @unittest.skip('bug in ProgramManager')
+    def test_filter_control_dependence_positive_1(self):
+        code = '''public void methodEx() {
+                    int a = 1;
+                    for (int i=1; i < 10 ; i++) {
+                        System.out.println('Something');
+                        do(a);
+                    }
+                '''
+        manager = ProgramGraphsManager(code, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(3, 0), Point(4, 10000))
+        block_slice = ProgramSlice(code).from_statements(block)
+        extension = manager.get_statements_in_range(Point(1, 0), Point(2, 10000))
+        self.assertTrue(filter_control_dependence(extension, block, block_slice, manager))

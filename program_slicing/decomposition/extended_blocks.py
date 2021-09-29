@@ -207,13 +207,14 @@ def __extend_block_singleton(block_statements: Block,
     return singleton_extensions
 
 
-def __filter_anti_dependence(new_statements, original_slice, manager):
+def __filter_anti_dependence(new_statements: Set, original_slice, manager):
     ddg = manager.get_data_dependence_graph()
     for statement in new_statements:
-        if statement.end_point > original_slice.ranges[0]:
+        if statement.end_point > original_slice.ranges[0][0]:
             continue
+        data_successors = list(ddg.successors(statement))
         for data_successor in ddg.successors(statement):
-            if data_successor.end_point > original_slice.ranges[0]:
+            if data_successor.end_point > original_slice.ranges[0][0]:
                 continue
             if __flow_dep_given_data_dep(data_successor, statement):
                 return False
@@ -221,27 +222,45 @@ def __filter_anti_dependence(new_statements, original_slice, manager):
     return True
 
 
-def __filter_control_dependence(new_statements, original_slice, manager):
-    # TODO
-    pass
+def __filter_control_dependence(new_statements: Set[Statement],
+                                original_statements: Set[Statement],
+                                original_slice: ProgramSlice,
+                                manager: ProgramGraphsManager) -> bool:
+    cdg = manager.get_control_dependence_graph()
+    for statement in new_statements:
+        if statement.end_point < original_slice.ranges[0][0]:
+            for control_successor in cdg.successors(statement):
+                if control_successor not in new_statements.union(original_statements):
+                    return False
+        else:
+            for control_predecessor in cdg.predecessors(statement):
+                if control_predecessor not in new_statements.union(original_statements):
+                    return False
+    return True
+
+
+def __filter_more_than_one_outgoing(slice_candidate: Set[Statement],
+                                    manager: ProgramGraphsManager) -> bool:
+    outgoing_variables = __get_outgoing_variables(slice_candidate, manager)
+    return len(outgoing_variables.keys()) <= 1
 
 
 def __filter_valid(slice_candidate: Set[Statement],
-                 original_slice: ProgramSlice,
-                 manager: ProgramGraphsManager) -> bool:
-    new_statements = slice_candidate.difference(original_slice)
+                   original_statements: Set[Statement],
+                   original_slice: ProgramSlice,
+                   manager: ProgramGraphsManager) -> bool:
+    new_statements = slice_candidate.difference(original_statements)
 
     # anti-dependence
     if not __filter_anti_dependence(new_statements, original_slice, manager):
         return False
 
     # more than 1 outgoing vars
-    outgoing_variables = __get_outgoing_variables(slice_candidate, manager)
-    if len(outgoing_variables.keys()) > 1:
+    if not __filter_more_than_one_outgoing(slice_candidate, manager):
         return False
 
     # control dep
-    if not __filter_control_dependence(new_statements, original_slice, manager):
+    if not __filter_control_dependence(new_statements, original_statements, original_slice, manager):
         return False
 
     return True
@@ -251,19 +270,19 @@ def __compute_cost(full_extension, param):
     pass
 
 
-def get_block_extensions_ordered(block_statements: Block,
-                                 manager: ProgramGraphsManager
-                                ) -> Iterable[ProgramSlice, float]:
-
-    singleton_extensions = __extend_block_singleton(block_statements, manager)
-
-    pq = []
-    for variable_id_subset in chain.from_iterable(combinations(singleton_extensions, r)
-                                                  for r in range(1, len(singleton_extensions) + 1)):
-        full_extension = reduce(lambda x, y: x.union(singleton_extensions[y][0]), variable_id_subset, set())
-        if __filter_valid(full_extension, block_statements, manager):
-            cost = __compute_cost(full_extension, [singleton_extensions[i] for i in variable_id_subset])
-            heappush(pq, (cost, full_extension))
-
-    while pq:
-        yield heappop(pq)
+#def get_block_extensions_ordered(block_statements: Block,
+#                                 manager: ProgramGraphsManager
+#                                ) -> Iterable[ProgramSlice, float]:#
+#
+#    singleton_extensions = __extend_block_singleton(block_statements, manager)#
+#
+#    pq = []
+#    for variable_id_subset in chain.from_iterable(combinations(singleton_extensions, r)
+#                                                  for r in range(1, len(singleton_extensions) + 1)):
+#        full_extension = reduce(lambda x, y: x.union(singleton_extensions[y][0]), variable_id_subset, set())
+#        if __filter_valid(full_extension, block_statements, manager):
+#            cost = __compute_cost(full_extension, [singleton_extensions[i] for i in variable_id_subset])
+#            heappush(pq, (cost, full_extension))#
+#
+#    while pq:
+#        yield heappop(pq)
