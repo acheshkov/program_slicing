@@ -71,6 +71,58 @@ class SlicePredicate:
                 return False
         return True
 
+    @property
+    def min_amount_of_statements(self) -> int:
+        return self.__min_amount_of_statements
+
+    @property
+    def max_amount_of_statements(self) -> int:
+        return self.__max_amount_of_statements
+
+    @property
+    def min_amount_of_lines(self) -> int:
+        return self.__min_amount_of_lines
+
+    @property
+    def max_amount_of_lines(self) -> int:
+        return self.__max_amount_of_lines
+
+    @property
+    def min_percentage_of_statements(self) -> float:
+        return self.__min_percentage_of_statements
+
+    @property
+    def max_percentage_of_statements(self) -> float:
+        return self.__max_percentage_of_statements
+
+    @property
+    def min_percentage_of_lines(self) -> float:
+        return self.__min_percentage_of_lines
+
+    @property
+    def max_percentage_of_lines(self) -> float:
+        return self.__max_percentage_of_lines
+
+    @property
+    def lines_are_full(self) -> bool:
+        return self.__lines_are_full
+
+    @property
+    def lang_to_check_parsing(self) -> str:
+        return self.__lang_to_check_parsing
+
+    @property
+    def has_returnable_variable(self) -> bool:
+        return self.__has_returnable_variable
+
+    @property
+    def is_whole_scope(self) -> bool:
+        return self.__is_whole_scope
+
+    @property
+    def forbidden_words(self) -> Set[str]:
+        return self.__forbidden_words
+
     def __check_is_whole_scope(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__is_whole_scope is None:
             return True

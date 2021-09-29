@@ -5,11 +5,12 @@ __maintainer__ = 'lyriccoder'
 __date__ = '2021/05/20'
 
 from itertools import combinations_with_replacement
-from typing import Iterable
+from typing import Iterable, List, Tuple
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.manager import ProgramGraphsManager
+from program_slicing.graph.statement import Statement
 
 
 def get_block_slices(
@@ -33,14 +34,16 @@ def get_block_slices(
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:
             continue
+        statements_in_scope = manager.get_statements_in_scope(scope)
         general_statements = sorted((
             statement
-            for statement in manager.get_statements_in_scope(scope)
-            if statement in manager.general_statements),
+            for statement in manager.general_statements
+            if statement in statements_in_scope),
             key=lambda x: (x.start_point, -x.end_point))
-        id_combinations = [
+        id_combinations = (
             c for c in combinations_with_replacement([idx for idx in range(len(general_statements))], 2)
-        ]
+            if __pre_check(general_statements, c, slice_predicate, source_lines)
+        )
         for ids in id_combinations:
             current_statements = general_statements[ids[0]: ids[1] + 1]
             if not current_statements:
@@ -61,3 +64,32 @@ def get_block_slices(
             ).from_statements(extended_statements)
             if slice_predicate is None or slice_predicate(program_slice, context=manager):
                 yield program_slice
+
+
+def __pre_check(
+        statements: List[Statement],
+        ids: Tuple[int, ...],
+        slice_predicate: SlicePredicate,
+        source_lines: List[str]) -> bool:
+    if slice_predicate:
+        if slice_predicate.min_amount_of_lines is not None:
+            max_lines_number = \
+                statements[ids[1]].end_point.line_number - statements[ids[0]].start_point.line_number + 1
+            if max_lines_number < slice_predicate.min_amount_of_lines:
+                return False
+        if slice_predicate.max_amount_of_statements is not None:
+            min_statements_number = ids[1] - ids[0] + 1
+            if min_statements_number > slice_predicate.max_amount_of_statements:
+                return False
+        if slice_predicate.lines_are_full is not None:
+            line_n = statements[ids[0]].start_point.line_number
+            column_n = statements[ids[0]].start_point.column_number
+            line_part = source_lines[line_n][:column_n]
+            if "//" not in line_part and any(c != ' ' and c != '\t' and c != '\n' and c != '\r' for c in line_part):
+                return not slice_predicate.lines_are_full
+            line_n = statements[ids[1]].end_point.line_number
+            column_n = statements[ids[1]].end_point.column_number
+            line_part = source_lines[line_n][column_n:]
+            if "//" not in line_part and any(c != ' ' and c != '\t' and c != '\n' and c != '\r' for c in line_part):
+                return not slice_predicate.lines_are_full
+    return True
