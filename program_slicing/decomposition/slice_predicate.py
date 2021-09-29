@@ -284,7 +284,7 @@ class SlicePredicate:
             context = self.__program_slice.context
             if context is None:
                 if self.__lang_to_check_parsing:
-                    context = ProgramGraphsManager(self.__program_slice.code, self.__lang_to_check_parsing)
+                    context = self.__get_generated_manager()
                     if context is None:
                         raise ValueError("context has to be specified to check if slice has returnable variable")
         ranges = self.__program_slice.ranges
@@ -366,21 +366,19 @@ def check_slice(
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
     :param min_percentage_of_statements: minimal acceptable share of Statements (float number [0-1]).
-    Will raise Exception if lang_to_check_parsing is not specified.
-    Will raise Exception if context is not specified.
+    May raise Exception if context is not specified.
     :param max_percentage_of_statements: maximal acceptable share of Statements (float number [0-1]).
-    Will raise Exception if lang_to_check_parsing is not specified.
-    Will raise Exception if context is not specified while calling.
+    May raise Exception if context is not specified.
     :param min_percentage_of_lines: minimal acceptable share of lines (float number [0-1]).
-    Will raise Exception if context is not specified while calling.
+    May raise Exception if context is not specified.
     :param max_percentage_of_lines: maximal acceptable share of lines (float number [0-1]).
-    Will raise Exception if context is not specified while calling.
+    May raise Exception if context is not specified.
     :param lines_are_full: check if the slice contains only entire lines.
     :param lang_to_check_parsing: language in which slice should to be compilable.
     :param has_returnable_variable: slice should to have a declaration of variable that may be returned if needed.
-    Will raise Exception if lang_to_check_parsing is not specified.
+    May raise Exception if lang_to_check_parsing is not specified.
     :param is_whole_scope: slice is a whole scope if True and is not a whole scope if False.
-    Will raise Exception if context or at least lang_to_check_parsing are not specified.
+    May raise Exception if context or at least lang_to_check_parsing are not specified.
     :param forbidden_words: a set of substrings that shouldn't be found in a slice code.
     :param context: a ProgramGraphsManager that defines context of the given ProgramSlice.
     :return: True if slice matches specified conditions.

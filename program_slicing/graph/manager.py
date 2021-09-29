@@ -34,7 +34,8 @@ class ProgramGraphsManager:
         self.__scope_dependency_backward: Optional[Dict[Statement, Set[Statement]]] = None
         self.__function_dependency: Optional[Dict[Statement, Statement]] = None
         self.__statement_line_numbers: Optional[Dict[Statement, Set[int]]] = None
-        self.__general_statements: Optional[List[Statement]] = None
+        self.__general_statements: Optional[Set[Statement]] = None
+        self.__sorted_statements: Optional[List[Statement]] = None
         if source_code is not None and lang is not None:
             self.__build_cdg = lambda: parse.control_dependence_graph(source_code, lang)
             self.__build_cfg = lambda: convert.cdg.to_cfg(self.control_dependence_graph)
@@ -87,11 +88,21 @@ class ProgramGraphsManager:
         return result
 
     @property
-    def general_statements(self) -> List[Statement]:
+    def sorted_statements(self) -> List[Statement]:
+        """
+        Statements are sorted by their first of all by increasing of start_point, then by decreasing of end_point.
+        :return: sorted list of all Statements.
+        """
+        if self.__sorted_statements is None:
+            self.__sorted_statements = self.__build_sorted_statements()
+        return self.__sorted_statements
+
+    @property
+    def general_statements(self) -> Set[Statement]:
         """
         Statement is a 'general' Statement if it is not contained in any
         non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
-        :return: list of general Statements.
+        :return: set of general Statements.
         """
         if self.__general_statements is None:
             self.__general_statements = self.__build_general_statements()
@@ -203,9 +214,11 @@ class ProgramGraphsManager:
         return self.__function_dependency.get(statement, None)
 
     def get_function_statement_by_range(self, start_point: Point, end_point: Point) -> Optional[Statement]:
-        # TODO: this function may be significantly faster if we will maintain sorted list of Statements.
-        statements = sorted(self.get_statements_in_range(start_point, end_point), key=lambda x: x.start_point)
-        return self.get_function_statement(statements[0]) if statements else None
+        statements = self.sorted_statements
+        start_statement_idx = self.__bisect_range_left(start_point, end_point)
+        if start_statement_idx >= len(statements):
+            return None
+        return self.get_function_statement(statements[start_statement_idx])
 
     def get_scope_statement(self, statement: Statement) -> Optional[Statement]:
         if self.__scope_dependency is None:
@@ -221,13 +234,15 @@ class ProgramGraphsManager:
             self,
             start_point: Point = None,
             end_point: Point = None) -> Set[Statement]:
-        # TODO: this function may be optimized
-        result = set()
-        for statement in self.control_dependence_graph:
-            if (start_point is None or start_point <= statement.start_point) and \
-                    (end_point is None or end_point >= statement.end_point):
-                result.add(statement)
-        return result
+        statements = self.sorted_statements
+        start_statement_idx = 0 if start_point is None else self.__bisect_range_left(start_point, end_point)
+        end_statement_idx = len(statements) if end_point is None else self.__bisect_range_right(end_point, end_point)
+        return set(
+            statements[idx]
+            for idx in range(start_statement_idx, end_statement_idx)
+            if (start_point is None or start_point <= statements[idx].start_point) and
+            (end_point is None or end_point >= statements[idx].end_point)
+        )
 
     def get_exit_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
         start_point = min(statement.start_point for statement in statements)
@@ -316,6 +331,9 @@ class ProgramGraphsManager:
                 function_dependency[statement] = function_statement
         return function_dependency
 
+    def __build_sorted_statements(self) -> List[Statement]:
+        return sorted(self.control_dependence_graph, key=lambda s: (s.start_point, -s.end_point))
+
     def __build_general_statements(self) -> Set[Statement]:
         result = set()
         for scope in self.scope_statements:
@@ -377,3 +395,29 @@ class ProgramGraphsManager:
                 if successor.ast_node_type == "else" and successor not in statements:
                     return True
         return False
+
+    def __bisect_range_left(self, start_point: Point, end_point: Point) -> int:
+        searching_range = (start_point, -end_point)
+        a = self.sorted_statements
+        lo = 0
+        hi = len(a)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if (a[mid].start_point, -a[mid].end_point) < searching_range:
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
+
+    def __bisect_range_right(self, start_point: Point, end_point: Point) -> int:
+        searching_range = (start_point, -end_point)
+        a = self.sorted_statements
+        lo = 0
+        hi = len(a)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if searching_range < (a[mid].start_point, -a[mid].end_point):
+                hi = mid
+            else:
+                lo = mid + 1
+        return lo

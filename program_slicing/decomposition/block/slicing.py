@@ -37,8 +37,8 @@ def get_block_slices(
         statements_in_scope = manager.get_statements_in_scope(scope)
         general_statements = sorted((
             statement
-            for statement in manager.general_statements
-            if statement in statements_in_scope),
+            for statement in statements_in_scope
+            if statement in manager.general_statements),
             key=lambda x: (x.start_point, -x.end_point))
         id_combinations = (
             c for c in combinations_with_replacement([idx for idx in range(len(general_statements))], 2)
