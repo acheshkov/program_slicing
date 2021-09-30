@@ -524,5 +524,5 @@ class SlicingTestCase(TestCase):
         [program_slice] = slices
         self.assertEqual(1, len(program_slice.ranges_compact))
         [(start, end)] = program_slice.ranges_compact
-        self.assertEqual(start.line_number, 1)
-        self.assertEqual(end.line_number, 7)
+        self.assertEqual(1, start.line_number)
+        self.assertEqual(7, end.line_number)

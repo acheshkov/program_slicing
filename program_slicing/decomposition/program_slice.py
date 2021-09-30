@@ -304,7 +304,7 @@ class ProgramSlice:
         self.__scopes.difference_update(added_scopes)
 
     def __has_information(self, start_point, end_point):
-        for line_number in range(start_point.line_number, end_point.line_number+1):
+        for line_number in range(start_point.line_number, end_point.line_number + 1):
             current_line = self.source_lines[line_number]
             if line_number == start_point.line_number:
                 start_column = start_point.column_number

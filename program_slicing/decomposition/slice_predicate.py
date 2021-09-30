@@ -169,7 +169,7 @@ class SlicePredicate:
         general_statements = self.__program_slice.general_statements
         if not general_statements and self.__program_slice.ranges:
             general_statements = [statement for statement in self.__get_generated_manager().general_statements]
-        if len(general_statements)/self.__get_number_of_statements(context) < \
+        if len(general_statements) / self.__get_number_of_statements(context) < \
                 self.__min_percentage_of_statements:
             return False
         return True
@@ -184,7 +184,7 @@ class SlicePredicate:
         general_statements = self.__program_slice.general_statements
         if not general_statements and self.__program_slice.ranges:
             general_statements = [statement for statement in self.__get_generated_manager().general_statements]
-        if len(general_statements)/self.__get_number_of_statements(context) > \
+        if len(general_statements) / self.__get_number_of_statements(context) > \
                 self.__max_percentage_of_statements:
             return False
         return True
@@ -210,7 +210,7 @@ class SlicePredicate:
             context = self.__program_slice.context
             if context is None:
                 raise ValueError("context has to be specified to check percentage of lines")
-        if len(self.__program_slice.lines)/self.__get_number_of_lines(context) < self.__min_percentage_of_lines:
+        if len(self.__program_slice.lines) / self.__get_number_of_lines(context) < self.__min_percentage_of_lines:
             return False
         return True
 
@@ -221,7 +221,7 @@ class SlicePredicate:
             context = self.__program_slice.context
             if context is None:
                 raise ValueError("context has to be specified to check percentage of lines")
-        if len(self.__program_slice.lines)/self.__get_number_of_lines(context) > self.__max_percentage_of_lines:
+        if len(self.__program_slice.lines) / self.__get_number_of_lines(context) > self.__max_percentage_of_lines:
             return False
         return True
 
@@ -254,13 +254,7 @@ class SlicePredicate:
         # TODO: manager may contain ast info, no need to parse it twice
         ast = parse.tree_sitter_ast(self.__program_slice.code, self.__lang_to_check_parsing).root_node
 
-        def traverse(root):
-            yield root
-            if root.children:
-                for child in root.children:
-                    for result in traverse(child):
-                        yield result
-        for node in traverse(ast):
+        for node in SlicePredicate.__traverse(ast):
             if node.type == "ERROR":
                 return False
             elif node.type == "type_identifier":
@@ -283,10 +277,9 @@ class SlicePredicate:
         if context is None:
             context = self.__program_slice.context
             if context is None:
-                if self.__lang_to_check_parsing:
-                    context = self.__get_generated_manager()
-                    if context is None:
-                        raise ValueError("context has to be specified to check if slice has returnable variable")
+                context = self.__get_generated_manager()
+                if context is None:
+                    raise ValueError("context has to be specified to check if slice has returnable variable")
         ranges = self.__program_slice.ranges
         if not ranges:
             return not self.__has_returnable_variable
@@ -338,6 +331,14 @@ class SlicePredicate:
             if self.__lang_to_check_parsing is not None:
                 self.__generated_manager = ProgramGraphsManager(self.__program_slice.code, self.__lang_to_check_parsing)
         return self.__generated_manager
+
+    @staticmethod
+    def __traverse(root):
+        yield root
+        if root.children:
+            for child in root.children:
+                for result in SlicePredicate.__traverse(child):
+                    yield result
 
 
 def check_slice(
