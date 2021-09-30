@@ -36,6 +36,9 @@ class ControlDependenceGraph(networkx.DiGraph):
     def add_entry_point(self, root: Statement) -> None:
         self.__entry_points.add(root)
 
+    def set_scope_dependency(self, scope_dependency: Dict[Statement, Statement]) -> None:
+        self.__scope_dependency = scope_dependency
+
     def build_scope_dependency(self) -> None:
         scopes_for_start_point: Dict[Point, Statement] = {}
         scopes_for_end_point: Dict[Point, Statement] = {}

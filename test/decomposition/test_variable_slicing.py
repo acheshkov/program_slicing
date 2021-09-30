@@ -6,21 +6,21 @@ __date__ = '2021/03/22'
 
 from unittest import TestCase
 
-from program_slicing.decomposition import variable_slicing
+from program_slicing.decomposition import variable
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.decomposition.variable_slicing import get_variable_slices
+from program_slicing.decomposition.variable.slicing import get_variable_slices
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
 from program_slicing.graph.manager import ProgramGraphsManager
 
-is_slicing_criterion = variable_slicing.__is_slicing_criterion
-obtain_variable_statements = variable_slicing.__obtain_variable_statements
-obtain_seed_statements = variable_slicing.__obtain_seed_statements
-obtain_slicing_criteria = variable_slicing.__obtain_slicing_criteria
-obtain_common_boundary_blocks = variable_slicing.__obtain_common_boundary_blocks
-obtain_backward_slice = variable_slicing.__obtain_backward_slice
-obtain_complete_computation_slices = variable_slicing.__obtain_complete_computation_slices
+is_slicing_criterion = variable.slicing.__is_slicing_criterion
+obtain_variable_statements = variable.slicing.__obtain_variable_statements
+obtain_seed_statements = variable.slicing.__obtain_seed_statements
+obtain_slicing_criteria = variable.slicing.__obtain_slicing_criteria
+obtain_common_boundary_blocks = variable.slicing.__obtain_common_boundary_blocks
+obtain_backward_slice = variable.slicing.__obtain_backward_slice
+obtain_complete_computation_slices = variable.slicing.__obtain_complete_computation_slices
 
 
 class SlicingTestCase(TestCase):
@@ -72,7 +72,7 @@ class SlicingTestCase(TestCase):
         n = a + b;
         return a;
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
@@ -127,7 +127,7 @@ class SlicingTestCase(TestCase):
         }
         return a;
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
@@ -165,7 +165,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA,
             SlicePredicate(lang_to_check_parsing=LANG_JAVA))
@@ -209,7 +209,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -252,7 +252,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -292,7 +292,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -318,7 +318,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -349,7 +349,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -383,7 +383,7 @@ class SlicingTestCase(TestCase):
             }
         }
         """
-        slices = variable_slicing.get_complete_computation_slices(
+        slices = variable.slicing.get_complete_computation_slices(
             source_code,
             LANG_JAVA)
         slices = [program_slice for program_slice in slices]
@@ -480,37 +480,37 @@ class SlicingTestCase(TestCase):
             self.assertEqual(1, len(complete_computation_slices))
 
     def test_if_slice_is_continuous_with_block_comments(self) -> None:
-        code = '''
-            int a = 0;
-            /* Block slices
-               need to be included
-            */
-            ++a;
-        '''
+        code = """
+        int a = 0;
+        /* Block slices
+           need to be included
+        */
+        ++a;
+        """
         slices = list(get_variable_slices(code, LANG_JAVA))
-        self.assertTrue(len(slices), 1)
-        [slice] = slices
-        self.assertTrue(len(slice.ranges_compact()), 1)
-        [(start, end)] = slice.ranges_compact()
-        self.assertEqual(start.line_number, 1)
-        self.assertEqual(end.line_number, 5)
+        self.assertEqual(1, len(slices))
+        [program_slice] = slices
+        self.assertEqual(1, len(program_slice.ranges_compact))
+        [(start, end)] = program_slice.ranges_compact
+        self.assertEqual(1, start.line_number)
+        self.assertEqual(5, end.line_number)
 
     def test_if_slice_is_continuous_with_single_comment(self) -> None:
-        code = '''
-            int a = 0;
-            // comment
-            ++a;
-        '''
+        code = """
+        int a = 0;
+        // comment
+        ++a;
+        """
         slices = list(get_variable_slices(code, LANG_JAVA))
-        self.assertTrue(len(slices), 1)
-        [slice] = slices
-        self.assertTrue(len(slice.ranges_compact()), 1)
-        [(start, end)] = slice.ranges_compact()
-        self.assertEqual(start.line_number, 1)
-        self.assertEqual(end.line_number, 3)
+        self.assertEqual(1, len(slices))
+        [program_slice] = slices
+        self.assertEqual(1, len(program_slice.ranges_compact))
+        [(start, end)] = program_slice.ranges_compact
+        self.assertEqual(1, start.line_number)
+        self.assertEqual(3, end.line_number)
 
     def test_if_slice_is_continuous_with_empty_lines(self) -> None:
-        code = '''
+        code = """
             int a = 0;
 
             if (a < 5) {
@@ -518,11 +518,11 @@ class SlicingTestCase(TestCase):
                 --a;
             }
             ++a;
-        '''
+        """
         slices = list(get_variable_slices(code, LANG_JAVA))
-        self.assertTrue(len(slices), 1)
-        [slice] = slices
-        self.assertTrue(len(slice.ranges_compact()), 1)
-        [(start, end)] = slice.ranges_compact()
+        self.assertEqual(1, len(slices))
+        [program_slice] = slices
+        self.assertEqual(1, len(program_slice.ranges_compact))
+        [(start, end)] = program_slice.ranges_compact
         self.assertEqual(start.line_number, 1)
         self.assertEqual(end.line_number, 7)

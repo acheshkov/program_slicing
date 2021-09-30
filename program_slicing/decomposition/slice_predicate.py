@@ -4,14 +4,14 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/06/03'
 
-from typing import Set, Iterable
+from typing import Set
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import parse
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
 from program_slicing.graph.point import Point
-from program_slicing.graph.statement import StatementType, Statement
+from program_slicing.graph.statement import StatementType
 
 
 class SlicePredicate:
@@ -22,58 +22,73 @@ class SlicePredicate:
             max_amount_of_statements: int = None,
             min_amount_of_lines: int = None,
             max_amount_of_lines: int = None,
+            min_percentage_of_statements: float = None,
+            max_percentage_of_statements: float = None,
+            min_percentage_of_lines: float = None,
+            max_percentage_of_lines: float = None,
             lines_are_full: bool = None,
             lang_to_check_parsing: str = None,
             has_returnable_variable: bool = None,
-            forbidden_words: Set[str] = None,
-            filter_by_scope: bool = False):
+            is_whole_scope: bool = None,
+            forbidden_words: Set[str] = None):
         self.__min_amount_of_statements = min_amount_of_statements
-        self.__filter_blocks = filter_by_scope
         self.__max_amount_of_statements = max_amount_of_statements
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
+        self.__min_percentage_of_statements = min_percentage_of_statements
+        self.__max_percentage_of_statements = max_percentage_of_statements
+        self.__min_percentage_of_lines = min_percentage_of_lines
+        self.__max_percentage_of_lines = max_percentage_of_lines
         self.__lines_are_full = lines_are_full
         self.__lang_to_check_parsing = lang_to_check_parsing
         self.__has_returnable_variable = has_returnable_variable
+        self.__is_whole_scope = is_whole_scope
         self.__forbidden_words = forbidden_words
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
+            self.__check_min_percentage_of_lines,
+            self.__check_max_percentage_of_lines,
             self.__check_lines_are_full,
             self.__check_parsing,
             self.__check_min_amount_of_statements,
             self.__check_max_amount_of_statements,
+            self.__check_min_percentage_of_statements,
+            self.__check_max_percentage_of_statements,
             self.__check_has_returnable_variable,
+            self.__check_is_whole_scope,
             self.__check_forbidden_words
         ]
         self.__program_slice = None
         self.__manager = None
 
-    def __call__(self, program_slice: ProgramSlice, scopes: Iterable[Statement] = None) -> bool:
+    def __call__(self, program_slice: ProgramSlice, **kwargs) -> bool:
         if program_slice is None:
             raise ValueError("Program slice has to be defined")
         self.__program_slice = program_slice
         for checker in self.__checkers:
-            if not checker():
+            if not checker(**kwargs):
                 return False
-
-        if not self.__check_if_slice_matches_scope(scopes):
-            return False
-
         return True
 
-    def __check_if_slice_matches_scope(self, scopes: Iterable[Statement]) -> bool:
-        if not scopes or not self.__filter_blocks:
+    def __check_is_whole_scope(self, context: ProgramGraphsManager, **kwargs) -> bool:
+        if self.__is_whole_scope is None:
             return True
+        if context is None:
+            if self.__manager is None:
+                raise ValueError(
+                    "context or at least lang_to_check_parsing has to be specified to check if slice is a whole scope")
+            context = self.__manager
+        if not context.scope_statements:
+            return not self.__is_whole_scope
         start_line = self.__program_slice.ranges[0][0].line_number
         end_line = self.__program_slice.ranges[-1][0].line_number
-        scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in scopes}
+        scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in context.scope_statements}
         if (start_line, end_line) in scopes_lines:
-            return True
-        else:
-            return False
+            return not self.__is_whole_scope
+        return self.__is_whole_scope
 
-    def __check_min_amount_of_statements(self) -> bool:
+    def __check_min_amount_of_statements(self, **kwargs) -> bool:
         if self.__min_amount_of_statements is None:
             return True
         if self.__manager is None:
@@ -82,7 +97,7 @@ class SlicePredicate:
             return False
         return True
 
-    def __check_max_amount_of_statements(self) -> bool:
+    def __check_max_amount_of_statements(self, **kwargs) -> bool:
         if self.__max_amount_of_statements is None:
             return True
         if self.__manager is None:
@@ -92,21 +107,64 @@ class SlicePredicate:
             return False
         return True
 
-    def __check_min_amount_of_lines(self) -> bool:
+    def __check_min_percentage_of_statements(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
+        if self.__min_percentage_of_statements is None:
+            return True
+        if self.__manager is None:
+            raise ValueError("lang_to_check_parsing has to be specified to check if slice has enough statements")
+        if context is None:
+            raise ValueError("context has to be specified to check percentage of statements")
+        if len(self.__manager.general_statements)/self.__get_number_of_statements(context) < \
+                self.__min_percentage_of_statements:
+            return False
+        return True
+
+    def __check_max_percentage_of_statements(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
+        if self.__max_percentage_of_statements is None:
+            return True
+        if self.__manager is None:
+            raise ValueError(
+                "lang_to_check_parsing has to be specified to check if slice doesn't has too much statements")
+        if context is None:
+            raise ValueError("context has to be specified to check percentage of statements")
+        if len(self.__manager.general_statements)/self.__get_number_of_statements(context) > \
+                self.__max_percentage_of_statements:
+            return False
+        return True
+
+    def __check_min_amount_of_lines(self, **kwargs) -> bool:
         if self.__min_amount_of_lines is None:
             return True
         if len(self.__program_slice.lines) < self.__min_amount_of_lines:
             return False
         return True
 
-    def __check_max_amount_of_lines(self) -> bool:
+    def __check_max_amount_of_lines(self, **kwargs) -> bool:
         if self.__max_amount_of_lines is None:
             return True
         if len(self.__program_slice.lines) > self.__max_amount_of_lines:
             return False
         return True
 
-    def __check_lines_are_full(self) -> bool:
+    def __check_min_percentage_of_lines(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
+        if self.__min_percentage_of_lines is None:
+            return True
+        if context is None:
+            raise ValueError("context has to be specified to check percentage of lines")
+        if len(self.__program_slice.lines)/self.__get_number_of_lines(context) < self.__min_percentage_of_lines:
+            return False
+        return True
+
+    def __check_max_percentage_of_lines(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
+        if self.__max_percentage_of_lines is None:
+            return True
+        if context is None:
+            raise ValueError("context has to be specified to check percentage of lines")
+        if len(self.__program_slice.lines)/self.__get_number_of_lines(context) > self.__max_percentage_of_lines:
+            return False
+        return True
+
+    def __check_lines_are_full(self, **kwargs) -> bool:
         if self.__lines_are_full is None:
             return True
         source_lines = self.__program_slice.source_lines
@@ -122,12 +180,12 @@ class SlicePredicate:
                     contain_commented_part = True
                     continue
                 if contain_commented_part:
-                    return False
+                    return not self.__lines_are_full
                 if char != ' ' and char != '\t' and char != '\r':
-                    return False
-        return True
+                    return not self.__lines_are_full
+        return self.__lines_are_full
 
-    def __check_parsing(self) -> bool:
+    def __check_parsing(self, **kwargs) -> bool:
         if self.__lang_to_check_parsing is None:
             return True
         code_bytes = bytes(self.__program_slice.code, "utf-8")
@@ -141,7 +199,6 @@ class SlicePredicate:
                 for child in root.children:
                     for result in traverse(child):
                         yield result
-
         for node in traverse(ast):
             if node.type == "ERROR":
                 return False
@@ -154,7 +211,7 @@ class SlicePredicate:
                     return False
         return self.__check_no_broken_goto()
 
-    def __check_no_broken_goto(self) -> bool:
+    def __check_no_broken_goto(self, **kwargs) -> bool:
         cdg = self.__manager.get_control_dependence_graph()
         for statement in cdg:
             if statement.statement_type == StatementType.GOTO:
@@ -162,7 +219,7 @@ class SlicePredicate:
                     return False
         return True
 
-    def __check_has_returnable_variable(self) -> bool:
+    def __check_has_returnable_variable(self, **kwargs) -> bool:
         if self.__has_returnable_variable is None:
             return True
         if self.__manager is None:
@@ -175,10 +232,10 @@ class SlicePredicate:
                 lines = self.__program_slice.lines
                 if (scope.statement_type == StatementType.SCOPE or scope.statement_type == StatementType.FUNCTION) and \
                         scope.start_point == Point(0, 0) and scope.end_point == Point(len(lines) - 1, len(lines[-1])):
-                    return True
-        return False
+                    return self.__has_returnable_variable
+        return not self.__has_returnable_variable
 
-    def __check_forbidden_words(self) -> bool:
+    def __check_forbidden_words(self, **kwargs) -> bool:
         if self.__forbidden_words is None:
             return True
         code = self.__program_slice.code
@@ -187,6 +244,28 @@ class SlicePredicate:
                 return False
         return True
 
+    def __get_number_of_lines(self, context: ProgramGraphsManager) -> int:
+        slice_function = context.get_function_statement_by_range(
+            self.__program_slice.ranges[0][0],
+            self.__program_slice.ranges[-1][1])
+        if slice_function is None:
+            return 1
+        if len(context.get_statements_in_scope(slice_function)) > 1:
+            return slice_function.end_point.line_number - slice_function.start_point.line_number + 1
+        return max(1, (slice_function.end_point.line_number - slice_function.start_point.line_number - 1))
+        # return 1 if slice_function is None else max(1, len(context.get_statement_line_numbers(slice_function)))
+
+    def __get_number_of_statements(self, context: ProgramGraphsManager) -> int:
+        slice_function = context.get_function_statement_by_range(
+            self.__program_slice.ranges[0][0],
+            self.__program_slice.ranges[-1][1])
+        statements_in_function = set() if slice_function is None else context.get_statements_in_range(
+            slice_function.start_point,
+            slice_function.end_point)
+        return max(1, len([
+            statement for statement in context.general_statements if statement in statements_in_function
+        ]))
+
 
 def check_slice(
         program_slice: ProgramSlice,
@@ -194,10 +273,16 @@ def check_slice(
         max_amount_of_statements: int = None,
         min_amount_of_lines: int = None,
         max_amount_of_lines: int = None,
+        min_percentage_of_statements: float = None,
+        max_percentage_of_statements: float = None,
+        min_percentage_of_lines: float = None,
+        max_percentage_of_lines: float = None,
         lines_are_full: bool = None,
         lang_to_check_parsing: str = None,
         has_returnable_variable: bool = None,
-        forbidden_words: Set[str] = None) -> bool:
+        is_whole_scope: bool = None,
+        forbidden_words: Set[str] = None,
+        context: ProgramGraphsManager = None) -> bool:
     """
     Check a ProgramSlice if it matches specified conditions.
     :param program_slice: slice that should to be checked.
@@ -207,11 +292,24 @@ def check_slice(
     Will raise Exception if lang_to_check_parsing is not specified.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
+    :param min_percentage_of_statements: minimal acceptable share of Statements (float number [0-1]).
+    Will raise Exception if lang_to_check_parsing is not specified.
+    Will raise Exception if context is not specified.
+    :param max_percentage_of_statements: maximal acceptable share of Statements (float number [0-1]).
+    Will raise Exception if lang_to_check_parsing is not specified.
+    Will raise Exception if context is not specified while calling.
+    :param min_percentage_of_lines: minimal acceptable share of lines (float number [0-1]).
+    Will raise Exception if context is not specified while calling.
+    :param max_percentage_of_lines: maximal acceptable share of lines (float number [0-1]).
+    Will raise Exception if context is not specified while calling.
     :param lines_are_full: check if the slice contains only entire lines.
     :param lang_to_check_parsing: language in which slice should to be compilable.
     :param has_returnable_variable: slice should to have a declaration of variable that may be returned if needed.
     Will raise Exception if lang_to_check_parsing is not specified.
+    :param is_whole_scope: slice is a whole scope if True and is not a whole scope if False.
+    Will raise Exception if context or at least lang_to_check_parsing are not specified.
     :param forbidden_words: a set of substrings that shouldn't be found in a slice code.
+    :param context: a ProgramGraphsManager that defines context of the given ProgramSlice.
     :return: True if slice matches specified conditions.
     """
     return SlicePredicate(
@@ -219,8 +317,13 @@ def check_slice(
         max_amount_of_statements=max_amount_of_statements,
         min_amount_of_lines=min_amount_of_lines,
         max_amount_of_lines=max_amount_of_lines,
+        min_percentage_of_statements=min_percentage_of_statements,
+        max_percentage_of_statements=max_percentage_of_statements,
+        min_percentage_of_lines=min_percentage_of_lines,
+        max_percentage_of_lines=max_percentage_of_lines,
         lines_are_full=lines_are_full,
         lang_to_check_parsing=lang_to_check_parsing,
         has_returnable_variable=has_returnable_variable,
+        is_whole_scope=is_whole_scope,
         forbidden_words=forbidden_words
-    )(program_slice)
+    )(program_slice, context=context)

@@ -7,10 +7,11 @@ __date__ = '2020/05/19'
 import json
 import os
 import stat
-from typing import Any, AnyStr, List, Iterator, Tuple
+from pathlib import Path
+from typing import Any, AnyStr, List, Iterator, Tuple, Union
 
 
-def read_json(path: str) -> Any:
+def read_json(path: Union[str, Path]) -> Any:
     """
     Read a JSON file and return the extracted data.
     :param path: string with the JSON file path.
@@ -30,7 +31,7 @@ def read_json(path: str) -> Any:
             return ""
 
 
-def read_file(path: str) -> AnyStr:
+def read_file(path: Union[str, Path]) -> AnyStr:
     """
     Read any file and return the extracted data as a string.
     :param path: string with the file path.

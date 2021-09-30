@@ -353,14 +353,15 @@ class ManagerTestCase(TestCase):
         manager = ProgramGraphsManager(while_block, LANG_JAVA)
         self.assertEqual(5, len(list(manager.scope_statements)))
 
-    def test_all_statements_continious(self) -> None:
+    def test_statements_in_range_continuous(self) -> None:
         code = '''
-            for (int i=0; i < 10; i++){
-                continue;
-            }
+        for (int i=0; i < 10; i++){
+            continue;
+        }
         '''
         manager = ProgramGraphsManager(code, LANG_JAVA)
-        self.assertEqual(list(manager.statement_lines), [1, 2, 3])
+        [root_statement] = manager.get_program_dependence_graph().entry_points
+        self.assertEqual({1, 2, 3}, manager.get_statement_line_numbers(root_statement))
 
     def test_all_statements_with_empty_lines_loop(self) -> None:
         code = '''
@@ -373,7 +374,8 @@ class ManagerTestCase(TestCase):
 
         '''
         manager = ProgramGraphsManager(code, LANG_JAVA)
-        self.assertEqual(list(manager.statement_lines), [2, 4, 6])
+        [root_statement] = manager.get_program_dependence_graph().entry_points
+        self.assertEqual({2, 4, 6}, manager.get_statement_line_numbers(root_statement))
 
     def test_all_statements_with_empty_lines_branch(self) -> None:
         code = '''
@@ -386,7 +388,8 @@ class ManagerTestCase(TestCase):
 
         '''
         manager = ProgramGraphsManager(code, LANG_JAVA)
-        self.assertEqual(manager.statement_lines, [2, 4, 6])
+        [root_statement] = manager.get_program_dependence_graph().entry_points
+        self.assertEqual({2, 4, 6}, manager.get_statement_line_numbers(root_statement))
 
     def test_all_statements_with_inline_comments(self) -> None:
         code = '''
@@ -399,7 +402,8 @@ class ManagerTestCase(TestCase):
 
         '''
         manager = ProgramGraphsManager(code, LANG_JAVA)
-        self.assertEqual(list(manager.statement_lines), [2, 4, 6])
+        [root_statement] = manager.get_program_dependence_graph().entry_points
+        self.assertEqual({2, 4, 6}, manager.get_statement_line_numbers(root_statement))
 
     def test_all_statements_with_multiline_comments(self) -> None:
         code = '''
@@ -412,7 +416,8 @@ class ManagerTestCase(TestCase):
 
         '''
         manager = ProgramGraphsManager(code, LANG_JAVA)
-        self.assertEqual(list(manager.statement_lines), [1, 5, 6])
+        [root_statement] = manager.get_program_dependence_graph().entry_points
+        self.assertEqual({1, 5, 6}, manager.get_statement_line_numbers(root_statement))
 
     def test_all_statements_comments_and_empty_lines(self) -> None:
         code = '''
@@ -424,4 +429,5 @@ class ManagerTestCase(TestCase):
 
         '''
         manager = ProgramGraphsManager(code, LANG_JAVA)
-        self.assertEqual(list(manager.statement_lines), [1, 4, 5])
+        [root_statement] = manager.get_program_dependence_graph().entry_points
+        self.assertEqual({1, 4, 5}, manager.get_statement_line_numbers(root_statement))

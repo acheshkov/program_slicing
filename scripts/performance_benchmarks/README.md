@@ -3,8 +3,10 @@
 ### Usage
 
 1. ```$ pip3 install ./program_slicing```
-2. ```$ cd scripts/performance_benchmarks/block_slices```
-3. Script parameters: 
+2. ```$ cd scripts/performance_benchmarks```
+3. ```$ pip3 install -r requirements.txt```
+4. ```$ cd block_slices```
+5. Script parameters: 
 
 `--dir` folder with java files
 
@@ -29,7 +31,7 @@ PC info:
 
 The algorithm was run for 15 java files with 100 ncss. The procedure was run 1 time(s) for more accurate calculations.
 
-Total time of running 15 java methods is 25.0 secs.
+Total time of running 15 java methods is 32.0 secs.
 
 Average time for 1 method: 1.667 secs.
 

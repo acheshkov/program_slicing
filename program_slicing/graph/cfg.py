@@ -24,9 +24,9 @@ class ControlFlowGraph(networkx.DiGraph):
     def entry_points(self) -> Set[BasicBlock]:
         return self.__entry_points
 
-    # @property
-    # def forward_dominance(self) -> Dict[BasicBlock, List[BasicBlock]]:
-    #     return self.__forward_dominance
+    @property
+    def forward_dominance(self) -> Dict[BasicBlock, List[BasicBlock]]:
+        return self.__forward_dominance
 
     @property
     def scope_dependency(self) -> Dict[Statement, Statement]:

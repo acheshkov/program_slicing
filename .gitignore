@@ -129,7 +129,6 @@ dmypy.json
 # Pyre type checker
 .pyre/
 
-
 scripts/performance_benchmarks/block_slices/*.txt
 scripts/performance_benchmarks/block_slices/*.csv
 scripts/performance_benchmarks/block_slices/*.bs
@@ -139,7 +138,6 @@ program_slicing/decomposition/*.json
 program_slicing/decomposition/*.csv
 program_slicing/decomposition/*.txt
 program_slicing/decomposition/*.ipynb
-
 
 program_slicing/*.json
 program_slicing/*.csv
