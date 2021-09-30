@@ -27,13 +27,9 @@ def main():
         default=1,
         help="Number of iterations to run benchmark script for all files. Default is 1"
     )
-
     args = parser.parse_args()
-
     arr_with_datetime_in_seconds = []
-
     java_files = list(Path(args.dir).glob('*.java'))
-    
     print(f'\rWe are going to run performance tests for Block Slicing algorithm. '
           f'The algorithm will run {len(java_files)} java files with 100 ncss. '
           f'The procedure will be run {args.iterations} time(s) for more accurate calculations.')
@@ -57,12 +53,11 @@ def main():
                 ))
                 end_datetime = datetime.datetime.now()
                 diff_datetime = end_datetime - start_datetime
-                arr_with_datetime_in_seconds.append(diff_datetime.seconds + diff_datetime.microseconds/1e6)
+                arr_with_datetime_in_seconds.append(diff_datetime.seconds + diff_datetime.microseconds / 1e6)
             except Exception as e:
                 print(f'Error while reading {java_file}: {e}')
                 exc_type, exc_value, exc_traceback = sys.exc_info()
                 traceback.print_exception(exc_type, exc_value, exc_traceback, file=sys.stdout)
-
     total_time_for_one_iteration = mean(arr_with_datetime_in_seconds) * len(java_files)
     print(f'Total time of running {len(java_files)} java methods is '
           f'{total_time_for_one_iteration} secs for 1 iteration. \n'

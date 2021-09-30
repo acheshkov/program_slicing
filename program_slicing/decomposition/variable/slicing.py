@@ -56,7 +56,7 @@ def get_complete_computation_slices(
     """
     code_lines = str(source_code).split("\n")
     manager = ProgramGraphsManager(source_code, lang)
-    cdg = manager.get_control_dependence_graph()
+    cdg = manager.control_dependence_graph
     function_statements = cdg.entry_points
     for function_statement in function_statements:
         slicing_criteria = __obtain_slicing_criteria(manager, function_statement)
@@ -96,7 +96,7 @@ def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -
 def __obtain_seed_statements(
         manager: ProgramGraphsManager,
         variable_statement: Statement) -> Set[Statement]:
-    ddg = manager.get_data_dependence_graph()
+    ddg = manager.data_dependence_graph
     return {
         statement for statement in networkx.algorithms.traversal.dfs_tree(ddg, variable_statement)
         if __is_slicing_criterion(statement, variable_statement) and manager.get_basic_block(statement) is not None
@@ -104,7 +104,7 @@ def __obtain_seed_statements(
 
 
 def __obtain_slicing_criteria(manager: ProgramGraphsManager, root: Statement) -> Dict[Statement, Set[Statement]]:
-    variable_statements = __obtain_variable_statements(manager.get_control_dependence_graph(), root)
+    variable_statements = __obtain_variable_statements(manager.control_dependence_graph, root)
     return {
         variable_statement: __obtain_seed_statements(manager, variable_statement)
         for variable_statement in variable_statements
@@ -151,8 +151,8 @@ def __obtain_backward_slice_recursive(
             result.add(statement)
         else:
             __obtain_backward_slice_recursive(manager, statement, region, result)
-    if root in manager.get_program_dependence_graph():
-        for statement in manager.get_program_dependence_graph().predecessors(root):
+    if root in manager.program_dependence_graph:
+        for statement in manager.program_dependence_graph.predecessors(root):
             __obtain_backward_slice_recursive(manager, statement, region, result)
 
 
@@ -172,7 +172,7 @@ def __obtain_complete_computation_slices(
 def __obtain_necessary_goto(
         manager: ProgramGraphsManager,
         root: Statement) -> Iterator[Statement]:
-    descendants = {statement for statement in networkx.descendants(manager.get_control_dependence_graph(), root)}
+    descendants = {statement for statement in networkx.descendants(manager.control_dependence_graph, root)}
     for statement in descendants:
         if __is_necessary_goto(statement, manager, descendants):
             yield statement
@@ -183,7 +183,7 @@ def __obtain_branch_extension(
         root: Statement,
         region: Set[BasicBlock]) -> Iterator[Statement]:
     if root.statement_type == StatementType.BRANCH or root.statement_type == StatementType.LOOP:
-        for flow_statement in manager.get_control_dependence_graph().control_flow[root]:
+        for flow_statement in manager.control_dependence_graph.control_flow[root]:
             if root.start_point <= flow_statement.start_point and root.end_point >= flow_statement.end_point and \
                     flow_statement.statement_type != StatementType.GOTO:
                 yield flow_statement
@@ -195,7 +195,7 @@ def __obtain_branch_extension(
                 yield statement
         block_root = basic_block.root
     if block_root is not None and block_root.statement_type == StatementType.GOTO:
-        cdg = manager.get_control_dependence_graph()
+        cdg = manager.control_dependence_graph
         for predecessor in cdg.predecessors(root):
             if predecessor.statement_type == StatementType.BRANCH and manager.get_basic_block(predecessor) in region:
                 yield block_root
@@ -240,7 +240,7 @@ def __is_necessary_goto(statement: Statement, manager: ProgramGraphsManager, sco
     if statement.statement_type == StatementType.EXIT:
         return True
     if statement.statement_type == StatementType.GOTO:
-        for flow_statement in manager.get_control_dependence_graph().control_flow.get(statement, ()):
+        for flow_statement in manager.control_dependence_graph.control_flow.get(statement, ()):
             if flow_statement not in scope_statements:
                 return True
     return False

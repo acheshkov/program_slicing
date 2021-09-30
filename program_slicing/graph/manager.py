@@ -23,52 +23,89 @@ from program_slicing.graph import convert
 class ProgramGraphsManager:
 
     def __init__(self, source_code: str = None, lang: str = None) -> None:
-        self.__cdg: ControlDependenceGraph = ControlDependenceGraph()
-        self.__cfg: ControlFlowGraph = ControlFlowGraph()
-        self.__ddg: DataDependenceGraph = DataDependenceGraph()
-        self.__pdg: ProgramDependenceGraph = ProgramDependenceGraph()
-        self.__basic_block: Dict[Statement, BasicBlock] = {}
-        self.__dom_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
-        self.__reach_blocks: Dict[BasicBlock, Set[BasicBlock]] = {}
-        self.__scope_dependency: Dict[Statement, Statement] = {}
-        self.__scope_dependency_backward: Dict[Statement, Set[Statement]] = {}
-        self.__function_dependency: Dict[Statement, Statement] = {}
-        self.__statement_line_numbers: Dict[Statement, Set[int]] = {}
-        self.__general_statements: List[Statement] = []
+        self.__cdg: Optional[ControlDependenceGraph] = None
+        self.__cfg: Optional[ControlFlowGraph] = None
+        self.__ddg: Optional[DataDependenceGraph] = None
+        self.__pdg: Optional[ProgramDependenceGraph] = None
+        self.__basic_block: Optional[Dict[Statement, BasicBlock]] = None
+        self.__dom_blocks: Optional[Dict[BasicBlock, Set[BasicBlock]]] = None
+        self.__reach_blocks: Optional[Dict[BasicBlock, Set[BasicBlock]]] = None
+        self.__scope_dependency: Optional[Dict[Statement, Statement]] = None
+        self.__scope_dependency_backward: Optional[Dict[Statement, Set[Statement]]] = None
+        self.__function_dependency: Optional[Dict[Statement, Statement]] = None
+        self.__statement_line_numbers: Optional[Dict[Statement, Set[int]]] = None
+        self.__general_statements: Optional[Set[Statement]] = None
+        self.__sorted_statements: Optional[List[Statement]] = None
         if source_code is not None and lang is not None:
-            self.init_by_source_code(source_code=source_code, lang=lang)
+            self.__build_cdg = lambda: parse.control_dependence_graph(source_code, lang)
+            self.__build_cfg = lambda: convert.cdg.to_cfg(self.control_dependence_graph)
+            self.__build_ddg = lambda: convert.cdg.to_ddg(self.control_dependence_graph)
+            self.__build_pdg = lambda: convert.cdg.to_pdg(self.control_dependence_graph)
+        else:
+            self.__build_cdg = lambda: ControlDependenceGraph()
+            self.__build_cfg = lambda: ControlFlowGraph()
+            self.__build_ddg = lambda: DataDependenceGraph()
+            self.__build_pdg = lambda: ProgramDependenceGraph()
+
+    @classmethod
+    def from_source_code(cls, source_code: str, lang: str) -> 'ProgramGraphsManager':
+        return cls(source_code, lang)
 
     @classmethod
     def from_control_dependence_graph(cls, graph: ControlDependenceGraph) -> 'ProgramGraphsManager':
         result = cls()
-        result.init_by_control_dependence_graph(graph)
+        result.__build_cdg = lambda: graph
+        result.__build_cfg = lambda: convert.cdg.to_cfg(result.control_dependence_graph)
+        result.__build_ddg = lambda: convert.cdg.to_ddg(result.control_dependence_graph)
+        result.__build_pdg = lambda: convert.cdg.to_pdg(result.control_dependence_graph)
         return result
 
     @classmethod
     def from_control_flow_graph(cls, graph: ControlFlowGraph) -> 'ProgramGraphsManager':
         result = cls()
-        result.init_by_control_flow_graph(graph)
+        result.__build_cdg = lambda: convert.cfg.to_cdg(result.control_flow_graph)
+        result.__build_cfg = lambda: graph
+        result.__build_ddg = lambda: convert.cfg.to_ddg(result.control_flow_graph)
+        result.__build_pdg = lambda: convert.cfg.to_pdg(result.control_flow_graph)
         return result
 
     @classmethod
     def from_data_dependence_graph(cls, graph: DataDependenceGraph) -> 'ProgramGraphsManager':
         result = cls()
-        result.init_by_data_dependence_graph(graph)
+        result.__build_cdg = lambda: convert.ddg.to_cdg(result.data_dependence_graph)
+        result.__build_cfg = lambda: convert.ddg.to_cfg(result.data_dependence_graph)
+        result.__build_ddg = lambda: graph
+        result.__build_pdg = lambda: convert.ddg.to_pdg(result.data_dependence_graph)
         return result
 
     @classmethod
     def from_program_dependence_graph(cls, graph: ProgramDependenceGraph) -> 'ProgramGraphsManager':
         result = cls()
-        result.init_by_program_dependence_graph(graph)
+        result.__build_cdg = lambda: convert.pdg.to_cdg(result.program_dependence_graph)
+        result.__build_cfg = lambda: convert.pdg.to_cfg(result.program_dependence_graph)
+        result.__build_ddg = lambda: convert.pdg.to_ddg(result.program_dependence_graph)
+        result.__build_pdg = lambda: graph
         return result
 
     @property
-    def general_statements(self) -> List[Statement]:
+    def sorted_statements(self) -> List[Statement]:
+        """
+        Statements are sorted by their first of all by increasing of start_point, then by decreasing of end_point.
+        :return: sorted list of all Statements.
+        """
+        if self.__sorted_statements is None:
+            self.__sorted_statements = self.__build_sorted_statements()
+        return self.__sorted_statements
+
+    @property
+    def general_statements(self) -> Set[Statement]:
         """
         Statement is a 'general' Statement if it is not contained in any
         non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
-        :return: list of general Statements.
+        :return: set of general Statements.
         """
+        if self.__general_statements is None:
+            self.__general_statements = self.__build_general_statements()
         return self.__general_statements
 
     @property
@@ -77,52 +114,37 @@ class ProgramGraphsManager:
         Statement is a 'scope' Statement if it is SCOPE, BRANCH, LOOP or FUNCTION.
         :return: set of scope Statements.
         """
+        if self.__scope_dependency_backward is None:
+            self.__scope_dependency_backward = self.__build_statements_in_scope()
         return self.__scope_dependency_backward.keys()
 
-    def get_control_dependence_graph(self) -> ControlDependenceGraph:
+    @property
+    def control_dependence_graph(self) -> ControlDependenceGraph:
+        if self.__cdg is None:
+            self.__cdg = self.__build_cdg()
         return self.__cdg
 
-    def get_control_flow_graph(self) -> ControlFlowGraph:
+    @property
+    def control_flow_graph(self) -> ControlFlowGraph:
+        if self.__cfg is None:
+            self.__cfg = self.__build_cfg()
         return self.__cfg
 
-    def get_data_dependence_graph(self) -> DataDependenceGraph:
+    @property
+    def data_dependence_graph(self) -> DataDependenceGraph:
+        if self.__ddg is None:
+            self.__ddg = self.__build_ddg()
         return self.__ddg
 
-    def get_program_dependence_graph(self) -> ProgramDependenceGraph:
+    @property
+    def program_dependence_graph(self) -> ProgramDependenceGraph:
+        if self.__pdg is None:
+            self.__pdg = self.__build_pdg()
         return self.__pdg
 
-    def init_by_source_code(self, source_code: str, lang: str) -> None:
-        self.init_by_control_dependence_graph(parse.control_dependence_graph(source_code, lang))
-
-    def init_by_control_dependence_graph(self, cdg: ControlDependenceGraph) -> None:
-        self.__cdg = cdg
-        self.__cfg = convert.cdg.to_cfg(cdg)
-        self.__ddg = convert.cdg.to_ddg(cdg)
-        self.__pdg = convert.cdg.to_pdg(cdg)
-        self.__build_dependencies()
-
-    def init_by_control_flow_graph(self, cfg: ControlFlowGraph) -> None:
-        self.__cdg = convert.cfg.to_cdg(cfg)
-        self.__cfg = cfg
-        self.__ddg = convert.cfg.to_ddg(cfg)
-        self.__pdg = convert.cfg.to_pdg(cfg)
-        self.__build_dependencies()
-
-    def init_by_data_dependence_graph(self, ddg: DataDependenceGraph) -> None:
-        self.__cdg = convert.ddg.to_cdg(ddg)
-        self.__cfg = convert.ddg.to_cfg(ddg)
-        self.__ddg = ddg
-        self.__pdg = convert.ddg.to_pdg(ddg)
-        self.__build_dependencies()
-
-    def init_by_program_dependence_graph(self, pdg: ProgramDependenceGraph) -> None:
-        self.__cdg = convert.pdg.to_cdg(pdg)
-        self.__cfg = convert.pdg.to_cfg(pdg)
-        self.__ddg = convert.pdg.to_ddg(pdg)
-        self.__pdg = pdg
-        self.__build_dependencies()
-
     def get_basic_block(self, statement: Statement) -> Optional[BasicBlock]:
+        if self.__basic_block is None:
+            self.__basic_block = self.__build_basic_block()
         return self.__basic_block.get(statement, None)
 
     def get_boundary_blocks_for_statement(self, statement: Statement) -> Set[BasicBlock]:
@@ -130,17 +152,19 @@ class ProgramGraphsManager:
         return self.get_boundary_blocks(block)
 
     def get_dominated_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
+        if self.__dom_blocks is None:
+            self.__dom_blocks = {}
         if block in self.__dom_blocks:
             return self.__dom_blocks[block]
         result = {block}
         root = block.root
         if root is None:
             return result
-        predecessors = [predecessor for predecessor in self.__cdg.predecessors(root)]
+        predecessors = [predecessor for predecessor in self.control_dependence_graph.predecessors(root)]
         if len(predecessors) == 0:
             predecessors = [root]
         for root in predecessors:
-            for statement in networkx.algorithms.bfs_tree(self.__cdg, root):
+            for statement in networkx.algorithms.bfs_tree(self.control_dependence_graph, root):
                 if statement == root:
                     continue
                 current_block = self.get_basic_block(statement)
@@ -150,16 +174,20 @@ class ProgramGraphsManager:
         return result
 
     def get_reach_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
+        if self.__reach_blocks is None:
+            self.__reach_blocks = {}
         return self.__build_reach_blocks(block)
 
     def get_boundary_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         boundary_blocks = set()
-        for basic_block in self.__cfg:
+        for basic_block in self.control_flow_graph:
             if block in self.get_dominated_blocks(basic_block).intersection(self.get_reach_blocks(basic_block)):
                 boundary_blocks.add(basic_block)
         return boundary_blocks
 
     def get_statement_line_numbers(self, statement: Statement) -> Set[int]:
+        if self.__statement_line_numbers is None:
+            self.__statement_line_numbers = {}
         if statement in self.__statement_line_numbers:
             return self.__statement_line_numbers[statement]
         inner_statements = self.get_statements_in_scope(statement)
@@ -181,39 +209,49 @@ class ProgramGraphsManager:
         return result
 
     def get_function_statement(self, statement: Statement) -> Optional[Statement]:
+        if self.__function_dependency is None:
+            self.__function_dependency = self.__build_function_dependency()
         return self.__function_dependency.get(statement, None)
 
     def get_function_statement_by_range(self, start_point: Point, end_point: Point) -> Optional[Statement]:
-        # TODO: this function may be significantly faster if we will maintain sorted list of Statements.
-        statements = sorted(self.get_statements_in_range(start_point, end_point), key=lambda x: x.start_point)
-        return self.get_function_statement(statements[0]) if statements else None
+        statements = self.sorted_statements
+        start_statement_idx = self.__bisect_range_left(start_point, end_point)
+        if start_statement_idx >= len(statements):
+            return None
+        return self.get_function_statement(statements[start_statement_idx])
 
     def get_scope_statement(self, statement: Statement) -> Optional[Statement]:
+        if self.__scope_dependency is None:
+            self.__scope_dependency = self.control_dependence_graph.scope_dependency
         return self.__scope_dependency.get(statement, None)
 
     def get_statements_in_scope(self, scope: Statement) -> Set[Statement]:
+        if self.__scope_dependency_backward is None:
+            self.__scope_dependency_backward = self.__build_statements_in_scope()
         return self.__scope_dependency_backward.get(scope, set())
 
     def get_statements_in_range(
             self,
             start_point: Point = None,
             end_point: Point = None) -> Set[Statement]:
-        # TODO: this function may be optimized
-        result = set()
-        for statement in self.__cdg:
-            if (start_point is None or start_point <= statement.start_point) and \
-                    (end_point is None or end_point >= statement.end_point):
-                result.add(statement)
-        return result
+        statements = self.sorted_statements
+        start_statement_idx = 0 if start_point is None else self.__bisect_range_left(start_point, end_point)
+        end_statement_idx = len(statements) if end_point is None else self.__bisect_range_right(end_point, end_point)
+        return set(
+            statements[idx]
+            for idx in range(start_statement_idx, end_statement_idx)
+            if (start_point is None or start_point <= statements[idx].start_point) and
+            (end_point is None or end_point >= statements[idx].end_point)
+        )
 
     def get_exit_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
         start_point = min(statement.start_point for statement in statements)
         end_point = max(statement.end_point for statement in statements)
         exit_statements = set()
         for statement in statements:
-            if statement not in self.__cdg.control_flow:
+            if statement not in self.control_dependence_graph.control_flow:
                 continue
-            for flow_statement in self.__cdg.control_flow[statement]:
+            for flow_statement in self.control_dependence_graph.control_flow[statement]:
                 if flow_statement.start_point < start_point or flow_statement.end_point > end_point:
                     exit_statements.add(flow_statement)
         return exit_statements
@@ -228,9 +266,9 @@ class ProgramGraphsManager:
         arg_statements_by_arg_name = self.__get_arg_statements_by_arg_name(statements)
         affecting_statements = set()
         for assignment_statement in assignment_statements:
-            if assignment_statement not in self.__ddg:
+            if assignment_statement not in self.data_dependence_graph:
                 continue
-            for affected_statement in self.__ddg.successors(assignment_statement):
+            for affected_statement in self.data_dependence_graph.successors(assignment_statement):
                 if affected_statement not in statements or \
                         affected_statement.end_point <= assignment_statement.end_point and \
                         affected_statement in arg_statements_by_arg_name.get(assignment_statement.name, set()):
@@ -244,16 +282,16 @@ class ProgramGraphsManager:
             if statement.statement_type == StatementType.VARIABLE:
                 used_variables.add(statement)
             if statement.statement_type == StatementType.ASSIGNMENT:
-                if statement not in self.__ddg:
+                if statement not in self.data_dependence_graph:
                     continue
-                for ancestor in networkx.ancestors(self.__ddg, statement):
+                for ancestor in networkx.ancestors(self.data_dependence_graph, statement):
                     if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
                         used_variables.add(ancestor)
         return used_variables
 
     def get_used_variables(self, statements: Iterable[Statement]) -> Set[Statement]:
         used_variables = set()
-        ddg = self.get_data_dependence_graph()
+        ddg = self.data_dependence_graph
         for statement in statements:
             if statement not in ddg:
                 continue
@@ -268,7 +306,7 @@ class ProgramGraphsManager:
     def contain_redundant_statements(self, statements: Set[Statement]) -> bool:
         for statement in statements:
             if statement.ast_node_type == "else" or statement.ast_node_type == "catch_clause":
-                for predecessor in self.__cdg.predecessors(statement):
+                for predecessor in self.control_dependence_graph.predecessors(statement):
                     if predecessor not in statements:
                         return True
             elif statement.ast_node_type == "finally_clause" and self.__is_redundant_finally(statement, statements):
@@ -277,25 +315,24 @@ class ProgramGraphsManager:
                 return True
         return False
 
-    def __build_dependencies(self) -> None:
-        self.__statement_line_numbers.clear()
-        self.__basic_block.clear()
-        for block in networkx.traversal.dfs_tree(self.__cfg):
+    def __build_basic_block(self) -> Dict[Statement, BasicBlock]:
+        basic_block = {}
+        for block in networkx.traversal.dfs_tree(self.control_flow_graph):
             for statement in block:
-                self.__basic_block[statement] = block
-        self.__scope_dependency = self.__cdg.scope_dependency
-        self.__scope_dependency_backward = self.__build_statements_in_scope()
-        self.__function_dependency = self.__build_function_dependency()
-        self.__general_statements = self.__build_general_statements()
+                basic_block[statement] = block
+        return basic_block
 
     def __build_function_dependency(self) -> Dict[Statement, Statement]:
         function_dependency = {}
         for function_statement in sorted(
-                (s for s in self.__cdg if s.statement_type == StatementType.FUNCTION),
+                (s for s in self.control_dependence_graph if s.statement_type == StatementType.FUNCTION),
                 key=lambda x: (x.start_point, -x.end_point)):
-            for statement in networkx.traversal.dfs_tree(self.__cdg, function_statement):
+            for statement in networkx.traversal.dfs_tree(self.control_dependence_graph, function_statement):
                 function_dependency[statement] = function_statement
         return function_dependency
+
+    def __build_sorted_statements(self) -> List[Statement]:
+        return sorted(self.control_dependence_graph, key=lambda s: (s.start_point, -s.end_point))
 
     def __build_general_statements(self) -> Set[Statement]:
         result = set()
@@ -316,7 +353,7 @@ class ProgramGraphsManager:
             visited_blocks = set()
         visited_blocks.add(block)
         result = {block}
-        for child in self.__cfg.successors(block):
+        for child in self.control_flow_graph.successors(block):
             if child not in visited_blocks:
                 result.update(self.__build_reach_blocks(child, visited_blocks))
         self.__reach_blocks[block] = result
@@ -325,8 +362,7 @@ class ProgramGraphsManager:
 
     def __build_statements_in_scope(self) -> Dict[Statement, Set[Statement]]:
         statements_in_scope = defaultdict(set)
-        cdg = self.get_control_dependence_graph()
-        for statement in cdg:
+        for statement in self.control_dependence_graph:
             scope = self.get_scope_statement(statement)
             if scope is None:
                 continue
@@ -336,10 +372,10 @@ class ProgramGraphsManager:
     def __get_arg_statements_by_arg_name(self, statements: Set[Statement]) -> Dict[str, Set[Statement]]:
         arg_statements_by_arg_name = defaultdict(set)
         for statement in statements:
-            if statement in self.__ddg and \
+            if statement in self.data_dependence_graph and \
                     statement.statement_type != StatementType.ASSIGNMENT and \
                     statement.statement_type != StatementType.VARIABLE:
-                for predecessor in self.__ddg.predecessors(statement):
+                for predecessor in self.data_dependence_graph.predecessors(statement):
                     if predecessor not in statements:
                         arg_statements_by_arg_name[predecessor.name].add(statement)
         return arg_statements_by_arg_name
@@ -348,14 +384,40 @@ class ProgramGraphsManager:
         finally_block = self.get_basic_block(statement)
         if finally_block is None:
             return True
-        for predecessor_block in self.__cfg.predecessors(finally_block):
+        for predecessor_block in self.control_flow_graph.predecessors(finally_block):
             if predecessor_block.statements and predecessor_block.statements[-1] not in statements:
                 return True
         return False
 
     def __is_redundant_if(self, statement: Statement, statements: Set[Statement]) -> bool:
-        if statement in self.__cdg.control_flow:
-            for successor in self.__cdg.control_flow[statement]:
+        if statement in self.control_dependence_graph.control_flow:
+            for successor in self.control_dependence_graph.control_flow[statement]:
                 if successor.ast_node_type == "else" and successor not in statements:
                     return True
         return False
+
+    def __bisect_range_left(self, start_point: Point, end_point: Point) -> int:
+        searching_range = (start_point, -end_point)
+        a = self.sorted_statements
+        lo = 0
+        hi = len(a)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if (a[mid].start_point, -a[mid].end_point) < searching_range:
+                lo = mid + 1
+            else:
+                hi = mid
+        return lo
+
+    def __bisect_range_right(self, start_point: Point, end_point: Point) -> int:
+        searching_range = (start_point, -end_point)
+        a = self.sorted_statements
+        lo = 0
+        hi = len(a)
+        while lo < hi:
+            mid = (lo + hi) // 2
+            if searching_range < (a[mid].start_point, -a[mid].end_point):
+                hi = mid
+            else:
+                lo = mid + 1
+        return lo

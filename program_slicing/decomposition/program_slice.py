@@ -46,6 +46,8 @@ class ProgramSlice:
         self.__lines = None
         self.__ranges = None
         self.__ranges_compact = None
+        self.__statements = None
+        self.__general_statements = None
 
     def __str__(self) -> str:
         return self.code
@@ -60,6 +62,14 @@ class ProgramSlice:
 
     def __eq__(self, other) -> bool:
         return self.ranges == other.ranges
+
+    @property
+    def context(self) -> Optional[ProgramGraphsManager]:
+        """
+        Get the ProgramGraphsManager that specifies current slice context.
+        :return: ProgramGraphsManager passed to the constructor.
+        """
+        return self.__context
 
     @property
     def source_lines(self) -> List[str]:
@@ -149,6 +159,37 @@ class ProgramSlice:
             self.__ranges_compact.append((start_point, end_point))
         return self.__ranges_compact
 
+    @property
+    def statements(self) -> Set[Statement]:
+        """
+        Get a set of Statements for the current slice.
+        If the slice has no context and was based on ranges then set will be empty.
+        :return: set of Statements.
+        """
+        if self.__statements is None:
+            self.__statements = set()
+            if self.context is not None:
+                for start_point, end_point in self.ranges_compact:
+                    self.__statements.update(self.context.get_statements_in_range(start_point, end_point))
+        return self.__statements
+
+    @property
+    def general_statements(self) -> Set[Statement]:
+        """
+        Get a set of general Statements for the current slice.
+        Statement is a 'general' Statement if it is not contained in any
+        non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
+        If the slice has no context then set will be empty.
+        :return: set of general Statements.
+        """
+        if self.__general_statements is None:
+            self.__general_statements = set()
+            if self.context is not None:
+                for statement in self.context.general_statements:
+                    if statement in self.statements:
+                        self.__general_statements.add(statement)
+        return self.__general_statements
+
     def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':
         """
         Build a slice based on the given Statements.
@@ -188,6 +229,9 @@ class ProgramSlice:
             self.__scopes.add(statement)
         else:
             self.add_range(statement.start_point, statement.end_point, range_type)
+            if self.__statements is None:
+                self.__statements = set()
+            self.__statements.add(statement)
 
     def add_range(
             self,
@@ -254,10 +298,13 @@ class ProgramSlice:
             if scope.start_point > self.__start_point or scope.end_point < self.__end_point:
                 self.add_range(scope.start_point, scope.end_point, RangeType.BOUNDS)
                 added_scopes.add(scope)
+                if self.__statements is None:
+                    self.__statements = set()
+                self.__statements.add(scope)
         self.__scopes.difference_update(added_scopes)
 
     def __has_information(self, start_point, end_point):
-        for line_number in range(start_point.line_number, end_point.line_number+1):
+        for line_number in range(start_point.line_number, end_point.line_number + 1):
             current_line = self.source_lines[line_number]
             if line_number == start_point.line_number:
                 start_column = start_point.column_number
