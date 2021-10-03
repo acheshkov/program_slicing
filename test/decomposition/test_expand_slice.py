@@ -9,12 +9,11 @@ import unittest
 from typing import Tuple, Dict, List, Set
 
 from program_slicing.decomposition import extended_blocks
-from program_slicing.decomposition.extended_blocks import expand_slices_ordered, Block
+from program_slicing.decomposition.extended_blocks import get_block_extensions
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import LANG_JAVA
 from program_slicing.graph.point import Point
-from program_slicing.graph.statement import Statement
 
 get_incoming_variables = extended_blocks.__get_incoming_variables
 get_outgoing_variables = extended_blocks.__get_outgoing_variables
@@ -245,17 +244,11 @@ class ExpandSliceTestCase(unittest.TestCase):
         name_to_extension = {}
         for ext in singleton_extensions:
             name_to_extension[ext[3]] = ext
-        self.assertSetEqual({'', 'a'}, set(name_to_extension.keys()))
+        self.assertSetEqual({'a'}, set(name_to_extension.keys()))
 
         self.__compare_extended_slices(extension=name_to_extension['a'],
                                        expected_range=[(1, 1), (4, 4)],
                                        expected_in=set(),
-                                       expected_out=set(),
-                                       source_code=code)
-
-        self.__compare_extended_slices(extension=name_to_extension[''],
-                                       expected_range=[(4, 4)],
-                                       expected_in={'a'},
                                        expected_out=set(),
                                        source_code=code)
 
@@ -275,14 +268,7 @@ class ExpandSliceTestCase(unittest.TestCase):
         name_to_extension = {}
         for ext in singleton_extensions:
             name_to_extension[ext[3]] = ext
-        self.assertSetEqual({'', 'opt', 'rest', 'i'}, set(name_to_extension.keys()))
-
-        self.__compare_extended_slices(extension = name_to_extension[''],
-                                       expected_range = [(5, 5), (6, 6), (7, 7)],
-                                       expected_in = {'opt', 'rest', 'i'},
-                                       expected_out = set(),
-                                       source_code = code
-                                       )
+        self.assertSetEqual({'opt', 'rest', 'i'}, set(name_to_extension.keys()))
 
         self.__compare_extended_slices(extension=name_to_extension['opt'],
                                        expected_range=[(1, 1), (5, 5), (6, 6), (7, 7)],
@@ -321,14 +307,7 @@ class ExpandSliceTestCase(unittest.TestCase):
         name_to_extension = {}
         for ext in singleton_extensions:
             name_to_extension[ext[3]] = ext
-        self.assertSetEqual({'', 'r'}, set(name_to_extension.keys()))
-
-        self.__compare_extended_slices(extension=name_to_extension[''],
-                                       expected_range=[(1, 1), (2, 2), (3, 3), (4, 4)],
-                                       expected_in=set(),
-                                       expected_out={'r'},
-                                       source_code=code
-                                       )
+        self.assertSetEqual({'r'}, set(name_to_extension.keys()))
 
         self.__compare_extended_slices(extension=name_to_extension['r'],
                                        expected_range=[(1, 1), (2, 2), (3, 3), (4, 4), (6, 6)],
@@ -476,3 +455,151 @@ class ExpandSliceTestCase(unittest.TestCase):
         block_slice = ProgramSlice(code).from_statements(block)
         extension = manager.get_statements_in_range(Point(1, 0), Point(2, 10000))
         self.assertTrue(filter_control_dependence(extension, block, block_slice, manager))
+
+    def test_get_block_extensions_1(self):
+        code_ex = '''public void methodEx(final AClass a) {
+                                    final int opt = a.getOpt();
+                                    final int rest = a.getRest();
+                                    int i = 1;
+                                    do1(i);
+                                    if (opt > 0 || rest > -1) {
+                                        do2(i);
+                                    }
+                                }'''
+        manager = ProgramGraphsManager(code_ex, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(7, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex):
+            _range = [(r[0].line_number, r[1].line_number)
+                                for r in ext.ranges_compact()]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(5, 5), (6, 6), (7, 7)],
+                                     [(1, 1), (5, 5), (6, 6), (7, 7)],
+                                     [(2, 2), (5, 5), (6, 6), (7, 7)],
+                                     [(1, 1), (2, 2), (5, 5), (6, 6), (7, 7)]]
+
+        self.assertListEqual(sorted(expected_extension_ranges),
+                             sorted(result_extension_ranges))
+
+    def test_get_block_extensions_2(self):
+        code_ex = '''public void methodEx(final AClass a) {
+                    final int opt = a.getOpt();
+                    int i = 1;
+                    do1(i);
+                    if (opt > 0) {
+                        for (int j = 0; j < opt; j++, i++) {
+                            System.out.println(opt);
+                        }
+                    }
+                }'''
+        manager = ProgramGraphsManager(code_ex, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(7, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact()]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(5, 5), (6, 6), (7, 7)],
+            [(1, 1), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8)]]
+
+        self.assertEqual(sorted(expected_extension_ranges), sorted(result_extension_ranges))
+
+    def test_get_block_extensions_3(self):
+        code_ex = '''public void methodEx(final AClass a) {
+                    int e = 1;
+                    do1(e);
+                    if (cond()) {
+                        LClass optA = a.getOpt();
+                        System.out.println(optA, e);
+                    }
+                }'''
+        manager = ProgramGraphsManager(code_ex, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex):
+            _range = [(r[0].line_number, r[1].line_number)
+                                for r in ext.ranges_compact()]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(5, 5)],
+                                     [(3, 3), (4, 4), (5, 5), (6, 6)]
+                                    ]
+
+        self.assertEqual(sorted(expected_extension_ranges),
+                             sorted(result_extension_ranges))
+
+    def test_get_block_extensions_4(self):
+        code_ex = """
+        public void methodEx(final AClass a) {
+            final int opt = a.getOpt();
+            int i = 1;
+            do1(i);
+            if (opt > 0) {
+                LClass optA = a.getOpt();
+                for (int j = 0; j < opt; j++, i++) {
+                    System.out.println(optA);
+                }
+            }
+        }
+        """
+        manager = ProgramGraphsManager(code_ex, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(7, 0), Point(9, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex):
+            _range = [(r[0].line_number, r[1].line_number)
+                      for r in ext.ranges_compact()]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(7, 7), (8, 8), (9, 9)],
+                                     [(2,2), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10)]]
+
+        self.assertEqual(sorted(expected_extension_ranges),
+                         sorted(result_extension_ranges))
+
+    def test_get_block_extensions_5(self):
+        code_ex = """
+                public void methodEx(boolean a){
+                   RClass r = getR();
+                   if (a) {
+                       r.update();
+                   }
+                   System.out.println('Message');
+                   do1(r);
+                   do2(a);
+                   r = replaceR();
+                   do3(r);
+               }"""
+
+        manager = ProgramGraphsManager(code_ex, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(2, 0), Point(5, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex):
+            _range = [(r[0].line_number, r[1].line_number)
+                      for r in ext.ranges_compact()]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 2), (3, 3), (4, 4), (5, 5)],
+                                     [(2, 2), (3, 3), (4, 4), (5, 5), (7, 7), (9, 9), (10, 10)]]
+
+        self.assertEqual(sorted(expected_extension_ranges),
+                         sorted(result_extension_ranges))
+
+    def test_get_block_extensions_6(self):
+        code_ex = """
+                public void methodEx(boolean a){
+                   RClass r = getR();
+                   if (a) {
+                       r.update();
+                   }
+                   System.out.println('Message');
+                   do1(r);
+               }"""
+
+        manager = ProgramGraphsManager(code_ex, LANG_JAVA)
+        block = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex):
+            _range = [(r[0].line_number, r[1].line_number)
+                      for r in ext.ranges_compact()]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 2)]]
+
+        self.assertEqual(sorted(expected_extension_ranges),
+                         sorted(result_extension_ranges))
