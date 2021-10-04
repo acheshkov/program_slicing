@@ -202,7 +202,7 @@ def __obtain_branch_extension(
                 break
 
 
-def __obtain_linear_extension(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
+def __obtain_chain_extension(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
     return (
         statement for statement in basic_block
         if __is_linear_container(statement, root))
@@ -216,7 +216,7 @@ def __obtain_extension(
         yield statement
     basic_block = manager.get_basic_block(root)
     if basic_block is not None:
-        for statement in __obtain_linear_extension(root, manager.get_basic_block(root)):
+        for statement in __obtain_chain_extension(root, manager.get_basic_block(root)):
             yield statement
     for statement in __obtain_content(root, basic_block):
         yield statement
