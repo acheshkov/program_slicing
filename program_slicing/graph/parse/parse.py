@@ -33,6 +33,8 @@ def tree_sitter_ast(source_code: str, lang: Lang) -> Tree:
     """
     if lang == Lang.JAVA:
         return tree_sitter_ast_java.parse(source_code)
+    else:
+        raise NotImplemented()
 
 
 def control_flow_graph(source_code: str, lang: Lang) -> ControlFlowGraph:
@@ -44,6 +46,8 @@ def control_flow_graph(source_code: str, lang: Lang) -> ControlFlowGraph:
     """
     if lang == Lang.JAVA:
         return cfg_java.parse(source_code)
+    else:
+        raise NotImplemented()
 
 
 def control_dependence_graph(source_code: str, lang: Lang) -> ControlDependenceGraph:
@@ -55,6 +59,8 @@ def control_dependence_graph(source_code: str, lang: Lang) -> ControlDependenceG
     """
     if lang == Lang.JAVA:
         return cdg_java.parse(source_code)
+    else:
+        raise NotImplemented()
 
 
 def data_dependence_graph(source_code: str, lang: Lang) -> DataDependenceGraph:
@@ -66,6 +72,8 @@ def data_dependence_graph(source_code: str, lang: Lang) -> DataDependenceGraph:
     """
     if lang == Lang.JAVA:
         return ddg_java.parse(source_code)
+    else:
+        raise NotImplemented()
 
 
 def program_dependence_graph(source_code: str, lang: Lang) -> ProgramDependenceGraph:
@@ -77,3 +85,5 @@ def program_dependence_graph(source_code: str, lang: Lang) -> ProgramDependenceG
     """
     if lang == Lang.JAVA:
         return pdg_java.parse(source_code)
+    else:
+        raise NotImplemented()
