@@ -304,6 +304,7 @@ class ProgramSlice:
         self.__scopes.difference_update(added_scopes)
 
     def __has_information(self, start_point, end_point):
+        noneffective = {' ', '\t', '\n', '\r'}
         for line_number in range(start_point.line_number, end_point.line_number + 1):
             current_line = self.source_lines[line_number]
             if line_number == start_point.line_number:
@@ -314,6 +315,6 @@ class ProgramSlice:
                 end_column = end_point.column_number
             else:
                 end_column = len(current_line)
-            if any(c != ' ' and c != '\t' and c != '\n' and c != '\r' for c in current_line[start_column: end_column]):
+            if any(c not in noneffective for c in current_line[start_column: end_column]):
                 return True
         return False

@@ -70,7 +70,7 @@ def get_complete_computation_slices(
                 continue
             if not may_cause_code_duplication:
                 affecting_statements = manager.get_affecting_statements(complete_computation_slice)
-                if len(manager.get_used_variables(affecting_statements)) > 1:
+                if len(manager.get_involved_variables(affecting_statements)) > 1:
                     continue
                 if manager.contain_redundant_statements(complete_computation_slice):
                     continue

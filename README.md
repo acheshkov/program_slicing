@@ -189,29 +189,55 @@ manager_by_cdg = ProgramGraphsManager.from_control_dependence_graph(control_depe
 
 manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph(source_code, LANG_JAVA))
 ```
+****Properties:****
 
-- **get_control_dependence_graph** - return the _Control Dependence Graph_.
-- **get_control_flow_graph** - return the _Control Flow Graph_.
-- **get_data_dependence_graph** - return the _Data Dependence Graph_.
-- **get_program_dependence_graph** - return the _Program Dependence Graph_.
-- **get_scope_statement** - return a minimal 'scope-like' (SCOPE, LOOP, BRANCH) _Statement_ 
-  that contains a given _Statement_.
+- **control_dependence_graph** - return the _Control Dependence Graph_.
+- **control_flow_graph** - return the _Control Flow Graph_.
+- **data_dependence_graph** - return the _Data Dependence Graph_.
+- **program_dependence_graph** - return the _Program Dependence Graph_.
+- **sorted_statements** - return _Statements_ that are sorted first by increasing of their `start_point`,
+  then by decreasing of their `end_point`.
+- **general_statements** - return general _Statements_ 
+  (those which are not contained in any non `SCOPE`, `BRANCH`, `LOOP`, `FUNCTION` or `EXIT` _Statement_).
+- **scope_statements** - return all the `SCOPE`, `BRANCH`, `LOOP` or `FUNCTION` _Statements_.
+
+****Public methods:****
+
 - **get_basic_block** - return a _Basic Block_ (that is a node of the _Control Flow Graph_)
   that contains a given _Statement_.
+- **get_boundary_blocks** - return a set of _Basic Blocks_ which intersection of dominated and reach blocks
+  contain the given one block.
+- **get_boundary_blocks_for_statement** - return a set of boundary blocks for _Basic Block_
+  in which the given _Statement_ is placed.
 - **get_dominated_blocks** return a set of _Basic Blocks_ that are dominated by the given one (i.e. their
   _Statements_ are placed in a _control Dependence Graph_ subtree of the root of the given _Basic Block_).
 - **get_reach_blocks** - return a set of _Basic Blocks_ that are reachable 
   from the given one in the _Control Flow Graph_.
-- **get_boundary_blocks** - return a set of _Basic Blocks_ which intersection of dominated and reach blocks
-  contain the given one block.
-- **get_boundary_blocks_for_statement** - return a set of boundary blocks for _basic Block_ in which the given 
-  _Statement_ is placed.
-- **init_by_source_code** - build all the graphs by a given source code string and a language description.
-- **init_by_control_dependence_graph** - build all the graphs by a given _Control Dependence Graph_.
-- **init_by_control_flow_graph** - build all the graphs by a given _Control Flow Graph_.
-- **init_by_data_dependence_graph** - build all the graphs by a given _Data Dependence Graph_.
-- **init_by_program_dependence_graph** - build all the graphs by a given _Program Dependence Graph_.
+- **get_statement_line_numbers** - return a set of line numbers in which the given _Statement_ is placed.
+- **get_function_statement** - return the minimal `FUNCTION` _Statement_ in which the given _Statement_ is placed.
+- **get_function_statement_by_range** - return the minimal FUNCTION _Statement_ in which the given range is placed.
+- **get_scope_statement** - return a minimal 'scope-like' (`SCOPE`, `LOOP`, `BRANCH`) _Statement_
+  that contains a given _Statement_.
+- **get_statements_in_scope** - return all the _Statements_ in the given scope _Statement_.
+- **get_statements_in_range** - return all the _Statements_ in the given range.
+- **get_exit_statements** - return _Statements_ that are _Flow Dependence_ children of the given statements 
+  but not one of them.
+- **get_affecting_statements** - return _Statements_ from the given set of _Statements_ that affect 
+  some _Statement_ not form the given set.
+- **get_changed_variables** - return `VARIABLE` _Statements_ that represent variables changed 
+  in the given set of _Statements_.
+- **get_involved_variables** - return `VARIABLE` _Statements_ that represent variables involved (including usage) 
+  in the given set of _Statements_.
+- **contain_redundant_statements** - check if the given set of _Statements_ contain part of some construction 
+  not fully included in the given set.
 
+****Class methods:****
+
+- **from_source_code** - build all the graphs by a given source code string and a language description.
+- **from_control_dependence_graph** - build all the graphs by a given _Control Dependence Graph_.
+- **from_control_flow_graph** - build all the graphs by a given _Control Flow Graph_.
+- **from_data_dependence_graph** - build all the graphs by a given _Data Dependence Graph_.
+- **from_program_dependence_graph** - build all the graphs by a given _Program Dependence Graph_.
 ___
 
 ***parse*** - set of functions that allow to build different graphs from the specified source code string
