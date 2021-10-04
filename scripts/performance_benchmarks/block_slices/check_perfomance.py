@@ -10,7 +10,7 @@ from numpy import mean, median, quantile
 from program_slicing.file_manager.reader import read_file
 from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 
 
 def main():
@@ -37,7 +37,7 @@ def main():
         min_amount_of_lines=6,
         min_amount_of_statements=5,
         max_percentage_of_lines=0.8,
-        lang_to_check_parsing=LANG_JAVA,
+        lang_to_check_parsing=Lang.JAVA,
         lines_are_full=True
     )
     for i in range(args.iterations):
@@ -48,7 +48,7 @@ def main():
                 start_datetime = datetime.datetime.now()
                 list(get_block_slices(
                     text,
-                    LANG_JAVA,
+                    Lang.JAVA,
                     slice_predicate=sp
                 ))
                 end_datetime = datetime.datetime.now()

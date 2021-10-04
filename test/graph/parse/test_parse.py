@@ -11,7 +11,7 @@ from program_slicing.graph.parse import \
     control_dependence_graph, \
     data_dependence_graph, \
     program_dependence_graph, \
-    LANG_JAVA
+    Lang
 
 
 class ParseTestCase(TestCase):
@@ -22,16 +22,16 @@ class ParseTestCase(TestCase):
 
     def test_control_flow_graph(self) -> None:
         code = "class A { void foo() {} }"
-        self.__check_graph(control_flow_graph(code, LANG_JAVA))
+        self.__check_graph(control_flow_graph(code, Lang.JAVA))
 
     def test_control_dependence_graph(self) -> None:
         code = "class A { void foo() {} }"
-        self.__check_graph(control_dependence_graph(code, LANG_JAVA))
+        self.__check_graph(control_dependence_graph(code, Lang.JAVA))
 
     def test_data_dependence_graph(self) -> None:
         code = "class A { void foo() {} }"
-        self.__check_graph(data_dependence_graph(code, LANG_JAVA))
+        self.__check_graph(data_dependence_graph(code, Lang.JAVA))
 
     def test_program_dependence_graph(self) -> None:
         code = "class A { void foo() {} }"
-        self.__check_graph(program_dependence_graph(code, LANG_JAVA))
+        self.__check_graph(program_dependence_graph(code, Lang.JAVA))

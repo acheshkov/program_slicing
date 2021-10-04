@@ -178,16 +178,16 @@ ___
 and provides a set of methods for their analysis.
 
 ```python
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 from program_slicing.graph.parse import control_dependence_graph
 from program_slicing.graph.parse import control_flow_graph
 from program_slicing.graph.manager import ProgramGraphsManager
 
-manager_by_source = ProgramGraphsManager(source_code, LANG_JAVA)
+manager_by_source = ProgramGraphsManager(source_code, Lang.JAVA)
 
-manager_by_cdg = ProgramGraphsManager.from_control_dependence_graph(control_dependence_graph(source_code, LANG_JAVA))
+manager_by_cdg = ProgramGraphsManager.from_control_dependence_graph(control_dependence_graph(source_code, Lang.JAVA))
 
-manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph(source_code, LANG_JAVA))
+manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph(source_code, Lang.JAVA))
 ```
 ****Properties:****
 
@@ -247,36 +247,36 @@ and programming language specification.
 
 ```python
 from program_slicing.graph.cdg import ControlDependenceGraph
-from program_slicing.graph.parse import control_dependence_graph, LANG_JAVA
+from program_slicing.graph.parse import control_dependence_graph, Lang
 
-cdg: ControlDependenceGraph = control_dependence_graph(source_code, LANG_JAVA)
+cdg: ControlDependenceGraph = control_dependence_graph(source_code, Lang.JAVA)
 ```
 
 - **control_flow_graph** - parse a _Control Flow Graph_:
 
 ```python
 from program_slicing.graph.cfg import ControlFlowGraph
-from program_slicing.graph.parse import control_flow_graph, LANG_JAVA
+from program_slicing.graph.parse import control_flow_graph, Lang
 
-cfg: ControlFlowGraph = control_flow_graph(source_code, LANG_JAVA)
+cfg: ControlFlowGraph = control_flow_graph(source_code, Lang.JAVA)
 ```
 
 - **data_dependence_graph** - parse a _Data Dependence Graph_:
 
 ```python
 from program_slicing.graph.ddg import DataDependenceGraph
-from program_slicing.graph.parse import data_dependence_graph, LANG_JAVA
+from program_slicing.graph.parse import data_dependence_graph, Lang
 
-ddg: DataDependenceGraph = data_dependence_graph(source_code, LANG_JAVA)
+ddg: DataDependenceGraph = data_dependence_graph(source_code, Lang.JAVA)
 ```
 
 - **program_dependence_graph** - parse a _Program Dependence Graph_:
 
 ```python
 from program_slicing.graph.pdg import ProgramDependenceGraph
-from program_slicing.graph.parse import program_dependence_graph, LANG_JAVA
+from program_slicing.graph.parse import program_dependence_graph, Lang
 
-pdg: ProgramDependenceGraph = program_dependence_graph(source_code, LANG_JAVA)
+pdg: ProgramDependenceGraph = program_dependence_graph(source_code, Lang.JAVA)
 ```
 
 ___

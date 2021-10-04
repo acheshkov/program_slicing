@@ -9,7 +9,7 @@ from unittest import TestCase
 from program_slicing.decomposition import variable
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.decomposition.variable.slicing import get_variable_slices
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
 from program_slicing.graph.manager import ProgramGraphsManager
@@ -41,7 +41,7 @@ class SlicingTestCase(TestCase):
     @staticmethod
     def __get_manager_and_variables_0():
         source_code = SlicingTestCase.__get_source_code_0()
-        manager = ProgramGraphsManager(source_code, LANG_JAVA)
+        manager = ProgramGraphsManager(source_code, Lang.JAVA)
         cdg = manager.control_dependence_graph
         function_statements = [statement for statement in cdg.entry_points]
         return manager, obtain_variable_statements(cdg, function_statements[0])
@@ -74,8 +74,8 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA,
-            SlicePredicate(lang_to_check_parsing=LANG_JAVA))
+            Lang.JAVA,
+            SlicePredicate(lang_to_check_parsing=Lang.JAVA))
         slices = [program_slice for program_slice in slices]
         self.assertEqual(3, len(slices))
         for program_slice in slices:
@@ -129,8 +129,8 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA,
-            SlicePredicate(lang_to_check_parsing=LANG_JAVA))
+            Lang.JAVA,
+            SlicePredicate(lang_to_check_parsing=Lang.JAVA))
         for program_slice in slices:
             self.assertEqual(
                 "int a = 10;\n"
@@ -167,8 +167,8 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA,
-            SlicePredicate(lang_to_check_parsing=LANG_JAVA))
+            Lang.JAVA,
+            SlicePredicate(lang_to_check_parsing=Lang.JAVA))
         slices = [program_slice for program_slice in slices]
         self.assertEqual(1, len(slices))
         for program_slice in slices:
@@ -211,7 +211,7 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA)
+            Lang.JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(2, len(slices))
         for program_slice in slices:
@@ -254,7 +254,7 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA)
+            Lang.JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(3, len(slices))
         for program_slice in slices:
@@ -294,7 +294,7 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA)
+            Lang.JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(2, len(slices))
         for program_slice in slices:
@@ -320,7 +320,7 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA)
+            Lang.JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(2, len(slices))
         for program_slice in slices:
@@ -351,7 +351,7 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA)
+            Lang.JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(1, len(slices))
         for program_slice in slices:
@@ -385,7 +385,7 @@ class SlicingTestCase(TestCase):
         """
         slices = variable.slicing.get_complete_computation_slices(
             source_code,
-            LANG_JAVA)
+            Lang.JAVA)
         slices = [program_slice for program_slice in slices]
         self.assertEqual(2, len(slices))
         for program_slice in slices:
@@ -487,7 +487,7 @@ class SlicingTestCase(TestCase):
         */
         ++a;
         """
-        slices = list(get_variable_slices(code, LANG_JAVA))
+        slices = list(get_variable_slices(code, Lang.JAVA))
         self.assertEqual(1, len(slices))
         [program_slice] = slices
         self.assertEqual(1, len(program_slice.ranges_compact))
@@ -501,7 +501,7 @@ class SlicingTestCase(TestCase):
         // comment
         ++a;
         """
-        slices = list(get_variable_slices(code, LANG_JAVA))
+        slices = list(get_variable_slices(code, Lang.JAVA))
         self.assertEqual(1, len(slices))
         [program_slice] = slices
         self.assertEqual(1, len(program_slice.ranges_compact))
@@ -519,7 +519,7 @@ class SlicingTestCase(TestCase):
             }
             ++a;
         """
-        slices = list(get_variable_slices(code, LANG_JAVA))
+        slices = list(get_variable_slices(code, Lang.JAVA))
         self.assertEqual(1, len(slices))
         [program_slice] = slices
         self.assertEqual(1, len(program_slice.ranges_compact))

@@ -9,13 +9,14 @@ from typing import Iterable, List, Tuple
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
+from program_slicing.graph.parse import Lang
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.statement import Statement, StatementType
 
 
 def get_block_slices(
         source_code: str,
-        lang: str,
+        lang: Lang,
         slice_predicate: SlicePredicate = None,
         include_noneffective: bool = True,
         may_cause_code_duplication: bool = False,
@@ -23,7 +24,7 @@ def get_block_slices(
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
     :param source_code: source code that should be decomposed.
-    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
+    :param lang: the source code Lang.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :param include_noneffective: include comments and blank lines to a slice if True.
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.

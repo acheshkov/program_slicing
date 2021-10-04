@@ -9,6 +9,7 @@ from typing import Set, Optional
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import parse
+from program_slicing.graph.parse import Lang
 from program_slicing.graph.parse.tree_sitter_parsers import node_name
 from program_slicing.graph.statement import StatementType
 
@@ -26,7 +27,7 @@ class SlicePredicate:
             min_percentage_of_lines: float = None,
             max_percentage_of_lines: float = None,
             lines_are_full: bool = None,
-            lang_to_check_parsing: str = None,
+            lang_to_check_parsing: Lang = None,
             has_returnable_variable: bool = None,
             is_whole_scope: bool = None,
             forbidden_words: Set[str] = None):
@@ -108,7 +109,7 @@ class SlicePredicate:
         return self.__lines_are_full
 
     @property
-    def lang_to_check_parsing(self) -> str:
+    def lang_to_check_parsing(self) -> Lang:
         return self.__lang_to_check_parsing
 
     @property
@@ -352,7 +353,7 @@ def check_slice(
         min_percentage_of_lines: float = None,
         max_percentage_of_lines: float = None,
         lines_are_full: bool = None,
-        lang_to_check_parsing: str = None,
+        lang_to_check_parsing: Lang = None,
         has_returnable_variable: bool = None,
         is_whole_scope: bool = None,
         forbidden_words: Set[str] = None,

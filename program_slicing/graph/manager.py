@@ -9,7 +9,7 @@ from typing import Dict, Optional, Set, List, Iterable
 
 import networkx
 
-from program_slicing.graph.parse import parse
+from program_slicing.graph.parse import parse, Lang
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.cfg import ControlFlowGraph
 from program_slicing.graph.ddg import DataDependenceGraph
@@ -22,7 +22,7 @@ from program_slicing.graph import convert
 
 class ProgramGraphsManager:
 
-    def __init__(self, source_code: str = None, lang: str = None) -> None:
+    def __init__(self, source_code: str = None, lang: Lang = None) -> None:
         self.__cdg: Optional[ControlDependenceGraph] = None
         self.__cfg: Optional[ControlFlowGraph] = None
         self.__ddg: Optional[DataDependenceGraph] = None
@@ -48,11 +48,11 @@ class ProgramGraphsManager:
             self.__build_pdg = lambda: ProgramDependenceGraph()
 
     @classmethod
-    def from_source_code(cls, source_code: str, lang: str) -> 'ProgramGraphsManager':
+    def from_source_code(cls, source_code: str, lang: Lang) -> 'ProgramGraphsManager':
         """
         Build all the graphs by a given source code string and a language description.
         :param source_code: string with the source code.
-        :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
+        :param lang: the source code Lang.
         :return: Program Graphs Manager.
         """
         return cls(source_code, lang)
