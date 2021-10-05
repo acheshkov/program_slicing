@@ -122,35 +122,38 @@ def __handle_switch(
     entry_points = [block_statement]
     siblings.append(statement)
     __route_control_flow(entry_points, statement, cdg)
-    switch_block_item_ast = switch_block_ast.children[0].next_named_sibling if switch_block_ast.children else None
+    switch_block_group_ast = switch_block_ast.children[0].next_named_sibling if switch_block_ast.children else None
     local_break_statements = []
     entry_points = []
-    while switch_block_item_ast is not None:
-        if switch_block_item_ast.type == "switch_label":
-            switch_label_start_point = Point.from_tuple(switch_block_item_ast.start_point)
-            switch_label_statement = Statement(
-                StatementType.SCOPE,
-                start_point=switch_label_start_point,
-                end_point=switch_block_end_point,
-                ast_node_type=switch_block_item_ast.type)
-            cdg.add_edge(statement, switch_label_statement)
-            __route_control_flow([statement], switch_label_statement, cdg)
-            __route_control_flow(entry_points, switch_label_statement, cdg)
-            entry_points = [switch_label_statement]
+    while switch_block_group_ast is not None:
+        switch_block_item_ast = switch_block_group_ast.children[0]
+        while switch_block_item_ast is not None:
+            if switch_block_item_ast.type == "switch_label":
+                switch_label_start_point = Point.from_tuple(switch_block_item_ast.start_point)
+                switch_label_statement = Statement(
+                    StatementType.SCOPE,
+                    start_point=switch_label_start_point,
+                    end_point=switch_block_end_point,
+                    ast_node_type=switch_block_item_ast.type)
+                cdg.add_edge(statement, switch_label_statement)
+                __route_control_flow([statement], switch_label_statement, cdg)
+                __route_control_flow(entry_points, switch_label_statement, cdg)
+                entry_points = [switch_label_statement]
+                switch_block_item_ast = switch_block_item_ast.next_named_sibling
+                continue
+            switch_block_item = __parse(
+                source_code_bytes,
+                switch_block_item_ast,
+                cdg,
+                entry_points,
+                break_statements=local_break_statements,
+                continue_statements=continue_statements,
+                exit_statements=exit_statements,
+                variable_names=variable_names)
+            for child in switch_block_item:
+                cdg.add_edge(statement, child)
             switch_block_item_ast = switch_block_item_ast.next_named_sibling
-            continue
-        switch_block_item = __parse(
-            source_code_bytes,
-            switch_block_item_ast,
-            cdg,
-            entry_points,
-            break_statements=local_break_statements,
-            continue_statements=continue_statements,
-            exit_statements=exit_statements,
-            variable_names=variable_names)
-        for child in switch_block_item:
-            cdg.add_edge(statement, child)
-        switch_block_item_ast = switch_block_item_ast.next_named_sibling
+        switch_block_group_ast = switch_block_group_ast.next_named_sibling
     __split_by_hook(local_break_statements, statement.name, entry_points, break_statements)
     return siblings, [statement] + entry_points
 
@@ -682,7 +685,7 @@ statement_type_and_handler_map = {
         (StatementType.FUNCTION, __handle_method_declaration),
     "lambda_expression":
         (StatementType.FUNCTION, __handle_method_declaration),
-    "switch_statement":
+    "switch_expression":
         (StatementType.BRANCH, __handle_switch),
     "if_statement":
         (StatementType.BRANCH, __handle_if),
