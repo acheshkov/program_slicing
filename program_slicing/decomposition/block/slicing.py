@@ -5,7 +5,7 @@ __maintainer__ = 'lyriccoder'
 __date__ = '2021/05/20'
 
 from itertools import combinations_with_replacement
-from typing import Iterable, List, Tuple
+from typing import Iterator, List, Tuple
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
@@ -20,7 +20,7 @@ def get_block_slices(
         slice_predicate: SlicePredicate = None,
         include_noneffective: bool = True,
         may_cause_code_duplication: bool = False,
-        unite_statements_into_groups: bool = False) -> Iterable[ProgramSlice]:
+        unite_statements_into_groups: bool = False) -> Iterator[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
     :param source_code: source code that should be decomposed.
@@ -59,7 +59,7 @@ def get_block_slices(
                 current_groups[-1][-1].end_point)
             if not may_cause_code_duplication:
                 affecting_statements = manager.get_affecting_statements(extended_statements)
-                if len(manager.get_involved_variables(affecting_statements)) > 1 or \
+                if len(manager.get_involved_variables_statements(affecting_statements)) > 1 or \
                         manager.contain_redundant_statements(extended_statements):
                     continue
             if len(manager.get_exit_statements(extended_statements)) > 1:

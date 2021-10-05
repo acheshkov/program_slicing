@@ -126,7 +126,7 @@ def __handle_switch(
     local_break_statements = []
     entry_points = []
     while switch_block_group_ast is not None:
-        switch_block_item_ast = switch_block_group_ast.children[0]
+        switch_block_item_ast = switch_block_group_ast.children[0] if switch_block_group_ast.children else None
         while switch_block_item_ast is not None:
             if switch_block_item_ast.type == "switch_label":
                 switch_label_start_point = Point.from_tuple(switch_block_item_ast.start_point)

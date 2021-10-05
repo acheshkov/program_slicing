@@ -27,7 +27,7 @@ class ProgramGraphsManager:
         self.__cfg: Optional[ControlFlowGraph] = None
         self.__ddg: Optional[DataDependenceGraph] = None
         self.__pdg: Optional[ProgramDependenceGraph] = None
-        self.__basic_block: Optional[Dict[Statement, BasicBlock]] = None
+        self.__basic_blocks: Optional[Dict[Statement, BasicBlock]] = None
         self.__dom_blocks: Optional[Dict[BasicBlock, Set[BasicBlock]]] = None
         self.__reach_blocks: Optional[Dict[BasicBlock, Set[BasicBlock]]] = None
         self.__scope_dependency: Optional[Dict[Statement, Statement]] = None
@@ -188,9 +188,9 @@ class ProgramGraphsManager:
         Basic Block - structure that represents Control Flow Graph nodes.
         :return: Basic Block that contains the given Statement.
         """
-        if self.__basic_block is None:
-            self.__basic_block = self.__build_basic_block()
-        return self.__basic_block.get(statement, None)
+        if self.__basic_blocks is None:
+            self.__basic_blocks = self.__build_basic_blocks()
+        return self.__basic_blocks.get(statement, None)
 
     def get_boundary_blocks(self, block: BasicBlock) -> Set[BasicBlock]:
         """
@@ -358,7 +358,7 @@ class ProgramGraphsManager:
 
     def get_affecting_statements(self, statements: Set[Statement]) -> Set[Statement]:
         """
-        Get Statements from the given set of Statements that affect some Statement not form the given set.
+        Get Statements from the given set that affect by Data Dependence some Statement not form the given set.
         :param statements: set of Statements for which affecting Statements should to be obtained.
         :return: set of affecting Statements (may have VARIABLE or ASSIGNMENT type).
         """
@@ -381,7 +381,7 @@ class ProgramGraphsManager:
                     break
         return affecting_statements
 
-    def get_changed_variables(self, statements: Iterable[Statement]) -> Set[Statement]:
+    def get_changed_variables_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
         """
         Get VARIABLE Statements that represent variables changed in the given set of Statements.
         :param statements: set of Statements for which changed variables should to be obtained.
@@ -399,7 +399,7 @@ class ProgramGraphsManager:
                         changed_variables.add(ancestor)
         return changed_variables
 
-    def get_involved_variables(self, statements: Iterable[Statement]) -> Set[Statement]:
+    def get_involved_variables_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
         """
         Get VARIABLE Statements that represent variables involved (including usage) in the given set of Statements.
         :param statements: set of Statements for which involved variables should to be obtained.
@@ -435,12 +435,12 @@ class ProgramGraphsManager:
                 return True
         return False
 
-    def __build_basic_block(self) -> Dict[Statement, BasicBlock]:
-        basic_block = {}
+    def __build_basic_blocks(self) -> Dict[Statement, BasicBlock]:
+        basic_blocks = {}
         for block in networkx.traversal.dfs_tree(self.control_flow_graph):
             for statement in block:
-                basic_block[statement] = block
-        return basic_block
+                basic_blocks[statement] = block
+        return basic_blocks
 
     def __build_function_dependency(self) -> Dict[Statement, Statement]:
         function_dependency = {}
