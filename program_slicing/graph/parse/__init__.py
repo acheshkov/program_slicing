@@ -15,4 +15,4 @@ from program_slicing.graph.parse.parse import control_dependence_graph  # noqa: 
 from program_slicing.graph.parse.parse import control_flow_graph  # noqa: F401
 from program_slicing.graph.parse.parse import data_dependence_graph  # noqa: F401
 from program_slicing.graph.parse.parse import program_dependence_graph  # noqa: F401
-from program_slicing.graph.parse.parse import LANG_JAVA  # noqa: F401
+from program_slicing.graph.parse.parse import Lang  # noqa: F401

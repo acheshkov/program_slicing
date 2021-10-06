@@ -7,7 +7,7 @@ __date__ = '2021/03/22'
 from unittest import TestCase
 
 from program_slicing.decomposition import slicing
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 
 
 class SlicingTestCase(TestCase):
@@ -33,5 +33,5 @@ class SlicingTestCase(TestCase):
 
     def test_decompose_code(self):
         source_code = self.__get_source_code_0()
-        res = [decomposition for decomposition in slicing.decompose_code(source_code, LANG_JAVA)]
+        res = [decomposition for decomposition in slicing.decompose_code(source_code, Lang.JAVA)]
         self.assertEqual(4, len(res))

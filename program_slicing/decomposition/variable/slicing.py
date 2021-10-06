@@ -8,6 +8,7 @@ from typing import Set, Dict, Iterator
 
 import networkx
 
+from program_slicing.graph.parse import Lang
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.basic_block import BasicBlock
@@ -18,14 +19,16 @@ from program_slicing.decomposition.slice_predicate import SlicePredicate
 
 def get_variable_slices(
         source_code: str,
-        lang: str,
+        lang: Lang,
         slice_predicate: SlicePredicate = None,
+        include_noneffective: bool = True,
         may_cause_code_duplication: bool = True) -> Iterator[ProgramSlice]:
     """
     For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
-    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
+    :param lang: the source code Lang.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
+    :param include_noneffective: include comments and blank lines to a slice if True.
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
@@ -33,25 +36,28 @@ def get_variable_slices(
         source_code,
         lang,
         slice_predicate=slice_predicate,
+        include_noneffective=include_noneffective,
         may_cause_code_duplication=may_cause_code_duplication)
 
 
 def get_complete_computation_slices(
         source_code: str,
-        lang: str,
+        lang: Lang,
         slice_predicate: SlicePredicate = None,
+        include_noneffective: bool = True,
         may_cause_code_duplication: bool = True) -> Iterator[ProgramSlice]:
     """
     For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
-    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
+    :param lang: the source code Lang.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
+    :param include_noneffective: include comments and blank lines to a slice if True.
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
     code_lines = str(source_code).split("\n")
     manager = ProgramGraphsManager(source_code, lang)
-    cdg = manager.get_control_dependence_graph()
+    cdg = manager.control_dependence_graph
     function_statements = cdg.entry_points
     for function_statement in function_statements:
         slicing_criteria = __obtain_slicing_criteria(manager, function_statement)
@@ -65,17 +71,19 @@ def get_complete_computation_slices(
                 continue
             if not may_cause_code_duplication:
                 affecting_statements = manager.get_affecting_statements(complete_computation_slice)
-                if len(manager.get_used_variables(affecting_statements)) > 1:
+                if len(manager.get_involved_variables_statements(affecting_statements)) > 1:
                     continue
                 if manager.contain_redundant_statements(complete_computation_slice):
                     continue
             if len(manager.get_exit_statements(complete_computation_slice)) > 1:
                 continue
-            program_slice = ProgramSlice(code_lines).from_statements(complete_computation_slice)
-            program_slice.set_source_code_lines_with_stmts(manager.statement_lines)
+            program_slice = ProgramSlice(
+                code_lines,
+                context=manager if include_noneffective else None
+            ).from_statements(complete_computation_slice)
             program_slice.variable = variable_statement
             program_slice.function = function_statement
-            if slice_predicate is None or slice_predicate(program_slice):
+            if slice_predicate is None or slice_predicate(program_slice, context=manager):
                 yield program_slice
 
 
@@ -89,7 +97,7 @@ def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -
 def __obtain_seed_statements(
         manager: ProgramGraphsManager,
         variable_statement: Statement) -> Set[Statement]:
-    ddg = manager.get_data_dependence_graph()
+    ddg = manager.data_dependence_graph
     return {
         statement for statement in networkx.algorithms.traversal.dfs_tree(ddg, variable_statement)
         if __is_slicing_criterion(statement, variable_statement) and manager.get_basic_block(statement) is not None
@@ -97,7 +105,7 @@ def __obtain_seed_statements(
 
 
 def __obtain_slicing_criteria(manager: ProgramGraphsManager, root: Statement) -> Dict[Statement, Set[Statement]]:
-    variable_statements = __obtain_variable_statements(manager.get_control_dependence_graph(), root)
+    variable_statements = __obtain_variable_statements(manager.control_dependence_graph, root)
     return {
         variable_statement: __obtain_seed_statements(manager, variable_statement)
         for variable_statement in variable_statements
@@ -144,8 +152,8 @@ def __obtain_backward_slice_recursive(
             result.add(statement)
         else:
             __obtain_backward_slice_recursive(manager, statement, region, result)
-    if root in manager.get_program_dependence_graph():
-        for statement in manager.get_program_dependence_graph().predecessors(root):
+    if root in manager.program_dependence_graph:
+        for statement in manager.program_dependence_graph.predecessors(root):
             __obtain_backward_slice_recursive(manager, statement, region, result)
 
 
@@ -165,7 +173,7 @@ def __obtain_complete_computation_slices(
 def __obtain_necessary_goto(
         manager: ProgramGraphsManager,
         root: Statement) -> Iterator[Statement]:
-    descendants = {statement for statement in networkx.descendants(manager.get_control_dependence_graph(), root)}
+    descendants = {statement for statement in networkx.descendants(manager.control_dependence_graph, root)}
     for statement in descendants:
         if __is_necessary_goto(statement, manager, descendants):
             yield statement
@@ -176,7 +184,7 @@ def __obtain_branch_extension(
         root: Statement,
         region: Set[BasicBlock]) -> Iterator[Statement]:
     if root.statement_type == StatementType.BRANCH or root.statement_type == StatementType.LOOP:
-        for flow_statement in manager.get_control_dependence_graph().control_flow[root]:
+        for flow_statement in manager.control_dependence_graph.control_flow[root]:
             if root.start_point <= flow_statement.start_point and root.end_point >= flow_statement.end_point and \
                     flow_statement.statement_type != StatementType.GOTO:
                 yield flow_statement
@@ -188,14 +196,14 @@ def __obtain_branch_extension(
                 yield statement
         block_root = basic_block.root
     if block_root is not None and block_root.statement_type == StatementType.GOTO:
-        cdg = manager.get_control_dependence_graph()
+        cdg = manager.control_dependence_graph
         for predecessor in cdg.predecessors(root):
             if predecessor.statement_type == StatementType.BRANCH and (region is None or manager.get_basic_block(predecessor) in region):
                 yield block_root
                 break
 
 
-def __obtain_linear_extension(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
+def __obtain_chain_extension(root: Statement, basic_block: BasicBlock) -> Iterator[Statement]:
     return (
         statement for statement in basic_block
         if __is_linear_container(statement, root))
@@ -209,7 +217,7 @@ def __obtain_extension(
         yield statement
     basic_block = manager.get_basic_block(root)
     if basic_block is not None:
-        for statement in __obtain_linear_extension(root, manager.get_basic_block(root)):
+        for statement in __obtain_chain_extension(root, manager.get_basic_block(root)):
             yield statement
     for statement in __obtain_content(root, basic_block):
         yield statement
@@ -233,7 +241,7 @@ def __is_necessary_goto(statement: Statement, manager: ProgramGraphsManager, sco
     if statement.statement_type == StatementType.EXIT:
         return True
     if statement.statement_type == StatementType.GOTO:
-        for flow_statement in manager.get_control_dependence_graph().control_flow.get(statement, ()):
+        for flow_statement in manager.control_dependence_graph.control_flow.get(statement, ()):
             if flow_statement not in scope_statements:
                 return True
     return False

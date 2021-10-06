@@ -6,9 +6,9 @@ __date__ = '2021/06/01'
 
 from unittest import TestCase
 
-from program_slicing.decomposition.block_slicing import get_block_slices
+from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 from program_slicing.graph.point import Point
 
 
@@ -30,7 +30,7 @@ class BlockSlicingTestCase(TestCase):
             ((29, 8), (47, 17)),
             ((31, 8), (39, 10)), ((31, 8), (41, 51)), ((31, 8), (43, 34)), ((31, 8), (46, 34)),
             ((31, 8), (47, 17)),
-            ((41, 8), (46, 34)), ((41, 8), (47, 17)), ((42, 8), (47, 17))}
+            ((41, 8), (46, 34)), ((41, 8), (47, 17)), ((42, 8), (46, 34)), ((42, 8), (47, 17))}
         self.t_ = '''
         int t = 12;
         fImage= loadImage("logo.gif");
@@ -84,11 +84,11 @@ class BlockSlicingTestCase(TestCase):
              (program_slice.ranges[-1][1].line_number, program_slice.ranges[-1][1].column_number))
             for program_slice in get_block_slices(
                 self.t_,
-                LANG_JAVA,
-                max_percentage_of_lines=0.8,
+                Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
-                    lang_to_check_parsing=LANG_JAVA,
+                    max_percentage_of_lines=0.8,
+                    lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )
             ) if program_slice.ranges}
@@ -128,7 +128,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA)
+            for program_slice in get_block_slices(code, Lang.JAVA)
         }
         self.assertTrue((15, 16) in found_opportunities, True)
         self.assertTrue((15, 17) in found_opportunities, True)
@@ -169,11 +169,11 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(
                 code,
-                LANG_JAVA,
-                max_percentage_of_lines=max_percentage,
+                Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
-                    lang_to_check_parsing=LANG_JAVA,
+                    max_percentage_of_lines=max_percentage,
+                    lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )
             )
@@ -185,11 +185,11 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(
                 code,
-                LANG_JAVA,
-                max_percentage_of_lines=max_percentage,
+                Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
-                    lang_to_check_parsing=LANG_JAVA,
+                    max_percentage_of_lines=max_percentage,
+                    lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )
             )
@@ -225,10 +225,10 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0], program_slice.ranges[-1][1])
             for program_slice in get_block_slices(
                 code,
-                LANG_JAVA,
+                Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=5,
-                    lang_to_check_parsing=LANG_JAVA,
+                    lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )
             )
@@ -253,7 +253,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA)
+            for program_slice in get_block_slices(code, Lang.JAVA)
         }
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the current scope which is depended on
@@ -281,7 +281,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code_with_usage_inside_inner_scope, LANG_JAVA)
+            for program_slice in get_block_slices(code_with_usage_inside_inner_scope, Lang.JAVA)
         }
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the inner scope which is depended on
@@ -311,10 +311,10 @@ class BlockSlicingTestCase(TestCase):
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
             for program_slice in get_block_slices(
                 complex_objects,
-                LANG_JAVA,
+                Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=2,
-                    lang_to_check_parsing=LANG_JAVA,
+                    lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )
             )
@@ -354,7 +354,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(diff_scope, LANG_JAVA)
+            for program_slice in get_block_slices(diff_scope, Lang.JAVA)
         }
         self.assertTrue((4, 5) in found_opportunities)
         self.assertTrue((4, 6) in found_opportunities)
@@ -377,7 +377,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(diff_scope, LANG_JAVA)
+            for program_slice in get_block_slices(diff_scope, Lang.JAVA)
         }
         self.assertTrue((3, 4) not in found_opportunities)
         self.assertTrue((3, 5) not in found_opportunities)
@@ -399,7 +399,7 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(diff_scope, LANG_JAVA)
+            for program_slice in get_block_slices(diff_scope, Lang.JAVA)
         }
         self.assertTrue((3, 4) not in found_opportunities)
         self.assertTrue((3, 5) not in found_opportunities)
@@ -415,13 +415,13 @@ class BlockSlicingTestCase(TestCase):
             }
         '''
         slice_predicate = SlicePredicate(
-            lang_to_check_parsing=LANG_JAVA,
+            lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            filter_by_scope=True
+            is_whole_scope=False
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+            for program_slice in get_block_slices(code, Lang.JAVA, slice_predicate=slice_predicate)
         }
         self.assertEqual({(3, 5)}, found_opportunities)
 
@@ -432,13 +432,13 @@ class BlockSlicingTestCase(TestCase):
             }
         '''
         slice_predicate = SlicePredicate(
-            lang_to_check_parsing=LANG_JAVA,
+            lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            filter_by_scope=True
+            is_whole_scope=False
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+            for program_slice in get_block_slices(code, Lang.JAVA, slice_predicate=slice_predicate)
         }
         self.assertEqual({(1, 3)}, found_opportunities)
 
@@ -450,13 +450,13 @@ class BlockSlicingTestCase(TestCase):
             }
         '''
         slice_predicate = SlicePredicate(
-            lang_to_check_parsing=LANG_JAVA,
+            lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            filter_by_scope=True
+            is_whole_scope=False
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+            for program_slice in get_block_slices(code, Lang.JAVA, slice_predicate=slice_predicate)
         }
         self.assertEqual({(2, 4)}, found_opportunities)
 
@@ -469,13 +469,13 @@ class BlockSlicingTestCase(TestCase):
             }
         '''
         slice_predicate = SlicePredicate(
-            lang_to_check_parsing=LANG_JAVA,
+            lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            filter_by_scope=True
+            is_whole_scope=False
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+            for program_slice in get_block_slices(code, Lang.JAVA, slice_predicate=slice_predicate)
         }
         self.assertEqual({(1, 5)}, found_opportunities)
 
@@ -488,13 +488,13 @@ class BlockSlicingTestCase(TestCase):
             }
         '''
         slice_predicate = SlicePredicate(
-            lang_to_check_parsing=LANG_JAVA,
+            lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            filter_by_scope=True
+            is_whole_scope=False
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+            for program_slice in get_block_slices(code, Lang.JAVA, slice_predicate=slice_predicate)
         }
         self.assertEqual({(1, 5)}, found_opportunities)
 
@@ -522,12 +522,12 @@ class BlockSlicingTestCase(TestCase):
             }
         '''
         slice_predicate = SlicePredicate(
-            lang_to_check_parsing=LANG_JAVA,
+            lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            filter_by_scope=True
+            is_whole_scope=False
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, LANG_JAVA, slice_predicate=slice_predicate)
+            for program_slice in get_block_slices(code, Lang.JAVA, slice_predicate=slice_predicate)
         }
         self.assertEqual({(11, 14), (5, 19), (8, 16), (4, 20)}, found_opportunities)
