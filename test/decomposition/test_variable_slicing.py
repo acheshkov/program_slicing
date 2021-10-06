@@ -81,6 +81,9 @@ class SlicingTestCase(TestCase):
         for program_slice in slices:
             if program_slice.variable.name == "a":
                 self.assertEqual(
+                    [(Point(1, 8), Point(7, 18))],
+                    program_slice.ranges_compact)
+                self.assertEqual(
                     "int n = 0;\n"
                     "int a = 10;\n"
                     "int b = 10;\n"
@@ -96,7 +99,13 @@ class SlicingTestCase(TestCase):
                     "if (n < 10)\n"
                     "    b = n;",
                     program_slice.code)
+                self.assertEqual(
+                    [(Point(1, 8), Point(1, 18)), (Point(3, 8), Point(5, 18))],
+                    program_slice.ranges_compact)
             elif program_slice.variable.name == "n":
+                self.assertEqual(
+                    [(Point(1, 8), Point(8, 18))],
+                    program_slice.ranges_compact)
                 self.assertEqual(
                     "int n = 0;\n"
                     "int a = 10;\n"
