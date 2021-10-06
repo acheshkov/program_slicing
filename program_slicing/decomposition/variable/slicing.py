@@ -198,7 +198,8 @@ def __obtain_branch_extension(
     if block_root is not None and block_root.statement_type == StatementType.GOTO:
         cdg = manager.control_dependence_graph
         for predecessor in cdg.predecessors(root):
-            if predecessor.statement_type == StatementType.BRANCH and (region is None or manager.get_basic_block(predecessor) in region):
+            if predecessor.statement_type == StatementType.BRANCH \
+               and (region is None or manager.get_basic_block(predecessor) in region):
                 yield block_root
                 break
 
