@@ -10,11 +10,11 @@ from typing import Set, Tuple, Dict, Iterable, List
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.decomposition.variable_slicing import __obtain_extension, __obtain_necessary_goto
+from program_slicing.decomposition.variable.slicing import __obtain_extension, __obtain_necessary_goto
 from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.manager import ProgramGraphsManager
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 from program_slicing.graph.point import Point
 from program_slicing.graph.statement import Statement, StatementType
 
@@ -55,7 +55,7 @@ def __temp__get_block_slice_statements_raw(
 
 def __get_incoming_variables(
         block_statements: Set[Statement],
-        manager: ProgramGraphsManager) -> Dict[str, VariableUse] :
+        manager: ProgramGraphsManager) -> Dict[str, VariableUse]:
     """
     Identify variables that should be incoming parameters if block_statements
     is extracted into a separate method.
@@ -66,7 +66,7 @@ def __get_incoming_variables(
             in a block that uses it and is data-dependent on a statement
             outside the block
     """
-    ddg = manager.get_data_dependence_graph()
+    ddg = manager.data_dependence_graph
     incoming_variables = dict()
     for statement in block_statements:
         for data_dom in ddg.predecessors(statement):
@@ -80,7 +80,7 @@ def __get_incoming_variables(
 def __get_outgoing_variables(
         block_statements: Set[Statement],
         manager: ProgramGraphsManager) -> Dict[str, VariableDefinition]:
-    ddg = manager.get_data_dependence_graph()
+    ddg = manager.data_dependence_graph
     outgoing_variables: Dict[str, VariableDefinition] = dict()
     for statement in block_statements:
         for data_dependent in set(ddg.successors(statement)).difference(block_statements):
@@ -93,7 +93,7 @@ def __get_outgoing_variables(
 def __flow_dep_given_data_dep(
         statement_1: Statement,
         statement_2: Statement,
-        variable_name = None) -> bool:
+        variable_name: str = None) -> bool:
     """
     Check if statement_1 is flow-dependent on statement_2
 
@@ -166,8 +166,8 @@ def __compute_backward_slice(
         original_block: Set[Statement],
         manager: ProgramGraphsManager) -> Set[Statement]:
     backward_slice: Set[Statement] = set()
-    cdg = manager.get_control_dependence_graph()
-    ddg = manager.get_data_dependence_graph()
+    cdg = manager.control_dependence_graph
+    ddg = manager.data_dependence_graph
     __compute_backward_slice_recursive(
         variable_use,
         variable_name,
@@ -199,12 +199,12 @@ def __compute_forward_slice(
         variable_def: VariableDefinition,
         manager: ProgramGraphsManager) -> Set[Statement]:
     forward_slice = set()
-    ddg = manager.get_data_dependence_graph()
+    ddg = manager.data_dependence_graph
     __compute_forward_slice_recursive(
         variable_def,
         forward_slice,
         ddg,
-        recursion = variable_def.statement_type == StatementType.VARIABLE)
+        recursion=(variable_def.statement_type == StatementType.VARIABLE))
 
     return forward_slice
 
@@ -247,14 +247,13 @@ def __filter_anti_dependence(
         new_statements: Set[Statement],
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
-    ddg = manager.get_data_dependence_graph()
+    ddg = manager.data_dependence_graph
     for statement in new_statements:
         for data_successor in ddg.successors(statement):
             if data_successor in original_statements.union(new_statements):
                 continue
             if __flow_dep_given_data_dep(data_successor, statement):
                 return False
-
     return True
 
 
@@ -262,7 +261,7 @@ def __filter_control_dependence(
         new_statements: Set[Statement],
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
-    cdg = manager.get_control_dependence_graph()
+    cdg = manager.control_dependence_graph
 
     for statement in new_statements:
         for control_successor in cdg.successors(statement):
@@ -341,15 +340,15 @@ def get_block_extensions(
 def get_continuous_range_extensions(
         source_code: str,
         line_range: Tuple[int, int]) -> Iterable[ProgramSlice]:
-    manager = ProgramGraphsManager(source_code, LANG_JAVA)
+    manager = ProgramGraphsManager(source_code, Lang.JAVA)
     block_statements = manager.get_statements_in_range(Point(line_range[0], 0),
                                                        Point(line_range[1], 10000))
-    return get_block_extensions(block_statements, manager, source_code)
+    return get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
 def generate_extended_blocks(
         source_code: str,
-        lang: str,
+        lang: Lang,
         max_percentage_of_lines: float = None,
         slice_predicate: SlicePredicate = None) -> Iterable[ProgramSlice]:
 
