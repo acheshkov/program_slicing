@@ -95,19 +95,19 @@ class CheckSliceTestCase(TestCase):
         self.assertTrue(
             check_slice(
                 CheckSliceTestCase.__get_slice_0(),
-                lang_to_check_parsing=parse.LANG_JAVA,
+                lang_to_check_parsing=parse.Lang.JAVA,
                 min_amount_of_statements=6,
                 max_amount_of_statements=6))
         self.assertFalse(
             check_slice(
                 CheckSliceTestCase.__get_slice_0(),
-                lang_to_check_parsing=parse.LANG_JAVA,
+                lang_to_check_parsing=parse.Lang.JAVA,
                 min_amount_of_statements=7,
                 max_amount_of_statements=7))
         self.assertFalse(
             check_slice(
                 CheckSliceTestCase.__get_slice_0(),
-                lang_to_check_parsing=parse.LANG_JAVA,
+                lang_to_check_parsing=parse.Lang.JAVA,
                 min_amount_of_statements=5,
                 max_amount_of_statements=5))
 
@@ -115,13 +115,13 @@ class CheckSliceTestCase(TestCase):
         self.assertTrue(
             check_slice(
                 CheckSliceTestCase.__get_slice_1(),
-                lang_to_check_parsing=parse.LANG_JAVA
+                lang_to_check_parsing=parse.Lang.JAVA
             )
         )
         self.assertFalse(
             check_slice(
                 CheckSliceTestCase.__get_slice_2(),
-                lang_to_check_parsing=parse.LANG_JAVA
+                lang_to_check_parsing=parse.Lang.JAVA
             )
         )
 
@@ -129,7 +129,7 @@ class CheckSliceTestCase(TestCase):
         self.assertFalse(
             check_slice(
                 CheckSliceTestCase.__get_slice_1(),
-                lang_to_check_parsing=parse.LANG_JAVA,
+                lang_to_check_parsing=parse.Lang.JAVA,
                 has_returnable_variable=True
             )
         )

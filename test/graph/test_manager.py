@@ -7,7 +7,7 @@ __date__ = '2021/04/02'
 from unittest import TestCase
 
 from program_slicing.graph.manager import ProgramGraphsManager
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 
 
 class ManagerTestCase(TestCase):
@@ -37,7 +37,7 @@ class ManagerTestCase(TestCase):
 
     @staticmethod
     def __get_manager_0() -> ProgramGraphsManager:
-        return ProgramGraphsManager(ManagerTestCase.__get_source_code_0(), LANG_JAVA)
+        return ProgramGraphsManager(ManagerTestCase.__get_source_code_0(), Lang.JAVA)
 
     def test_init(self) -> None:
         pass
@@ -239,14 +239,14 @@ class ManagerTestCase(TestCase):
             return Collections.emptySet();
         }
         '''
-        manager = ProgramGraphsManager(if_statement, LANG_JAVA)
+        manager = ProgramGraphsManager(if_statement, Lang.JAVA)
         self.assertEqual(4, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_for_each(self) -> None:
         for_each_block = '''
         for (LaunchConfiguration config: workspace.getLaunchConfigurations()) { int i = 0;}
         '''
-        manager = ProgramGraphsManager(for_each_block, LANG_JAVA)
+        manager = ProgramGraphsManager(for_each_block, Lang.JAVA)
         self.assertEqual(3, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_while(self) -> None:
@@ -254,7 +254,7 @@ class ManagerTestCase(TestCase):
         while (null != (line = input.readLine()) && maxLines > 0) {
                 maxLines--;
         }'''
-        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        manager = ProgramGraphsManager(while_block, Lang.JAVA)
         self.assertEqual(3, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_sync(self) -> None:
@@ -262,7 +262,7 @@ class ManagerTestCase(TestCase):
         synchronized (getLock(cache)) {
            url = cache.toURI().toURL();
         }'''
-        manager = ProgramGraphsManager(sync_block, LANG_JAVA)
+        manager = ProgramGraphsManager(sync_block, Lang.JAVA)
         self.assertEqual(3, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_for(self) -> None:
@@ -270,7 +270,7 @@ class ManagerTestCase(TestCase):
         for (int i = 0; i < 10; ++i) {
             foo();
         }'''
-        manager = ProgramGraphsManager(for_cycle_block, LANG_JAVA)
+        manager = ProgramGraphsManager(for_cycle_block, Lang.JAVA)
         self.assertEqual(3, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_without_brackets(self) -> None:
@@ -278,7 +278,7 @@ class ManagerTestCase(TestCase):
         for (int i = 0; i < 10; ++i)
             foo();
         '''
-        manager = ProgramGraphsManager(block_without_brackets, LANG_JAVA)
+        manager = ProgramGraphsManager(block_without_brackets, Lang.JAVA)
         self.assertEqual(2, len(list(manager.scope_statements)))
 
     def test_identify_unique_blocks_with_try(self) -> None:
@@ -292,7 +292,7 @@ class ManagerTestCase(TestCase):
                 int j = 0;
             }
         '''
-        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
+        manager = ProgramGraphsManager(block_without_try, Lang.JAVA)
         self.assertEqual(6, len(list(manager.scope_statements)))
 
     def test_identify_unique_blocks_with_anonymous_class(self) -> None:
@@ -309,14 +309,14 @@ class ManagerTestCase(TestCase):
             }
         };
         '''
-        manager = ProgramGraphsManager(block_without_try, LANG_JAVA)
+        manager = ProgramGraphsManager(block_without_try, Lang.JAVA)
         self.assertEqual(5, len(list(manager.scope_statements)))
 
     def test_identify_unique_blocks_with_lambda(self) -> None:
         block_with_lambda = '''
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
-        manager = ProgramGraphsManager(block_with_lambda, LANG_JAVA)
+        manager = ProgramGraphsManager(block_with_lambda, Lang.JAVA)
         self.assertEqual(3, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_break(self) -> None:
@@ -339,7 +339,7 @@ class ManagerTestCase(TestCase):
             }
         }
         '''
-        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        manager = ProgramGraphsManager(while_block, Lang.JAVA)
         self.assertEqual(13, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_continue(self) -> None:
@@ -350,7 +350,7 @@ class ManagerTestCase(TestCase):
              if (true) { continue;}
         }
         '''
-        manager = ProgramGraphsManager(while_block, LANG_JAVA)
+        manager = ProgramGraphsManager(while_block, Lang.JAVA)
         self.assertEqual(5, len(list(manager.scope_statements)))
 
     def test_statements_in_range_continuous(self) -> None:
@@ -359,7 +359,7 @@ class ManagerTestCase(TestCase):
             continue;
         }
         '''
-        manager = ProgramGraphsManager(code, LANG_JAVA)
+        manager = ProgramGraphsManager(code, Lang.JAVA)
         [root_statement] = manager.program_dependence_graph.entry_points
         self.assertEqual({1, 2, 3}, manager.get_statement_line_numbers(root_statement))
 
@@ -373,7 +373,7 @@ class ManagerTestCase(TestCase):
             }
 
         '''
-        manager = ProgramGraphsManager(code, LANG_JAVA)
+        manager = ProgramGraphsManager(code, Lang.JAVA)
         [root_statement] = manager.program_dependence_graph.entry_points
         self.assertEqual({2, 4, 6}, manager.get_statement_line_numbers(root_statement))
 
@@ -387,7 +387,7 @@ class ManagerTestCase(TestCase):
             }
 
         '''
-        manager = ProgramGraphsManager(code, LANG_JAVA)
+        manager = ProgramGraphsManager(code, Lang.JAVA)
         [root_statement] = manager.program_dependence_graph.entry_points
         self.assertEqual({2, 4, 6}, manager.get_statement_line_numbers(root_statement))
 
@@ -401,7 +401,7 @@ class ManagerTestCase(TestCase):
             }
 
         '''
-        manager = ProgramGraphsManager(code, LANG_JAVA)
+        manager = ProgramGraphsManager(code, Lang.JAVA)
         [root_statement] = manager.program_dependence_graph.entry_points
         self.assertEqual({2, 4, 6}, manager.get_statement_line_numbers(root_statement))
 
@@ -415,7 +415,7 @@ class ManagerTestCase(TestCase):
             }
 
         '''
-        manager = ProgramGraphsManager(code, LANG_JAVA)
+        manager = ProgramGraphsManager(code, Lang.JAVA)
         [root_statement] = manager.program_dependence_graph.entry_points
         self.assertEqual({1, 5, 6}, manager.get_statement_line_numbers(root_statement))
 
@@ -428,6 +428,6 @@ class ManagerTestCase(TestCase):
             }
 
         '''
-        manager = ProgramGraphsManager(code, LANG_JAVA)
+        manager = ProgramGraphsManager(code, Lang.JAVA)
         [root_statement] = manager.program_dependence_graph.entry_points
         self.assertEqual({1, 4, 5}, manager.get_statement_line_numbers(root_statement))

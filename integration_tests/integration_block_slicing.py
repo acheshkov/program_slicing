@@ -6,7 +6,7 @@ import tqdm
 from program_slicing.file_manager.reader import read_file, read_json
 from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.slice_predicate import SlicePredicate
-from program_slicing.graph.parse import LANG_JAVA
+from program_slicing.graph.parse import Lang
 
 
 def run_check(expected_emos, observable_emos):
@@ -36,12 +36,12 @@ def main():
             (program_slice.ranges[0][0].line_number + 1, program_slice.ranges[-1][1].line_number + 1)
             for program_slice in get_block_slices(
                 code,
-                LANG_JAVA,
+                Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=6,
                     min_amount_of_statements=5,
                     max_percentage_of_lines=0.8,
-                    lang_to_check_parsing=LANG_JAVA,
+                    lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )
             )

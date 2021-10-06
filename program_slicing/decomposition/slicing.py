@@ -5,10 +5,11 @@ __maintainer__ = 'kuyaki'
 __date__ = '2021/03/17'
 
 import os
-from typing import List, Iterator
+from typing import Iterator
 
 from program_slicing.file_manager import reader
 from program_slicing.file_manager import writer
+from program_slicing.graph.parse import Lang
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.variable.slicing import get_variable_slices
@@ -22,7 +23,7 @@ def decompose_dir(dir_path: str, work_dir: str = None) -> None:
     decomposed files will be saved into it with their original names.
     The stdout will be used if work_dir is not specified.
     """
-    for file_path in reader.browse_file_sub_paths(dir_path, __get_applicable_formats()):
+    for file_path in reader.browse_file_sub_paths(dir_path, list(map(str, Lang))):
         decompose_file(file_path, work_dir)
 
 
@@ -37,7 +38,7 @@ def decompose_file(file_path: str, work_dir: str = None, prefix: str = None) -> 
     :param prefix: file_name prefix that should be removed while saving.
     Remove nothing if prefix is None.
     """
-    for i, result in enumerate(decompose_code(reader.read_file(file_path), os.path.splitext(file_path)[1])):
+    for i, result in enumerate(decompose_code(reader.read_file(file_path), Lang(os.path.splitext(file_path)[1]))):
         if work_dir is None:
             print(result)
             continue
@@ -50,11 +51,11 @@ def decompose_file(file_path: str, work_dir: str = None, prefix: str = None) -> 
         writer.save_file(result_path, result)
 
 
-def decompose_code(source_code: str, lang: str) -> Iterator[str]:
+def decompose_code(source_code: str, lang: Lang) -> Iterator[str]:
     """
     Decompose the specified source code and return all the decomposition variants.
     :param source_code: source code that should be decomposed.
-    :param lang: string with the source code format described as a file ext (like '.java' or '.xml').
+    :param lang: the source code Lang.
     :return: generator of decomposed source code versions in a string format.
     """
     slice_predicate = SlicePredicate(
@@ -76,11 +77,3 @@ def decompose_code(source_code: str, lang: str) -> Iterator[str]:
     for program_slice in block_slices:
         yield "\033[33m\nBlock slice: " + str([a[0].line_number + 1 for a in program_slice.ranges]) + \
               "\033[00m\n" + program_slice.code
-
-
-def __get_applicable_formats() -> List[str]:
-    """
-    Get the list of file formats that are supported by parsers.
-    :return: list of strings like '.java' or '.xml'
-    """
-    return [".java"]
