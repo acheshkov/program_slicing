@@ -64,7 +64,7 @@ def get_block_slices(
                 continue
             program_slice = ProgramSlice(source_lines).from_statements(extended_statements)
             if slice_predicate is None or slice_predicate(program_slice, scopes=manager.scope_statements):
-                yield program_slice
+                yield program_slice, function_length
 
 
 def __percentage_or_amount_exceeded(outer_number, inner_number, percentage):
