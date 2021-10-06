@@ -102,7 +102,7 @@ def __pre_check(
     return True
 
 
-def __build_general_groups(general_statements):
+def __build_general_groups(general_statements: List[Statement]) -> List[List[Statement]]:
     last_general_group = []
     general_groups = []
     for statement in general_statements:
@@ -117,3 +117,4 @@ def __build_general_groups(general_statements):
             last_general_group = []
     if last_general_group:
         general_groups.append(last_general_group)
+    return general_groups
