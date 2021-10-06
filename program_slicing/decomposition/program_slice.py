@@ -9,7 +9,7 @@ from typing import List, Tuple, Dict, Set, Optional, Iterable
 
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
-from program_slicing.decomposition.merge_range import merge_ranges
+from program_slicing.graph.manager import ProgramGraphsManager
 
 
 class RangeType(Enum):
@@ -24,7 +24,14 @@ StatementColumnNumber = int
 
 class ProgramSlice:
 
-    def __init__(self, source_lines: List[str]) -> None:
+    def __init__(self, source_lines: List[str], context: ProgramGraphsManager = None) -> None:
+        """
+        Program slice represent slice in different formats:
+        code string, list of code lines, list of ranges in an original source lines or list of Statements.
+        :param source_lines: list of the original source code lines.
+        :param context: ProgramGraphsManager that describes context of the slice.
+        If not specified - comments and empty strings will be ignored while forming the slice.
+        """
         self.variable: Optional[Statement] = None
         self.function: Optional[Statement] = None
         self.__source_lines: List[str] = source_lines
@@ -34,10 +41,13 @@ class ProgramSlice:
         self.__start_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.__end_points: Dict[StatementLineNumber, StatementColumnNumber] = {}
         self.__scopes: Set[Statement] = set()
+        self.__context: ProgramGraphsManager = context
         self.__code = None
         self.__lines = None
         self.__ranges = None
-        self.__source_code_lines_with_stmts: List[int] = []
+        self.__ranges_compact = None
+        self.__statements = None
+        self.__general_statements = None
 
     def __str__(self) -> str:
         return self.code
@@ -52,6 +62,14 @@ class ProgramSlice:
 
     def __eq__(self, other) -> bool:
         return self.ranges == other.ranges
+
+    @property
+    def context(self) -> Optional[ProgramGraphsManager]:
+        """
+        Get the ProgramGraphsManager that specifies current slice context.
+        :return: ProgramGraphsManager passed to the constructor.
+        """
+        return self.__context
 
     @property
     def source_lines(self) -> List[str]:
@@ -93,6 +111,16 @@ class ProgramSlice:
         if self.__ranges is not None:
             return self.__ranges
         self.__update_scopes()
+        if self.__context:
+            last_point = None
+            for line_number in sorted(self.__end_points.keys()):
+                current_point = Point(
+                    line_number,
+                    self.__start_points[line_number] if line_number in self.__start_points else
+                    self.__minimum_column)
+                if last_point and not self.__context.get_statements_in_range(last_point, current_point):
+                    self.add_range(last_point, current_point, RangeType.FULL)
+                last_point = Point(line_number, self.__end_points[line_number])
         self.__ranges = []
         for line_number in sorted(self.__end_points.keys()):
             start_column = self.__start_point.column_number if line_number == self.__start_point.line_number else (
@@ -104,15 +132,63 @@ class ProgramSlice:
                 Point(line_number, end_column)))
         return self.__ranges
 
-    def set_source_code_lines_with_stmts(self, source_code_lines_with_stmts: List[int]) -> None:
-        self.__source_code_lines_with_stmts = source_code_lines_with_stmts
-
+    @property
     def ranges_compact(self) -> List[Tuple[Point, Point]]:
-        '''ranges, but merged if empty lines or comments between'''
+        """
+        Get compact ranges of lines and columns for the current slice.
+        Range is compact when there is no two neighbour ranges without information between them.
+        :return: list of tuples of start and end points (point is a tuple of two integers).
+        """
+        if self.__ranges_compact is not None:
+            return self.__ranges_compact
         ranges = self.ranges
-        if len(self.__source_code_lines_with_stmts) == 0:
-            return ranges
-        return merge_ranges(self.__source_code_lines_with_stmts, ranges)
+        self.__ranges_compact = []
+        start_point = None
+        end_point = None
+        for current_range in ranges:
+            if start_point is None:
+                start_point, end_point = current_range
+            else:
+                if self.__has_information(end_point, current_range[0]):
+                    self.__ranges_compact.append((start_point, end_point))
+                    start_point = None
+                    end_point = None
+                else:
+                    end_point = current_range[1]
+        if start_point is not None:
+            self.__ranges_compact.append((start_point, end_point))
+        return self.__ranges_compact
+
+    @property
+    def statements(self) -> Set[Statement]:
+        """
+        Get a set of Statements for the current slice.
+        If the slice has no context and was based on ranges then set will be empty.
+        :return: set of Statements.
+        """
+        if self.__statements is None:
+            self.__statements = set()
+            if self.context is not None:
+                for start_point, end_point in self.ranges_compact:
+                    self.__statements.update(self.context.get_statements_in_range(start_point, end_point))
+        return self.__statements
+
+    @property
+    def general_statements(self) -> Set[Statement]:
+        """
+        Get a set of general Statements for the current slice.
+        Statement is a 'general' Statement if it is not contained in any
+        non SCOPE, BRANCH, LOOP, FUNCTION or EXIT Statement.
+        If the slice has no context then set will be empty.
+        :return: set of general Statements.
+        """
+        if self.__general_statements is None:
+            self.__general_statements = set()
+            if self.context is not None:
+                for statement in self.context.general_statements:
+                    if statement in self.statements:
+                        self.__general_statements.add(statement)
+        return self.__general_statements
 
     def from_statements(self, statements: Iterable[Statement]) -> 'ProgramSlice':
         """
@@ -153,6 +229,9 @@ class ProgramSlice:
             self.__scopes.add(statement)
         else:
             self.add_range(statement.start_point, statement.end_point, range_type)
+            if self.__statements is None:
+                self.__statements = set()
+            self.__statements.add(statement)
 
     def add_range(
             self,
@@ -170,6 +249,7 @@ class ProgramSlice:
         self.__code = None
         self.__ranges = None
         self.__lines = None
+        self.__ranges_compact = None
         self.__update_minimal_column(start_point, end_point)
         if self.__start_point is None or self.__start_point > start_point:
             self.__start_point = start_point
@@ -218,4 +298,23 @@ class ProgramSlice:
             if scope.start_point > self.__start_point or scope.end_point < self.__end_point:
                 self.add_range(scope.start_point, scope.end_point, RangeType.BOUNDS)
                 added_scopes.add(scope)
+                if self.__statements is None:
+                    self.__statements = set()
+                self.__statements.add(scope)
         self.__scopes.difference_update(added_scopes)
+
+    def __has_information(self, start_point, end_point):
+        noneffective = {' ', '\t', '\n', '\r'}
+        for line_number in range(start_point.line_number, end_point.line_number + 1):
+            current_line = self.source_lines[line_number]
+            if line_number == start_point.line_number:
+                start_column = start_point.column_number
+            else:
+                start_column = 0
+            if line_number == end_point.line_number:
+                end_column = end_point.column_number
+            else:
+                end_column = len(current_line)
+            if any(c not in noneffective for c in current_line[start_column: end_column]):
+                return True
+        return False
