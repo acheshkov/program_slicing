@@ -182,7 +182,7 @@ def __obtain_necessary_goto(
 def __obtain_branch_extension(
         manager: ProgramGraphsManager,
         root: Statement,
-        region: Set[BasicBlock]) -> Iterator[Statement]:
+        region: Set[BasicBlock] = None) -> Iterator[Statement]:
     if root.statement_type == StatementType.BRANCH or root.statement_type == StatementType.LOOP:
         for flow_statement in manager.control_dependence_graph.control_flow[root]:
             if root.start_point <= flow_statement.start_point and root.end_point >= flow_statement.end_point and \
@@ -198,8 +198,8 @@ def __obtain_branch_extension(
     if block_root is not None and block_root.statement_type == StatementType.GOTO:
         cdg = manager.control_dependence_graph
         for predecessor in cdg.predecessors(root):
-            if predecessor.statement_type == StatementType.BRANCH \
-               and (region is None or manager.get_basic_block(predecessor) in region):
+            if predecessor.statement_type == StatementType.BRANCH and \
+                    (region is None or manager.get_basic_block(predecessor) in region):
                 yield block_root
                 break
 
@@ -213,7 +213,7 @@ def __obtain_chain_extension(root: Statement, basic_block: BasicBlock) -> Iterat
 def __obtain_extension(
         manager: ProgramGraphsManager,
         root: Statement,
-        region: Set[BasicBlock]) -> Iterator[Statement]:
+        region: Set[BasicBlock] = None) -> Iterator[Statement]:
     for statement in __obtain_branch_extension(manager, root, region):
         yield statement
     basic_block = manager.get_basic_block(root)

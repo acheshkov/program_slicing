@@ -21,15 +21,15 @@ from program_slicing.graph.statement import Statement, StatementType
 
 VariableDefinition = Statement
 VariableUse = Statement
-SingletonExtensions = List[Tuple[Set[Statement],
-                                 Dict[str, VariableUse],
-                                 Dict[str, VariableDefinition],
-                                 str]]
+SingletonExtensions = List[Tuple[
+    Set[Statement],
+    Dict[str, VariableUse],
+    Dict[str, VariableDefinition],
+    str
+]]
 
 
-def __temp__get_block_slice_statements_raw(
-        manager: ProgramGraphsManager) -> Tuple[Iterable[Set[Statement]], int]:
-
+def __temp__get_block_slice_statements_raw(manager: ProgramGraphsManager) -> Tuple[Iterable[Set[Statement]], int]:
     for scope in manager.scope_statements:
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:
@@ -59,18 +59,16 @@ def __get_incoming_variables(
     """
     Identify variables that should be incoming parameters if block_statements
     is extracted into a separate method.
-
     :param block_statements: block to look for variables in
     :param manager: manage for graphs of the whole program
     :return: dictionary from name of variable in the block to a statement
-            in a block that uses it and is data-dependent on a statement
-            outside the block
+    in a block that uses it and is data-dependent on a statement outside the block
     """
     ddg = manager.data_dependence_graph
     incoming_variables = dict()
     for statement in block_statements:
         for data_dom in ddg.predecessors(statement):
-            # can be 1-many map, but it's ok for our purposes
+            # can be multimap, but it's ok for our purposes
             if data_dom not in block_statements and data_dom.name not in incoming_variables:
                 if __flow_dep_given_data_dep(statement, data_dom):
                     incoming_variables[data_dom.name] = statement
@@ -96,22 +94,21 @@ def __flow_dep_given_data_dep(
         variable_name: str = None) -> bool:
     """
     Check if statement_1 is flow-dependent on statement_2
-
     :param statement_1: statement that is supposed to be flow-dependent
     :param statement_2: statement that is supposed to be flow-dominant
     :param variable_name: flow-dependence with respect to variable variable_name
     :return: true if there is flow dependence
     """
-    if statement_2.statement_type not in {StatementType.ASSIGNMENT,
-                                          StatementType.VARIABLE,
-                                          StatementType.FUNCTION}:
+    if statement_2.statement_type not in {
+        StatementType.ASSIGNMENT,
+        StatementType.VARIABLE,
+        StatementType.FUNCTION
+    }:
         return False
-
     if statement_1.name != statement_2.name:
         if variable_name is not None:
             return statement_2.name == variable_name
         return True
-
     return False
 
 
@@ -205,7 +202,6 @@ def __compute_forward_slice(
         forward_slice,
         ddg,
         recursion=(variable_def.statement_type == StatementType.VARIABLE))
-
     return forward_slice
 
 
@@ -214,32 +210,26 @@ def __extend_block_singleton(
         manager: ProgramGraphsManager) -> SingletonExtensions:
     incoming_variables = __get_incoming_variables(block_statements, manager)
     outgoing_variables = __get_outgoing_variables(block_statements, manager)
-
     singleton_extensions: SingletonExtensions = list()
-
     for var_name in chain(incoming_variables.keys(), outgoing_variables.keys()):
         new_block = block_statements.copy()
         new_incoming_variables = incoming_variables.copy()
         new_outgoing_variables = outgoing_variables.copy()
-
         if var_name in incoming_variables:
             variable_use = incoming_variables[var_name]
             backward_slice = __compute_backward_slice(variable_use, var_name, block_statements, manager)
             new_block |= backward_slice
             del new_incoming_variables[var_name]
-
         if var_name in outgoing_variables:
             variable_def = outgoing_variables[var_name]
             forward_slice = __compute_forward_slice(variable_def, manager)
             new_block |= forward_slice
             del new_outgoing_variables[var_name]
-
         singleton_extensions.append((
             new_block,
             new_incoming_variables,
             new_outgoing_variables,
             var_name))
-
     return singleton_extensions
 
 
@@ -262,12 +252,10 @@ def __filter_control_dependence(
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
     cdg = manager.control_dependence_graph
-
     for statement in new_statements:
         for control_successor in cdg.successors(statement):
             if control_successor not in new_statements.union(original_statements):
                 return False
-
         for control_predecessor in cdg.predecessors(statement):
             if control_predecessor.statement_type == StatementType.FUNCTION:
                 continue
@@ -287,18 +275,13 @@ def __filter_valid(
         slice_candidate: Set[Statement],
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
-
     new_statements = slice_candidate.difference(original_statements)
-
     if not __filter_anti_dependence(new_statements, original_statements, manager):
         return False
-
     if not __filter_more_than_one_outgoing(slice_candidate, manager):
         return False
-
     if not __filter_control_dependence(new_statements, original_statements, manager):
         return False
-
     return True
 
 
@@ -316,24 +299,22 @@ def get_block_extensions(
         block_statements: Set[Statement],
         manager: ProgramGraphsManager,
         source_lines: List[str]) -> Iterable[ProgramSlice]:
-
     singleton_extensions = __extend_block_singleton(block_statements, manager)
-
     result = set()
-    for variable_id_subset in chain.from_iterable(combinations(range(len(singleton_extensions)), r)
-                                                  for r in range(1, len(singleton_extensions) + 1)):
-        full_extension: Set[Statement] = reduce(lambda x, y: x.union(singleton_extensions[y][0]),
-                                                variable_id_subset,
-                                                set())
+    for variable_id_subset in chain.from_iterable(
+            combinations(range(len(singleton_extensions)), r)
+            for r in range(1, len(singleton_extensions) + 1)):
+        full_extension: Set[Statement] = reduce(
+            lambda x, y: x.union(singleton_extensions[y][0]),
+            variable_id_subset,
+            set())
         extension_program_slice = ProgramSlice(source_lines).from_statements(full_extension)
         if extension_program_slice not in result:
             if __filter_valid(full_extension, block_statements, manager):
                 result.add(extension_program_slice)
-
     if __filter_valid(block_statements, block_statements, manager):
         block_slice = ProgramSlice(source_lines).from_statements(block_statements)
         result.add(block_slice)
-
     return result
 
 
@@ -341,8 +322,9 @@ def get_continuous_range_extensions(
         source_code: str,
         line_range: Tuple[int, int]) -> Iterable[ProgramSlice]:
     manager = ProgramGraphsManager(source_code, Lang.JAVA)
-    block_statements = manager.get_statements_in_range(Point(line_range[0], 0),
-                                                       Point(line_range[1], 10000))
+    block_statements = manager.get_statements_in_range(
+        Point(line_range[0], 0),
+        Point(line_range[1], 10000))
     return get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
@@ -351,10 +333,8 @@ def generate_extended_blocks(
         lang: Lang,
         max_percentage_of_lines: float = None,
         slice_predicate: SlicePredicate = None) -> Iterable[ProgramSlice]:
-
     manager = ProgramGraphsManager(source_code, lang)
     source_lines = source_code.split("\n")
-
     slices_so_far = set()
     for raw_block, function_length in __temp__get_block_slice_statements_raw(manager):
         for extended_block in get_block_extensions(raw_block, manager, source_lines):
@@ -364,8 +344,6 @@ def generate_extended_blocks(
                         extended_block,
                         max_percentage_of_lines):
                     continue
-
             if slice_predicate is None or slice_predicate(extended_block, scopes=manager.scope_statements):
                 slices_so_far.add(extended_block)
-
     return slices_so_far

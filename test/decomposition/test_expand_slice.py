@@ -8,7 +8,7 @@ __date__ = '2021/09/14'
 import unittest
 
 from program_slicing.decomposition import extended_blocks
-from program_slicing.decomposition.extended_blocks import get_block_extensions
+from program_slicing.decomposition.extended_blocks import get_block_extensions,
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import Lang
@@ -25,9 +25,9 @@ filter_control_dependence = extended_blocks.__filter_control_dependence
 class ExpandSliceTestCase(unittest.TestCase):
 
     @unittest.skip("not implemented")
-    def test_vars_before_1(self):
+    def test_vars_before_1(self) -> None:
         """
-        output the first 3 minimal expansions from the priority queue
+        Output the first 3 minimal expansions from the priority queue.
         """
         code_ex = """
         public void methodEx(final AClass a) {
