@@ -151,8 +151,7 @@ class ProgramSlice:
             else:
                 if self.__has_information(end_point, current_range[0]):
                     self.__ranges_compact.append((start_point, end_point))
-                    start_point = None
-                    end_point = None
+                    start_point, end_point = current_range
                 else:
                     end_point = current_range[1]
         if start_point is not None:
