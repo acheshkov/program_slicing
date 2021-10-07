@@ -92,11 +92,11 @@ def __flow_dep_given_data_dep(
         statement_2: Statement,
         variable_name: str = None) -> bool:
     """
-    Check if statement_1 is flow-dependent on statement_2
-    :param statement_1: statement that is supposed to be flow-dependent
-    :param statement_2: statement that is supposed to be flow-dominant
-    :param variable_name: flow-dependence with respect to variable variable_name
-    :return: true if there is flow dependence
+    Check if statement_1 is flow-dependent on statement_2 assuming that they are data dependent.
+    :param statement_1: statement that is supposed to be flow-dependent.
+    :param statement_2: statement that is supposed to be flow-dominant.
+    :param variable_name: flow-dependence with respect to variable variable_name.
+    :return: true if there is flow dependence.
     """
     if statement_2.statement_type not in {
         StatementType.ASSIGNMENT,
