@@ -295,7 +295,7 @@ def __percentage_or_amount_exceeded(
     return float(total_lines) / float(function_length) > max_percentage_of_lines
 
 
-def get_block_extensions(
+def __get_block_extensions(
         block_statements: Set[Statement],
         manager: ProgramGraphsManager,
         source_lines: List[str]) -> Iterable[ProgramSlice]:
@@ -325,10 +325,10 @@ def get_continuous_range_extensions(
     block_statements = manager.get_statements_in_range(
         Point(line_range[0], 0),
         Point(line_range[1], 10000))
-    return get_block_extensions(block_statements, manager, source_code.split("\n"))
+    return __get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
-def generate_extended_blocks(
+def get_extended_block_slices(
         source_code: str,
         lang: Lang,
         max_percentage_of_lines: float = None,
@@ -337,7 +337,7 @@ def generate_extended_blocks(
     source_lines = source_code.split("\n")
     slices_so_far = set()
     for raw_block, function_length in __temp__get_block_slice_statements_raw(manager):
-        for extended_block in get_block_extensions(raw_block, manager, source_lines):
+        for extended_block in __get_block_extensions(raw_block, manager, source_lines):
             if max_percentage_of_lines is not None:
                 if __percentage_or_amount_exceeded(
                         function_length,
