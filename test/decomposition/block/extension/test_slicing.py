@@ -47,7 +47,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(expected_extensions, found_extensions)
 
     @unittest.skip("not implemented")
-    def test_vars_before_2(self):
+    def test_vars_before_2(self) -> None:
         """
         output the minimal expansion
         """
@@ -70,7 +70,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(expected_extension, found_extension)
 
     @unittest.skip("not implemented")
-    def test_expand_invalid_slice_1(self):
+    def test_expand_invalid_slice_1(self) -> None:
         """
         slice not finished in the end
         not including this functionality for now
@@ -86,7 +86,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertRaises(Exception, get_extended_block_slices_ordered(code_ex, slice_to_expand))
 
     @unittest.skip("not implemented")
-    def test_expand_invalid_slice_2(self):
+    def test_expand_invalid_slice_2(self) -> None:
         """
         needs expanding from beginning: 3 expansions of equal cost
         """
@@ -109,7 +109,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(expected_extensions, found_extensions)
 
     @unittest.skip("not implemented")
-    def test_vars_after(self):
+    def test_vars_after(self) -> None:
         """
         output first 3 minimal expansions from the priority queue
         (they reduce the number of IN)
@@ -131,7 +131,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(expected_extension, found_extension)
 
     @unittest.skip("not implemented")
-    def test_multiple_vars(self):
+    def test_multiple_vars(self) -> None:
         """
         expansion wrt var a and both a and b have equal cost,
         even though b is not used in the slice
@@ -150,7 +150,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         found_extensions = {next(extension_generator) for _ in range(3)}
         self.assertEqual(expected_extensions, found_extensions)
 
-    def test_get_incoming_variables_1(self):
+    def test_get_incoming_variables_1(self) -> None:
         code_1 = """
         public void methodEx(final AClass a) {
             final int opt = a.getOpt();
@@ -165,7 +165,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         incoming_variables_11 = get_incoming_variables(block_11, manager)
         self.assertEqual(set(incoming_variables_11.keys()), {'opt', 'rest', 'i'})
 
-    def test_get_incoming_variables_2(self):
+    def test_get_incoming_variables_2(self) -> None:
         code = """
         public void methodEx() {
             int i = 1;
@@ -178,7 +178,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         incoming_variables = get_incoming_variables(block, manager)
         self.assertEqual(set(incoming_variables.keys()), set())
 
-    def test_get_incoming_variables_3(self):
+    def test_get_incoming_variables_3(self) -> None:
         code = """
         public void methodEx(final AClass a) {
             final int opt = a.getOpt();
@@ -196,7 +196,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         incoming_variables = get_incoming_variables(block, manager)
         self.assertEqual(set(incoming_variables.keys()), {'opt', 'optA'})
 
-    def test_outgoing_variables_1(self):
+    def test_outgoing_variables_1(self) -> None:
         code = """
         public void methodEx(boolean a){
             RClass r = getR();
@@ -212,7 +212,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         outgoing_variables = get_outgoing_variables(block, manager)
         self.assertEqual(set(outgoing_variables.keys()), {'r'})
 
-    def test_outgoing_variables_2(self):
+    def test_outgoing_variables_2(self) -> None:
         code = """
         public void methodEx(boolean a){
             RClass r = getR();
@@ -229,7 +229,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         outgoing_variables = get_outgoing_variables(block, manager)
         self.assertEqual(set(outgoing_variables.keys()), set())
 
-    def __compare_extended_slices(self, **kwargs):
+    def __compare_extended_slices(self, **kwargs) -> None:
         result_extension = kwargs["extension"]
         expected_range = kwargs["expected_range"]
         expected_in = kwargs["expected_in"]
@@ -244,7 +244,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(expected_in, in_vars)
         self.assertEqual(expected_out, out_vars)
 
-    def test_extend_block_singleton_1(self):
+    def test_extend_block_singleton_1(self) -> None:
         code = """
         public void method() {
             int a = 1;
@@ -266,7 +266,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             expected_out=set(),
             source_code=code)
 
-    def test_extend_block_singleton_2(self):
+    def test_extend_block_singleton_2(self) -> None:
         code = """
         public void methodEx(final AClass a) {
             final int opt = a.getOpt();
@@ -306,7 +306,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             source_code=code
         )
 
-    def test_extend_block_singleton_3(self):
+    def test_extend_block_singleton_3(self) -> None:
         code = """
         public void methodEx(){
             RClass r = getR();
@@ -333,7 +333,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         )
 
     @unittest.skip("need to fix bug in parser")
-    def test_extend_block_singleton_4(self):
+    def test_extend_block_singleton_4(self) -> None:
         code = """
         public void methodEx(boolean a){
             System.out.println();
@@ -356,7 +356,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             source_code=code
         )
 
-    def test_filter_anti_dependence_negative(self):
+    def test_filter_anti_dependence_negative(self) -> None:
         """
         extended slice [(1, 1), (3,3)] -- we should filter such examples
         """
@@ -371,7 +371,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         extension = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
         self.assertFalse(filter_anti_dependence(extension.difference(block), block, manager))
 
-    def test_filter_anti_dependence_positive(self):
+    def test_filter_anti_dependence_positive(self) -> None:
         """
         extended slice [(1,3)] from (2,2) -- this one does not violate
         """
@@ -388,7 +388,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertTrue(
             filter_anti_dependence((extension_1.union(extension_2)).difference(block), block, manager))
 
-    def test_filter_more_than_one_outgoing_negative_1(self):
+    def test_filter_more_than_one_outgoing_negative_1(self) -> None:
         code = """
         public void methodEx() {
             int i = 1;
@@ -400,7 +400,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         slice_candidate = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
         self.assertFalse(filter_more_than_one_outgoing(slice_candidate, manager))
 
-    def test_filter_more_than_one_outgoing_negative_2(self):
+    def test_filter_more_than_one_outgoing_negative_2(self) -> None:
         code = """
         public void methodEx() {
             int i = 1;
@@ -413,7 +413,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         slice_candidate = manager.get_statements_in_range(Point(3, 0), Point(4, 10000))
         self.assertFalse(filter_more_than_one_outgoing(slice_candidate, manager))
 
-    def test_filter_more_than_one_outgoing_positive(self):
+    def test_filter_more_than_one_outgoing_positive(self) -> None:
         code = """
         public void methodEx() {
             int i = 1;
@@ -425,7 +425,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertTrue(filter_more_than_one_outgoing(slice_candidate, manager))
 
     @unittest.skip('bug in ProgramManager')
-    def test_filter_control_dependence_negative_1(self):
+    def test_filter_control_dependence_negative_1(self) -> None:
         code = """
         public void methodEx() {
             int a = 1;
@@ -440,7 +440,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertFalse(filter_control_dependence(extension_1.union(extension_2), block, manager))
 
     @unittest.skip('bug in ProgramManager')
-    def test_filter_control_dependence_negative_2(self):
+    def test_filter_control_dependence_negative_2(self) -> None:
         code = """
         public void methodEx() {
             int a = 1;
@@ -455,7 +455,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertFalse(filter_control_dependence(extension, block, manager))
 
     @unittest.skip('bug in ProgramManager')
-    def test_filter_control_dependence_positive_1(self):
+    def test_filter_control_dependence_positive_1(self) -> None:
         code = """
         public void methodEx() {
             int a = 1;
@@ -469,7 +469,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         extension = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
         self.assertTrue(filter_control_dependence(extension, block, manager))
 
-    def test_get_block_extensions_1(self):
+    def test_get_block_extensions_1(self) -> None:
         code_ex = """
         public void methodEx(final AClass a) {
             final int opt = a.getOpt();
@@ -496,7 +496,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
 
-    def test_get_block_extensions_2(self):
+    def test_get_block_extensions_2(self) -> None:
         code_ex = """
         public void methodEx(final AClass a) {
             final int opt = a.getOpt();
@@ -520,7 +520,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         ]
         self.assertEqual(sorted(expected_extension_ranges), sorted(result_extension_ranges))
 
-    def test_get_block_extensions_3(self):
+    def test_get_block_extensions_3(self) -> None:
         code_ex = """
         public void methodEx(final AClass a) {
             int e = 1;
@@ -544,7 +544,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
 
-    def test_get_block_extensions_4(self):
+    def test_get_block_extensions_4(self) -> None:
         code_ex = """
         public void methodEx(final AClass a) {
             final int opt = a.getOpt();
@@ -571,7 +571,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
 
-    def test_get_block_extensions_5(self):
+    def test_get_block_extensions_5(self) -> None:
         code_ex = """
         public void methodEx(boolean a){
            RClass r = getR();
@@ -598,7 +598,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
 
-    def test_get_block_extensions_6(self):
+    def test_get_block_extensions_6(self) -> None:
         code_ex = """
         public void methodEx(boolean a){
            RClass r = getR();
