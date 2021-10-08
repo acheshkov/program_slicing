@@ -118,6 +118,8 @@ def __get_incoming_variables(
     ddg = manager.data_dependence_graph
     incoming_variables = dict()
     for statement in block_statements:
+        if statement.statement_type == StatementType.FUNCTION:
+            continue
         for data_dom in ddg.predecessors(statement):
             # can be multimap, but it's ok for our purposes
             if data_dom not in block_statements and data_dom.name not in incoming_variables:
@@ -132,6 +134,8 @@ def __get_outgoing_variables(
     ddg = manager.data_dependence_graph
     outgoing_variables: Dict[str, VariableDefinition] = dict()
     for statement in block_statements:
+        if statement.statement_type == StatementType.FUNCTION:
+            continue
         for data_dependent in set(ddg.successors(statement)).difference(block_statements):
             if __flow_dep_given_data_dep(data_dependent, statement):
                 outgoing_variables[statement.name] = statement
@@ -230,13 +234,16 @@ def __compute_backward_slice(
 def __compute_forward_slice_recursive(
         variable_def: VariableDefinition,
         forward_slice: Set[Statement],
-        ddg: DataDependenceGraph,
+        manager: ProgramGraphsManager,
         recursion: bool) -> None:
-    for data_successor in ddg.successors(variable_def):
+    for data_successor in manager.data_dependence_graph.successors(variable_def):
         if data_successor.statement_type == StatementType.ASSIGNMENT:
+            if data_successor == variable_def or data_successor in forward_slice:
+                continue
             if recursion:
                 forward_slice.add(data_successor)
-                __compute_forward_slice_recursive(data_successor, forward_slice, ddg, recursion)
+                forward_slice |= set(__obtain_extension(manager, data_successor))
+                __compute_forward_slice_recursive(data_successor, forward_slice, manager, recursion)
             else:
                 continue
         else:
@@ -247,11 +254,10 @@ def __compute_forward_slice(
         variable_def: VariableDefinition,
         manager: ProgramGraphsManager) -> Set[Statement]:
     forward_slice = set()
-    ddg = manager.data_dependence_graph
     __compute_forward_slice_recursive(
         variable_def,
         forward_slice,
-        ddg,
+        manager,
         recursion=(variable_def.statement_type == StatementType.VARIABLE))
     return forward_slice
 
