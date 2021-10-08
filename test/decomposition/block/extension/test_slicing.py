@@ -618,3 +618,57 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
+
+    def test_cyclic_dependencies_forward(self):
+        """
+        Makes sure doesn't go into infinite recursion due to cycle.
+        """
+        code = """
+        public void methodEx() {
+            int i = 1;
+            while (condition()) {
+                i++;
+            }
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 2)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_anon_class_function(self):
+        """
+        make sure we avoid methods in anon class
+        """
+        code = """
+        public void methodEx() {
+            int a = 0;
+            doSomething(a);
+            SomeClass o = new SomeClass() {
+                public int greet() {
+                    int b = 0;
+                    return b;
+                }
+            };
+            doSomething(o);
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(3, 0), Point(9, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)],
+                                     [(2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)],
+                                     [(3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10)],
+                                     [(2, 2), (3, 3), (4, 4), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
