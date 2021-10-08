@@ -15,6 +15,7 @@ from program_slicing.graph.cdg import ControlDependenceGraph
 from program_slicing.graph.ddg import DataDependenceGraph
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import Lang
+from program_slicing.graph.point import Point
 from program_slicing.graph.statement import Statement, StatementType
 
 
@@ -26,6 +27,64 @@ SingletonExtensions = List[Tuple[
     Dict[str, VariableDefinition],
     str
 ]]
+
+
+def get_extended_block_slices(
+        source_code: str,
+        lang: Lang,
+        slice_predicate: SlicePredicate = None) -> Set[ProgramSlice]:
+    manager = ProgramGraphsManager(source_code, lang)
+    source_lines = source_code.split("\n")
+    slices_so_far = set()
+    for raw_block, function_length in __temp__get_block_slice_statements_raw(manager):
+        for extended_block in __get_block_extensions(raw_block, manager, source_lines):
+            if slice_predicate.max_percentage_of_lines is not None:
+                if __percentage_or_amount_exceeded(
+                        function_length,
+                        extended_block,
+                        slice_predicate.max_percentage_of_lines):
+                    continue
+            if slice_predicate is None or slice_predicate(extended_block, scopes=manager.scope_statements):
+                slices_so_far.add(extended_block)
+    return slices_so_far
+
+
+def get_extended_block_slices_ordered(code_ex: str, slice_to_expand: Tuple[int, int]) -> Set[ProgramSlice]:
+    raise NotImplementedError("ordering not implemented yet")
+
+
+def __get_block_extensions(
+        block_statements: Set[Statement],
+        manager: ProgramGraphsManager,
+        source_lines: List[str]) -> Set[ProgramSlice]:
+    singleton_extensions = __extend_block_singleton(block_statements, manager)
+    result = set()
+    for variable_id_subset in chain.from_iterable(
+            combinations(range(len(singleton_extensions)), r)
+            for r in range(1, len(singleton_extensions) + 1)):
+        full_extension: Set[Statement] = reduce(
+            lambda x, y: x.union(singleton_extensions[y][0]),
+            variable_id_subset,
+            set())
+        extension_program_slice = ProgramSlice(source_lines).from_statements(full_extension)
+        if extension_program_slice not in result:
+            if __filter_valid(full_extension, block_statements, manager):
+                result.add(extension_program_slice)
+    if __filter_valid(block_statements, block_statements, manager):
+        block_slice = ProgramSlice(source_lines).from_statements(block_statements)
+        result.add(block_slice)
+    return result
+
+
+def __get_continuous_range_extensions(
+        source_code: str,
+        line_range: Tuple[int, int],
+        lang: Lang) -> Set[ProgramSlice]:
+    manager = ProgramGraphsManager(source_code, lang)
+    block_statements = manager.get_statements_in_range(
+        Point(line_range[0], 0),
+        Point(line_range[1], 10000))
+    return __get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
 def __temp__get_block_slice_statements_raw(manager: ProgramGraphsManager) -> Tuple[Set[Statement], int]:
@@ -292,52 +351,3 @@ def __percentage_or_amount_exceeded(
         return True
     total_lines = reduce(lambda x, y: x + y[1].line_number - y[0].line_number + 1, extended_slice.ranges, 0)
     return float(total_lines) / float(function_length) > max_percentage_of_lines
-
-
-def __get_block_extensions(
-        block_statements: Set[Statement],
-        manager: ProgramGraphsManager,
-        source_lines: List[str]) -> Set[ProgramSlice]:
-    singleton_extensions = __extend_block_singleton(block_statements, manager)
-    result = set()
-    for variable_id_subset in chain.from_iterable(
-            combinations(range(len(singleton_extensions)), r)
-            for r in range(1, len(singleton_extensions) + 1)):
-        full_extension: Set[Statement] = reduce(
-            lambda x, y: x.union(singleton_extensions[y][0]),
-            variable_id_subset,
-            set())
-        extension_program_slice = ProgramSlice(source_lines).from_statements(full_extension)
-        if extension_program_slice not in result:
-            if __filter_valid(full_extension, block_statements, manager):
-                result.add(extension_program_slice)
-    if __filter_valid(block_statements, block_statements, manager):
-        block_slice = ProgramSlice(source_lines).from_statements(block_statements)
-        result.add(block_slice)
-    return result
-
-
-def get_extended_block_slices(
-        source_code: str,
-        lang: Lang,
-        slice_predicate: SlicePredicate = None) -> Set[ProgramSlice]:
-    manager = ProgramGraphsManager(source_code, lang)
-    source_lines = source_code.split("\n")
-    slices_so_far = set()
-    for raw_block, function_length in __temp__get_block_slice_statements_raw(manager):
-        for extended_block in __get_block_extensions(raw_block, manager, source_lines):
-            if slice_predicate.max_percentage_of_lines is not None:
-                if __percentage_or_amount_exceeded(
-                        function_length,
-                        extended_block,
-                        slice_predicate.max_percentage_of_lines):
-                    continue
-            if slice_predicate is None or slice_predicate(extended_block, scopes=manager.scope_statements):
-                slices_so_far.add(extended_block)
-    return slices_so_far
-
-
-def get_extended_block_slices_ordered(code_ex: str, slice_to_expand: Tuple[int, int]):
-    if code_ex and slice_to_expand:
-        return []
-    return []
