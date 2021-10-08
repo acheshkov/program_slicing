@@ -6,7 +6,7 @@ __date__ = '2021/09/14'
 
 from functools import reduce
 from itertools import chain, combinations_with_replacement, combinations
-from typing import Set, Tuple, Dict, List
+from typing import Set, Tuple, Dict, List, Iterator
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
@@ -36,15 +36,9 @@ def get_extended_block_slices(
     manager = ProgramGraphsManager(source_code, lang)
     source_lines = source_code.split("\n")
     slices_so_far = set()
-    for raw_block, function_length in __temp__get_block_slice_statements_raw(manager):
+    for raw_block in __temp__get_block_slice_statements_raw(manager):
         for extended_block in __get_block_extensions(raw_block, manager, source_lines):
-            if slice_predicate.max_percentage_of_lines is not None:
-                if __percentage_or_amount_exceeded(
-                        function_length,
-                        extended_block,
-                        slice_predicate.max_percentage_of_lines):
-                    continue
-            if slice_predicate is None or slice_predicate(extended_block, scopes=manager.scope_statements):
+            if slice_predicate is None or slice_predicate(extended_block, context=manager):
                 slices_so_far.add(extended_block)
     return slices_so_far
 
@@ -87,12 +81,11 @@ def __get_continuous_range_extensions(
     return __get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
-def __temp__get_block_slice_statements_raw(manager: ProgramGraphsManager) -> Tuple[Set[Statement], int]:
+def __temp__get_block_slice_statements_raw(manager: ProgramGraphsManager) -> Iterator[Set[Statement]]:
     for scope in manager.scope_statements:
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:
             continue
-        function_length = function_statement.end_point.line_number - function_statement.start_point.line_number + 1
         general_statements = sorted((
             statement
             for statement in manager.get_statements_in_scope(scope)
@@ -108,7 +101,7 @@ def __temp__get_block_slice_statements_raw(manager: ProgramGraphsManager) -> Tup
             extended_statements = manager.get_statements_in_range(
                 current_statements[0].start_point,
                 current_statements[-1].end_point)
-            yield extended_statements, function_length
+            yield extended_statements
 
 
 def __get_incoming_variables(
@@ -341,13 +334,3 @@ def __filter_valid(
     if not __filter_control_dependence(new_statements, original_statements, manager):
         return False
     return True
-
-
-def __percentage_or_amount_exceeded(
-        function_length: int,
-        extended_slice: ProgramSlice,
-        max_percentage_of_lines: float) -> bool:
-    if function_length == 0:
-        return True
-    total_lines = reduce(lambda x, y: x + y[1].line_number - y[0].line_number + 1, extended_slice.ranges, 0)
-    return float(total_lines) / float(function_length) > max_percentage_of_lines
