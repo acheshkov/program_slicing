@@ -23,7 +23,7 @@ obtain_backward_slice = variable.slicing.__obtain_backward_slice
 obtain_complete_computation_slices = variable.slicing.__obtain_complete_computation_slices
 
 
-class SlicingTestCase(TestCase):
+class VariableSlicingTestCase(TestCase):
 
     @staticmethod
     def __get_source_code_0():
@@ -40,7 +40,7 @@ class SlicingTestCase(TestCase):
 
     @staticmethod
     def __get_manager_and_variables_0():
-        source_code = SlicingTestCase.__get_source_code_0()
+        source_code = VariableSlicingTestCase.__get_source_code_0()
         manager = ProgramGraphsManager(source_code, Lang.JAVA)
         cdg = manager.control_dependence_graph
         function_statements = [statement for statement in cdg.entry_points]

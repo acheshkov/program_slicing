@@ -3,9 +3,9 @@ Set of methods for source code decomposition.
 ___
 ## Installation
 
-1. ```$ git clone --recurse-submodules git@github.com:acheshkov/program_slicing.git```
-
-2. ```$ pip3 install ./program_slicing```
+1. ```$ git clone git@github.com:acheshkov/program_slicing.git```
+2. ```$ git submodule update --recursive --init```
+3. ```$ pip3 install ./program_slicing```
 
 You should have access to global network to use pip.
 Python 3.9 with corresponding C compiler is required.
@@ -197,7 +197,7 @@ manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph
 - **program_dependence_graph** - return the _Program Dependence Graph_.
 - **sorted_statements** - return _Statements_ that are sorted first by increasing of their `start_point`,
   then by decreasing of their `end_point`.
-- **general_statements** - return general _Statements_ 
+- **general_statements** - return general _Statements_
   (those which are not contained in any non `SCOPE`, `BRANCH`, `LOOP`, `FUNCTION` or `EXIT` _Statement_).
 - **scope_statements** - return all the `SCOPE`, `BRANCH`, `LOOP` or `FUNCTION` _Statements_.
 
