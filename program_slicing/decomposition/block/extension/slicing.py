@@ -234,15 +234,16 @@ def __compute_backward_slice(
 def __compute_forward_slice_recursive(
         variable_def: VariableDefinition,
         forward_slice: Set[Statement],
-        ddg: DataDependenceGraph,
+        manager: ProgramGraphsManager,
         recursion: bool) -> None:
-    for data_successor in ddg.successors(variable_def):
+    for data_successor in manager.data_dependence_graph.successors(variable_def):
         if data_successor.statement_type == StatementType.ASSIGNMENT:
             if data_successor == variable_def or data_successor in forward_slice:
                 continue
             if recursion:
                 forward_slice.add(data_successor)
-                __compute_forward_slice_recursive(data_successor, forward_slice, ddg, recursion)
+                forward_slice |= set(__obtain_extension(manager, data_successor))
+                __compute_forward_slice_recursive(data_successor, forward_slice, manager, recursion)
             else:
                 continue
         else:
@@ -253,11 +254,10 @@ def __compute_forward_slice(
         variable_def: VariableDefinition,
         manager: ProgramGraphsManager) -> Set[Statement]:
     forward_slice = set()
-    ddg = manager.data_dependence_graph
     __compute_forward_slice_recursive(
         variable_def,
         forward_slice,
-        ddg,
+        manager,
         recursion=(variable_def.statement_type == StatementType.VARIABLE))
     return forward_slice
 
