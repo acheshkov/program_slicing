@@ -33,6 +33,32 @@ def get_block_slices(
     """
     source_lines = source_code.split("\n")
     manager = ProgramGraphsManager(source_code, lang)
+    return get_block_slices_from_manager(
+        source_lines,
+        manager,
+        slice_predicate=slice_predicate,
+        include_noneffective=include_noneffective,
+        may_cause_code_duplication=may_cause_code_duplication,
+        unite_statements_into_groups=unite_statements_into_groups)
+
+
+def get_block_slices_from_manager(
+        source_lines: List[str],
+        manager: ProgramGraphsManager,
+        slice_predicate: SlicePredicate = None,
+        include_noneffective: bool = True,
+        may_cause_code_duplication: bool = False,
+        unite_statements_into_groups: bool = False) -> Iterator[ProgramSlice]:
+    """
+    For each a specified source code generate list of Program Slices based on continues blocks.
+    :param source_lines: lines of source code that should be decomposed.
+    :param manager: precomputed manager wrt which to build slices
+    :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
+    :param include_noneffective: include comments and blank lines to a slice if True.
+    :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
+    :param unite_statements_into_groups: will unite function calls, assignment and declarations into groups if True.
+    :return: generator of the ProgramSlices.
+    """
     for scope in manager.scope_statements:
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:

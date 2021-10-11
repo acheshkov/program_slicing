@@ -626,6 +626,30 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
 
+    def test_cycle_ddg_cfg(self):
+        code = """
+        public void methodEx() {
+            int i = 0;
+            int b = 0;
+            while (cond(i)) {
+                do1(b, ++i);
+            }
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(5, 5)],
+            [(2, 2), (4, 6)],
+            [(2, 6)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
     def test_anon_class_function(self):
         """
         make sure we avoid methods in anon class
@@ -654,6 +678,44 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             [(2, 9)],
             [(3, 10)],
             [(2, 10)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_noneffective(self):
+        code = """
+        public void methodEx() {
+            int a = 1;
+
+            // some comment
+            do(a);
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 5)], [(5, 5)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_return_statement(self):
+        code = """
+        public int methodEx() {
+            int a = 0;
+            return a + 1;
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(3, 0), Point(3, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 3)], [(3, 3)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
