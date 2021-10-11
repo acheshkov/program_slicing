@@ -417,7 +417,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -434,7 +434,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -452,7 +452,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -471,7 +471,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -490,7 +490,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -524,7 +524,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)

@@ -133,12 +133,12 @@ class SlicePredicate:
                 raise ValueError("context has to be specified to check if slice is a whole scope")
         if not context.scope_statements:
             return not self.__is_whole_scope
-        start_line = self.__program_slice.ranges[0][0].line_number
-        end_line = self.__program_slice.ranges[-1][0].line_number
-        scopes_lines = {(x.start_point.line_number, x.end_point.line_number) for x in context.scope_statements}
-        if (start_line, end_line) in scopes_lines:
-            return not self.__is_whole_scope
-        return self.__is_whole_scope
+        start_point = self.__program_slice.ranges[0][0]
+        end_point = self.__program_slice.ranges[-1][1]
+        scopes_points = {(x.start_point, x.end_point) for x in context.scope_statements}
+        if (start_point, end_point) in scopes_points:
+            return self.__is_whole_scope
+        return not self.__is_whole_scope
 
     def __check_min_amount_of_statements(self, **kwargs) -> bool:
         if self.__min_amount_of_statements is None:
@@ -254,7 +254,6 @@ class SlicePredicate:
         manager = self.__get_generated_manager()
         # TODO: manager may contain ast info, no need to parse it twice
         ast = parse.tree_sitter_ast(self.__program_slice.code, self.__lang_to_check_parsing).root_node
-
         for node in SlicePredicate.__traverse(ast):
             if node.type == "ERROR":
                 return False
