@@ -229,21 +229,6 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         outgoing_variables = get_outgoing_variables(block, manager)
         self.assertEqual(set(outgoing_variables.keys()), set())
 
-    def __compare_extended_slices(self, **kwargs) -> None:
-        result_extension = kwargs["extension"]
-        expected_range = kwargs["expected_range"]
-        expected_in = kwargs["expected_in"]
-        expected_out = kwargs["expected_out"]
-        _range = [
-            (r[0].line_number, r[1].line_number)
-            for r in ProgramSlice(kwargs['source_code']).from_statements(result_extension[0]).ranges
-        ]
-        in_vars = set(result_extension[1].keys())
-        out_vars = set(result_extension[2].keys())
-        self.assertEqual(expected_range, _range)
-        self.assertEqual(expected_in, in_vars)
-        self.assertEqual(expected_out, out_vars)
-
     def test_extend_block_singleton_1(self) -> None:
         code = """
         public void method() {
@@ -286,21 +271,21 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual({'opt', 'rest', 'i'}, set(name_to_extension.keys()))
         self.__compare_extended_slices(
             extension=name_to_extension['opt'],
-            expected_range=[(2, 2), (6, 6), (7, 7), (8, 8)],
+            expected_range=[(2, 2), (6, 8)],
             expected_in={'rest', 'i'},
             expected_out=set(),
             source_code=code
         )
         self.__compare_extended_slices(
             extension=name_to_extension['rest'],
-            expected_range=[(3, 3), (6, 6), (7, 7), (8, 8)],
+            expected_range=[(3, 3), (6, 8)],
             expected_in={'opt', 'i'},
             expected_out=set(),
             source_code=code
         )
         self.__compare_extended_slices(
             extension=name_to_extension['i'],
-            expected_range=[(4, 4), (6, 6), (7, 7), (8, 8)],
+            expected_range=[(4, 4), (6, 8)],
             expected_in={'opt', 'rest'},
             expected_out=set(),
             source_code=code
@@ -326,7 +311,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual({'r'}, set(name_to_extension.keys()))
         self.__compare_extended_slices(
             extension=name_to_extension['r'],
-            expected_range=[(2, 2), (3, 3), (4, 4), (5, 5), (7, 7)],
+            expected_range=[(2, 5), (7, 7)],
             expected_in=set(),
             expected_out=set(),
             source_code=code
@@ -350,7 +335,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual({''}, set(name_to_extension.keys()))
         self.__compare_extended_slices(
             extension=name_to_extension[''],
-            expected_range=[(2, 2), (3, 3), (4, 4), (5, 5)],
+            expected_range=[(2, 5)],
             expected_in={'a'},
             expected_out=set(),
             source_code=code
@@ -484,13 +469,13 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         block = manager.get_statements_in_range(Point(6, 0), Point(8, 10000))
         result_extension_ranges = []
         for ext in get_block_extensions(block, manager, code_ex.split("\n")):
-            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [
-            [(6, 6), (7, 7), (8, 8)],
-            [(2, 2), (6, 6), (7, 7), (8, 8)],
-            [(3, 3), (6, 6), (7, 7), (8, 8)],
-            [(2, 2), (3, 3), (6, 6), (7, 7), (8, 8)]
+            [(6, 8)],
+            [(2, 2), (6, 8)],
+            [(3, 3), (6, 8)],
+            [(2, 3), (6, 8)]
         ]
         self.assertEqual(
             sorted(expected_extension_ranges),
@@ -512,11 +497,11 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         block = manager.get_statements_in_range(Point(6, 0), Point(8, 10000))
         result_extension_ranges = []
         for ext in get_block_extensions(block, manager, code_ex.split("\n")):
-            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [
-            [(6, 6), (7, 7), (8, 8)],
-            [(2, 2), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9)]
+            [(6, 8)],
+            [(2, 2), (5, 9)]
         ]
         self.assertEqual(sorted(expected_extension_ranges), sorted(result_extension_ranges))
 
@@ -534,11 +519,11 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         block = manager.get_statements_in_range(Point(6, 0), Point(6, 10000))
         result_extension_ranges = []
         for ext in get_block_extensions(block, manager, code_ex.split("\n")):
-            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [
             [(6, 6)],
-            [(4, 4), (5, 5), (6, 6), (7, 7)]
+            [(4, 7)]
         ]
         self.assertEqual(
             sorted(expected_extension_ranges),
@@ -561,11 +546,11 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         block = manager.get_statements_in_range(Point(7, 0), Point(9, 10000))
         result_extension_ranges = []
         for ext in get_block_extensions(block, manager, code_ex.split("\n")):
-            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [
-            [(7, 7), (8, 8), (9, 9)],
-            [(2, 2), (5, 5), (6, 6), (7, 7), (8, 8), (9, 9), (10, 10)]
+            [(7, 9)],
+            [(2, 2), (5, 10)]
         ]
         self.assertEqual(
             sorted(expected_extension_ranges),
@@ -588,12 +573,11 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         block = manager.get_statements_in_range(Point(2, 0), Point(5, 10000))
         result_extension_ranges = []
         for ext in get_block_extensions(block, manager, code_ex.split("\n")):
-            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [
-            [(2, 2), (3, 3), (4, 4), (5, 5)],
-            [(2, 2), (3, 3), (4, 4), (5, 5), (7, 7), (9, 9), (10, 10)]
-        ]
+            [(2, 5)],
+            [(2, 5), (7, 7), (9, 10)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
@@ -612,9 +596,142 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         block = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
         result_extension_ranges = []
         for ext in get_block_extensions(block, manager, code_ex.split("\n")):
-            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges]
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [[(2, 2)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
+
+    def test_cyclic_dependencies_forward(self):
+        """
+        Makes sure doesn't go into infinite recursion due to cycle.
+        """
+        code = """
+        public void methodEx() {
+            int i = 1;
+            while (condition()) {
+                i++;
+            }
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 2)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_cycle_ddg_cfg(self):
+        code = """
+        public void methodEx() {
+            int i = 0;
+            int b = 0;
+            while (cond(i)) {
+                do1(b, ++i);
+            }
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(5, 5)],
+            [(2, 2), (4, 6)],
+            [(2, 6)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_anon_class_function(self):
+        """
+        make sure we avoid methods in anon class
+        """
+        code = """
+        public void methodEx() {
+            int a = 0;
+            doSomething(a);
+            SomeClass o = new SomeClass() {
+                public int greet() {
+                    int b = 0;
+                    return b;
+                }
+            };
+            doSomething(o);
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(3, 0), Point(9, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(3, 9)],
+            [(2, 9)],
+            [(3, 10)],
+            [(2, 10)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_noneffective(self):
+        code = """
+        public void methodEx() {
+            int a = 1;
+
+            // some comment
+            do(a);
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 5)], [(5, 5)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_return_statement(self):
+        code = """
+        public int methodEx() {
+            int a = 0;
+            return a + 1;
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(3, 0), Point(3, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [[(2, 3)], [(3, 3)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def __compare_extended_slices(self, **kwargs) -> None:
+        result_extension = kwargs["extension"]
+        expected_range = kwargs["expected_range"]
+        expected_in = kwargs["expected_in"]
+        expected_out = kwargs["expected_out"]
+        source_lines = kwargs['source_code'].split("\n")
+        _range = [
+            (r[0].line_number, r[1].line_number)
+            for r in ProgramSlice(source_lines).from_statements(result_extension[0]).ranges_compact
+        ]
+        in_vars = set(result_extension[1].keys())
+        out_vars = set(result_extension[2].keys())
+        self.assertEqual(expected_range, _range)
+        self.assertEqual(expected_in, in_vars)
+        self.assertEqual(expected_out, out_vars)
