@@ -52,7 +52,7 @@ def get_block_slices_from_manager(
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
     :param source_lines: lines of source code that should be decomposed.
-    :param manager: precomputed manager wrt which to build slices
+    :param manager: precomputed ProgramGraphsManager that contains Statements from which the slices should to be built.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :param include_noneffective: include comments and blank lines to a slice if True.
     :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
