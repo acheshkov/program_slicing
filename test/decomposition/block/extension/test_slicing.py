@@ -8,7 +8,9 @@ __date__ = '2021/09/14'
 import unittest
 
 from program_slicing.decomposition.block.extension import slicing
-from program_slicing.decomposition.block.extension.slicing import get_extended_block_slices_ordered
+from program_slicing.decomposition.block.extension.slicing import get_extended_block_slices_ordered, \
+    get_extended_block_slices
+from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import Lang
@@ -549,8 +551,8 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [
-            [(7, 9)],
-            [(2, 2), (5, 10)]
+            [(2, 2), (5, 10)],
+            [(7, 9)]
         ]
         self.assertEqual(
             sorted(expected_extension_ranges),
@@ -652,7 +654,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
 
     def test_anon_class_function(self):
         """
-        make sure we avoid methods in anon class
+        make sure we avoid methods defined in anon class
         """
         code = """
         public void methodEx() {
@@ -661,7 +663,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             SomeClass o = new SomeClass() {
                 public int greet() {
                     int b = 0;
-                    return b;
+                    return 1;
                 }
             };
             doSomething(o);
@@ -719,6 +721,45 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
+
+    def test_for_scope(self):
+        code = """
+        public void methodEx() {
+            for (int i = 0; i < 10; i++) {
+                do1(i);  
+            }
+        }
+        """
+        ext_blocks = get_extended_block_slices(code, Lang.JAVA)
+        result_ranges = []
+        for ext in ext_blocks:
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_ranges.append(_range)
+        expected_extension_ranges = [[(2, 4)], [(3, 3)]]
+        print([x.ranges_compact for x in ext_blocks])
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_ranges))
+
+    def test_while_scope(self):
+        code = """
+        public void methodEx() {
+            int i = 1;
+            while (i < 10) {
+                do1(i);  
+                i++;
+            }
+        }
+        """
+        ext_blocks = get_extended_block_slices(code, Lang.JAVA)
+        result_ranges = []
+        for ext in ext_blocks:
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_ranges.append(_range)
+        expected_extension_ranges = [[(2, 2)], [(4, 4)], [(5, 5)], [(4, 5)], [(3, 6)], [(2, 6)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_ranges))
 
     def __compare_extended_slices(self, **kwargs) -> None:
         result_extension = kwargs["extension"]

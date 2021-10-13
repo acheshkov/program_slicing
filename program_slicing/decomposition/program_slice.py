@@ -170,6 +170,8 @@ class ProgramSlice:
             if self.context is not None:
                 for start_point, end_point in self.ranges_compact:
                     self.__statements.update(self.context.get_statements_in_range(start_point, end_point))
+        else:
+            self.__update_scopes()
         return self.__statements
 
     @property

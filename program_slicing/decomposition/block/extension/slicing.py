@@ -67,6 +67,41 @@ def get_extended_block_slices_ordered(code_ex: str, slice_to_expand: Tuple[int, 
     raise NotImplementedError("ordering not implemented yet")
 
 
+def __full_control_construction(statements: Set[Statement], manager: ProgramGraphsManager) -> bool:
+    for statement in statements:
+        scope_statement = manager.get_scope_statement(statement)
+        if not scope_statement:
+            return False
+        if scope_statement.statement_type in {StatementType.LOOP, StatementType.BRANCH} and \
+                scope_statement not in statements:
+            return False
+    return True
+
+# def __full_control_construction(statements: Set[Statement], manager: ProgramGraphsManager) -> bool:
+#     """
+#     Returns true if everything's OK
+#     """
+#     cfg = manager.control_flow_graph
+#     for statement in statements:
+#         statement_basic_block = manager.get_basic_block(statement)
+#         if statement.statement_type in {StatementType.VARIABLE, StatementType.ASSIGNMENT}:
+#             # case: for (int i = 1;
+#             next_block_statements = next(cfg.successors(statement_basic_block)).statements
+#             if next_block_statements[-1].statement_type == StatementType.LOOP \
+#               and next_block_statements[-1].start_point < statement.start_point\
+#               and next_block_statements[-1].end_point > statement.end_point:
+#                 return next_block_statements[-1] in statements
+#
+#         # case i < 0, in FOR, IF, WHILE
+#         curr_block_statements = statement_basic_block.statements
+#         if curr_block_statements[-1].statement_type in {StatementType.LOOP, StatementType.BRANCH} \
+#                 and curr_block_statements[-1].start_point < statement.start_point \
+#                 and curr_block_statements[-1].end_point > statement.end_point:
+#             return curr_block_statements[-1] in statements
+#
+#     return True
+
+
 def __get_block_extensions(
         block_statements: Set[Statement],
         manager: ProgramGraphsManager,
@@ -85,9 +120,12 @@ def __get_block_extensions(
             source_lines,
             context=manager if include_noneffective else None).from_statements(full_extension)
         if extension_program_slice not in result:
-            if __filter_valid(full_extension, block_statements, manager):
-                result.add(extension_program_slice)
-    if __filter_valid(block_statements, block_statements, manager):
+            if not __filter_valid(full_extension, manager, original_statements=block_statements):
+                continue
+            if not __full_control_construction(full_extension, manager):
+                continue
+            result.add(extension_program_slice)
+    if __filter_valid(block_statements, manager) and __full_control_construction(block_statements, manager):
         block_slice = ProgramSlice(
             source_lines,
             context=manager if include_noneffective else None).from_statements(block_statements)
@@ -246,7 +284,7 @@ def __compute_forward_slice_recursive(
                 continue
             if recursion:
                 forward_slice.add(data_successor)
-                forward_slice |= set(__obtain_extension(manager, data_successor))
+                forward_slice.update(set(__obtain_extension(manager, data_successor)))
                 __compute_forward_slice_recursive(data_successor, forward_slice, manager, recursion)
             else:
                 continue
@@ -279,12 +317,12 @@ def __extend_block_singleton(
         if var_name in incoming_variables:
             variable_use = incoming_variables[var_name]
             backward_slice = __compute_backward_slice(variable_use, var_name, block_statements, manager)
-            new_block |= backward_slice
+            new_block.update(backward_slice)
             del new_incoming_variables[var_name]
         if var_name in outgoing_variables:
             variable_def = outgoing_variables[var_name]
             forward_slice = __compute_forward_slice(variable_def, manager)
-            new_block |= forward_slice
+            new_block.update(forward_slice)
             del new_outgoing_variables[var_name]
         singleton_extensions.append((
             new_block,
@@ -299,11 +337,16 @@ def __filter_anti_dependence(
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
     ddg = manager.data_dependence_graph
+    cfg = manager.control_dependence_graph
     for statement in new_statements:
+        if statement.statement_type == StatementType.FUNCTION:
+            continue
         for data_successor in ddg.successors(statement):
             if data_successor in original_statements.union(new_statements):
                 continue
-            if __flow_dep_given_data_dep(data_successor, statement):
+            if __flow_dep_given_data_dep(data_successor, statement)\
+                    and [x for x in original_statements
+                         if x.statement_type != StatementType.FUNCTION and data_successor in ddg.successors(x)] == []:
                 return False
     return True
 
@@ -313,16 +356,24 @@ def __filter_control_dependence(
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
     cdg = manager.control_dependence_graph
+    missing_cdg_parents = set()
     for statement in new_statements:
+        if statement.statement_type == StatementType.FUNCTION:
+            continue
         for control_successor in cdg.successors(statement):
             if control_successor not in new_statements.union(original_statements):
                 return False
         for control_predecessor in cdg.predecessors(statement):
-            if control_predecessor.statement_type == StatementType.FUNCTION:
-                continue
+            #if control_predecessor.statement_type == StatementType.FUNCTION:
+            #    missing_cdg_parents.append(control_successor)
             if control_predecessor not in new_statements.union(original_statements):
-                return False
-    return True
+                missing_cdg_parents.add(control_predecessor)
+    missing_cdg_parents.update(reduce(
+        lambda x, y: x.union(set(cdg.predecessors(y))),
+        {x for x in original_statements if x.statement_type != StatementType.FUNCTION},
+        set()))
+    missing_cdg_parents = missing_cdg_parents.difference(original_statements.union(new_statements))
+    return len(missing_cdg_parents) <= 1
 
 
 def __filter_more_than_one_outgoing(
@@ -334,9 +385,15 @@ def __filter_more_than_one_outgoing(
 
 def __filter_valid(
         slice_candidate: Set[Statement],
-        original_statements: Set[Statement],
-        manager: ProgramGraphsManager) -> bool:
-    new_statements = slice_candidate.difference(original_statements)
+        manager: ProgramGraphsManager,
+        original_statements: Set[Statement] = None) -> bool:
+    if original_statements:
+        new_statements = slice_candidate.difference(original_statements)
+    else:
+        new_statements = slice_candidate
+        original_statements = slice_candidate
+    #new_statements = set(filter(lambda x: x.statement_type != StatementType.FUNCTION, new_statements))
+    #original_statements = set(filter(lambda x: x.statement_type != StatementType.FUNCTION, original_statements))
     if not __filter_anti_dependence(new_statements, original_statements, manager):
         return False
     if not __filter_more_than_one_outgoing(slice_candidate, manager):
