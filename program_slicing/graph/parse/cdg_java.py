@@ -715,6 +715,8 @@ statement_type_and_handler_map = {
         (StatementType.SCOPE, __handle_statement),
     "constructor_body":
         (StatementType.SCOPE, __handle_statement),
+    "class_body":
+        (StatementType.SCOPE, __handle_statement),
     "continue_statement":
         (StatementType.GOTO, __handle_continue),
     "break_statement":

@@ -493,6 +493,7 @@ class CDGJavaTestCase(TestCase):
                 self.__check_cdg_children(function_children, {
                     0: StatementType.SCOPE,
                     3: StatementType.VARIABLE,
+                    6: StatementType.SCOPE,
                     7: StatementType.EXIT
                 })
             else:
