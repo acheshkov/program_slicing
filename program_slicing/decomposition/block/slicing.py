@@ -19,7 +19,6 @@ def get_block_slices(
         lang: Lang,
         slice_predicate: SlicePredicate = None,
         include_noneffective: bool = True,
-        may_cause_code_duplication: bool = False,
         unite_statements_into_groups: bool = False) -> Iterator[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
@@ -27,7 +26,6 @@ def get_block_slices(
     :param lang: the source code Lang.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :param include_noneffective: include comments and blank lines to a slice if True.
-    :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :param unite_statements_into_groups: will unite function calls, assignment and declarations into groups if True.
     :return: generator of the ProgramSlices.
     """
@@ -38,7 +36,6 @@ def get_block_slices(
         manager,
         slice_predicate=slice_predicate,
         include_noneffective=include_noneffective,
-        may_cause_code_duplication=may_cause_code_duplication,
         unite_statements_into_groups=unite_statements_into_groups)
 
 
@@ -47,7 +44,6 @@ def get_block_slices_from_manager(
         manager: ProgramGraphsManager,
         slice_predicate: SlicePredicate = None,
         include_noneffective: bool = True,
-        may_cause_code_duplication: bool = False,
         unite_statements_into_groups: bool = False) -> Iterator[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
@@ -55,7 +51,6 @@ def get_block_slices_from_manager(
     :param manager: precomputed ProgramGraphsManager that contains Statements from which the slices should to be built.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :param include_noneffective: include comments and blank lines to a slice if True.
-    :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :param unite_statements_into_groups: will unite function calls, assignment and declarations into groups if True.
     :return: generator of the ProgramSlices.
     """
@@ -83,13 +78,12 @@ def get_block_slices_from_manager(
             extended_statements = manager.get_statements_in_range(
                 current_groups[0][0].start_point,
                 current_groups[-1][-1].end_point)
-            if not may_cause_code_duplication:
-                affecting_statements = manager.get_affecting_statements(extended_statements)
-                if len(manager.get_involved_variables_statements(affecting_statements)) > 1 or \
-                        manager.contain_redundant_statements(extended_statements):
+            if slice_predicate is not None:
+                if not slice_predicate.check_statements(
+                        {statement for statement in extended_statements if statement in manager.general_statements},
+                        statements=extended_statements,
+                        context=manager):
                     continue
-            if len(manager.get_exit_statements(extended_statements)) > 1:
-                continue
             program_slice = ProgramSlice(
                 source_lines,
                 context=manager if include_noneffective else None

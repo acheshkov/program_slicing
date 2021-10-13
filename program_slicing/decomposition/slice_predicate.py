@@ -55,13 +55,13 @@ class SlicePredicate:
         self.__statements_checkers = [
             self.__check_min_amount_of_statements,
             self.__check_max_amount_of_statements,
+            self.__check_cause_code_duplication,
             self.__check_min_amount_of_exit_statements,
             self.__check_max_amount_of_exit_statements,
             self.__check_min_percentage_of_statements,
             self.__check_max_percentage_of_statements,
-            self.__check_has_returnable_variable,
             self.__check_is_whole_scope,
-            self.__check_cause_code_duplication
+            self.__check_has_returnable_variable
         ]
         self.__checkers = [
             self.__check_min_amount_of_lines,
@@ -88,7 +88,7 @@ class SlicePredicate:
             if not general_statements and self.__program_slice.ranges:
                 generated_manager = self.__get_generated_manager()
                 if generated_manager:
-                    general_statements = [statement for statement in generated_manager.general_statements]
+                    general_statements = {statement for statement in generated_manager.general_statements}
             result = self.check_statements(general_statements, statements=program_slice.statements, **kwargs)
         if result:
             for checker in self.__checkers:
@@ -201,19 +201,40 @@ class SlicePredicate:
             return self.__is_whole_scope
         return not self.__is_whole_scope
 
-    def __check_cause_code_duplication(self, **kwargs) -> bool:
+    def __check_cause_code_duplication(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__cause_code_duplication is None:
             return True
-        return True
+        if context is None:
+            context = None if self.__program_slice is None else self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check if slice cause code duplication")
+        affecting_statements = context.get_affecting_statements(self.__statements)
+        if len(context.get_involved_variables_statements(affecting_statements)) > 1:
+            return self.__cause_code_duplication
+        if context.contain_redundant_statements(self.__statements):
+            return self.__cause_code_duplication
+        return not self.__cause_code_duplication
 
-    def __check_min_amount_of_exit_statements(self, **kwargs) -> bool:
+    def __check_min_amount_of_exit_statements(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__min_amount_of_exit_statements is None:
             return True
+        if context is None:
+            context = None if self.__program_slice is None else self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check amount of exit statements")
+        if len(context.get_exit_statements(self.__statements)) < self.__min_amount_of_exit_statements:
+            return False
         return True
 
-    def __check_max_amount_of_exit_statements(self, **kwargs) -> bool:
+    def __check_max_amount_of_exit_statements(self, context: ProgramGraphsManager = None, **kwargs) -> bool:
         if self.__max_amount_of_exit_statements is None:
             return True
+        if context is None:
+            context = None if self.__program_slice is None else self.__program_slice.context
+            if context is None:
+                raise ValueError("context has to be specified to check amount of exit statements")
+        if len(context.get_exit_statements(self.__statements)) > self.__max_amount_of_exit_statements:
+            return False
         return True
 
     def __check_min_amount_of_statements(self, **kwargs) -> bool:
