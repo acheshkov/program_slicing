@@ -90,8 +90,6 @@ def get_block_slices_from_manager(
                     continue
             if len(manager.get_exit_statements(extended_statements)) > 1:
                 continue
-            #if not __full_control_construction(extended_statements, manager):
-            #    continue
             program_slice = ProgramSlice(
                 source_lines,
                 context=manager if include_noneffective else None

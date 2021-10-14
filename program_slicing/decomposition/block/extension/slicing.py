@@ -103,6 +103,8 @@ def __get_block_extensions(
             source_lines,
             context=manager if include_noneffective else None).from_statements(full_extension)
         if extension_program_slice not in result:
+            if len(manager.get_exit_statements(full_extension)) > 1:
+                continue
             if not __filter_valid(full_extension, manager, original_statements=block_statements):
                 continue
             if not __full_control_construction(full_extension, manager):
