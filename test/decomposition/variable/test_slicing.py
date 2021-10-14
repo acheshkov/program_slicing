@@ -118,6 +118,22 @@ class VariableSlicingTestCase(TestCase):
                     program_slice.code)
             else:
                 self.assertTrue(False)
+        slices = variable.slicing.get_complete_computation_slices(
+            source_code,
+            Lang.JAVA,
+            SlicePredicate(
+                lang_to_check_parsing=Lang.JAVA,
+                cause_code_duplication=False
+            ))
+        slices = [program_slice for program_slice in slices]
+        self.assertEqual(1, len(slices))
+        for program_slice in slices:
+            if program_slice.variable.name == "n":
+                self.assertEqual(
+                    [(Point(1, 8), Point(8, 18))],
+                    program_slice.ranges_compact)
+            else:
+                self.assertTrue(False)
 
     def test_get_complete_computation_slices_goto(self):
         source_code = """
