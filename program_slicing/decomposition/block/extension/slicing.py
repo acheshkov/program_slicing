@@ -105,13 +105,26 @@ def __get_block_extensions(
         if extension_program_slice not in result:
             if not __filter_valid(full_extension, manager, original_statements=block_statements):
                 continue
+            if not __full_control_construction(full_extension, manager):
+                continue
             result.add(extension_program_slice)
-    if __filter_valid(block_statements, manager):
+    if __filter_valid(block_statements, manager) and __full_control_construction(block_statements, manager) :
         block_slice = ProgramSlice(
             source_lines,
             context=manager if include_noneffective else None).from_statements(block_statements)
         result.add(block_slice)
     return result
+
+
+def __full_control_construction(statements: Set[Statement], manager: ProgramGraphsManager) -> bool:
+    for statement in statements:
+        scope_statement = manager.get_scope_statement(statement)
+        if scope_statement is None:
+            continue
+        if scope_statement.statement_type in {StatementType.LOOP, StatementType.BRANCH, StatementType.GOTO} and \
+                scope_statement not in statements:
+            return False
+    return True
 
 
 def __get_incoming_variables(

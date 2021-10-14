@@ -759,6 +759,28 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(expected_extension_ranges),
             sorted(result_ranges))
 
+    def test_if_scope(self):
+        code = """
+        public void methodEx() {
+            int i = 1;
+            if (cond2(i)) {
+                do1(i);
+            }
+        }
+        """
+        ext_blocks = get_extended_block_slices(code, Lang.JAVA)
+        result_ranges = []
+        for ext in ext_blocks:
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_ranges.append(_range)
+        expected_extension_ranges = [[(2, 2)],
+                                     [(4, 4)],
+                                     [(3, 5)],
+                                     [(2, 5)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_ranges))
+
     def test_return(self):
         code = """
         public int methodEx() {
@@ -787,6 +809,54 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_ranges))
+
+    def test_included_scope(self):
+        code = """
+        public void methodEx() {
+            if (cond()) {
+                int i = 1;
+                if (cond2(i)) {
+                    do1(i);
+                }
+            }
+        }
+        """
+        ext_blocks = get_extended_block_slices(code, Lang.JAVA)
+        result_ranges = []
+        for ext in ext_blocks:
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_ranges.append(_range)
+        expected_extension_ranges = [[(3, 3)],
+                                     [(5, 5)],
+                                     [(4, 6)],
+                                     [(3, 6)],
+                                     [(2, 7)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_ranges))
+
+    @unittest.skip("BUG: if without curly braces doesnt have SCOPE, hence not handled correctly")
+    def test_if_else_scope(self):
+        code = """
+        public void methodEx() {
+            if (cond())
+                do1();
+            else
+                do2();
+        }
+        """
+        ext_blocks = get_extended_block_slices(code, Lang.JAVA)
+        result_ranges = []
+        for ext in ext_blocks:
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_ranges.append(_range)
+        expected_extension_ranges = [[(3, 3)],
+                                     [(5, 5)],
+                                     [(2, 5)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_ranges))
+
 
     def __compare_extended_slices(self, **kwargs) -> None:
         result_extension = kwargs["extension"]
