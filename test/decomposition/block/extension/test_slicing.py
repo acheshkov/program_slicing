@@ -773,10 +773,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         for ext in ext_blocks:
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_ranges.append(_range)
-        expected_extension_ranges = [[(2, 2)],
-                                     [(4, 4)],
-                                     [(3, 5)],
-                                     [(2, 5)]]
+        expected_extension_ranges = [[(2, 2)], [(4, 4)], [(3, 5)], [(2, 5)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_ranges))
@@ -797,15 +794,16 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         for ext in ext_blocks:
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_ranges.append(_range)
-        expected_extension_ranges = [[(2, 2)],
-                                     [(4, 4)],
-                                     [(5, 5)],
-                                     [(4, 5)],
-                                     [(3, 6)],
-                                     [(2, 6)],
-                                     [(3, 7)],
-                                     [(2, 7)],
-                                     [(7, 7)]]
+        expected_extension_ranges = [
+            [(2, 2)],
+            [(4, 4)],
+            [(5, 5)],
+            [(4, 5)],
+            [(3, 6)],
+            [(2, 6)],
+            [(3, 7)],
+            [(2, 7)],
+            [(7, 7)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_ranges))
@@ -826,11 +824,12 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         for ext in ext_blocks:
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_ranges.append(_range)
-        expected_extension_ranges = [[(3, 3)],
-                                     [(5, 5)],
-                                     [(4, 6)],
-                                     [(3, 6)],
-                                     [(2, 7)]]
+        expected_extension_ranges = [
+            [(3, 3)],
+            [(5, 5)],
+            [(4, 6)],
+            [(3, 6)],
+            [(2, 7)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_ranges))
@@ -850,13 +849,10 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         for ext in ext_blocks:
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_ranges.append(_range)
-        expected_extension_ranges = [[(3, 3)],
-                                     [(5, 5)],
-                                     [(2, 5)]]
+        expected_extension_ranges = [[(3, 3)], [(5, 5)], [(2, 5)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_ranges))
-
 
     def __compare_extended_slices(self, **kwargs) -> None:
         result_extension = kwargs["extension"]

@@ -328,9 +328,9 @@ def __filter_anti_dependence(
         for data_successor in ddg.successors(statement):
             if data_successor in original_statements.union(new_statements):
                 continue
-            if __flow_dep_given_data_dep(data_successor, statement)\
-                    and [x for x in original_statements
-                         if x.statement_type != StatementType.FUNCTION and data_successor in ddg.successors(x)] == []:
+            if __flow_dep_given_data_dep(data_successor, statement) and all(
+                    (x.statement_type == StatementType.FUNCTION or data_successor not in ddg.successors(x))
+                    for x in original_statements):
                 return False
     return True
 
