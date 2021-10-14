@@ -5,7 +5,7 @@ __maintainer__ = 'lyriccoder'
 __date__ = '2021/05/20'
 
 from itertools import combinations_with_replacement
-from typing import Iterator, List, Tuple
+from typing import Iterator, List, Tuple, Set
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate
@@ -90,12 +90,25 @@ def get_block_slices_from_manager(
                     continue
             if len(manager.get_exit_statements(extended_statements)) > 1:
                 continue
+            if not __full_control_construction(extended_statements, manager):
+                continue
             program_slice = ProgramSlice(
                 source_lines,
                 context=manager if include_noneffective else None
             ).from_statements(extended_statements)
             if slice_predicate is None or slice_predicate(program_slice, context=manager):
                 yield program_slice
+
+
+def __full_control_construction(statements: Set[Statement], manager: ProgramGraphsManager) -> bool:
+    for statement in statements:
+        scope_statement = manager.get_scope_statement(statement)
+        if scope_statement is None:
+            continue
+        if scope_statement.statement_type in {StatementType.LOOP, StatementType.BRANCH} and \
+                scope_statement not in statements:
+            return False
+    return True
 
 
 def __pre_check(

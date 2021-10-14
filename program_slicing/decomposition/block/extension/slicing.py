@@ -52,7 +52,7 @@ def get_extended_block_slices(
             include_noneffective=include_noneffective,
             may_cause_code_duplication=True,
             unite_statements_into_groups=False):
-        raw_block_statements = raw_block.statements
+        raw_block_statements = set(filter(lambda x: x.statement_type != StatementType.EXIT, raw_block.statements))
         for extended_block in __get_block_extensions(
                 raw_block_statements,
                 manager,
@@ -67,39 +67,22 @@ def get_extended_block_slices_ordered(code_ex: str, slice_to_expand: Tuple[int, 
     raise NotImplementedError("ordering not implemented yet")
 
 
-def __full_control_construction(statements: Set[Statement], manager: ProgramGraphsManager) -> bool:
-    for statement in statements:
-        scope_statement = manager.get_scope_statement(statement)
-        if not scope_statement:
-            return False
-        if scope_statement.statement_type in {StatementType.LOOP, StatementType.BRANCH} and \
-                scope_statement not in statements:
-            return False
-    return True
-
-# def __full_control_construction(statements: Set[Statement], manager: ProgramGraphsManager) -> bool:
-#     """
-#     Returns true if everything's OK
-#     """
-#     cfg = manager.control_flow_graph
-#     for statement in statements:
-#         statement_basic_block = manager.get_basic_block(statement)
-#         if statement.statement_type in {StatementType.VARIABLE, StatementType.ASSIGNMENT}:
-#             # case: for (int i = 1;
-#             next_block_statements = next(cfg.successors(statement_basic_block)).statements
-#             if next_block_statements[-1].statement_type == StatementType.LOOP \
-#               and next_block_statements[-1].start_point < statement.start_point\
-#               and next_block_statements[-1].end_point > statement.end_point:
-#                 return next_block_statements[-1] in statements
-#
-#         # case i < 0, in FOR, IF, WHILE
-#         curr_block_statements = statement_basic_block.statements
-#         if curr_block_statements[-1].statement_type in {StatementType.LOOP, StatementType.BRANCH} \
-#                 and curr_block_statements[-1].start_point < statement.start_point \
-#                 and curr_block_statements[-1].end_point > statement.end_point:
-#             return curr_block_statements[-1] in statements
-#
-#     return True
+def get_continuous_range_extensions(
+        source_code: str,
+        line_range: Tuple[int, int],
+        lang: Lang) -> Set[ProgramSlice]:
+    """
+    API to generate all extensions based on provided line range.
+    :param source_code: source code that should be decomposed.
+    :param line_range: range of line numbers in source code.
+    :param lang: the source code Lang.
+    :return: set of the ProgramSlices.
+    """
+    manager = ProgramGraphsManager(source_code, lang)
+    block_statements = manager.get_statements_in_range(
+        Point(line_range[0], 0),
+        Point(line_range[1], 10000))
+    return __get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
 def __get_block_extensions(
@@ -122,26 +105,13 @@ def __get_block_extensions(
         if extension_program_slice not in result:
             if not __filter_valid(full_extension, manager, original_statements=block_statements):
                 continue
-            if not __full_control_construction(full_extension, manager):
-                continue
             result.add(extension_program_slice)
-    if __filter_valid(block_statements, manager) and __full_control_construction(block_statements, manager):
+    if __filter_valid(block_statements, manager):
         block_slice = ProgramSlice(
             source_lines,
             context=manager if include_noneffective else None).from_statements(block_statements)
         result.add(block_slice)
     return result
-
-
-def __get_continuous_range_extensions(
-        source_code: str,
-        line_range: Tuple[int, int],
-        lang: Lang) -> Set[ProgramSlice]:
-    manager = ProgramGraphsManager(source_code, lang)
-    block_statements = manager.get_statements_in_range(
-        Point(line_range[0], 0),
-        Point(line_range[1], 10000))
-    return __get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
 def __get_incoming_variables(
@@ -337,7 +307,6 @@ def __filter_anti_dependence(
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
     ddg = manager.data_dependence_graph
-    cfg = manager.control_dependence_graph
     for statement in new_statements:
         if statement.statement_type == StatementType.FUNCTION:
             continue
@@ -364,8 +333,6 @@ def __filter_control_dependence(
             if control_successor not in new_statements.union(original_statements):
                 return False
         for control_predecessor in cdg.predecessors(statement):
-            #if control_predecessor.statement_type == StatementType.FUNCTION:
-            #    missing_cdg_parents.append(control_successor)
             if control_predecessor not in new_statements.union(original_statements):
                 missing_cdg_parents.add(control_predecessor)
     missing_cdg_parents.update(reduce(
@@ -392,8 +359,6 @@ def __filter_valid(
     else:
         new_statements = slice_candidate
         original_statements = slice_candidate
-    #new_statements = set(filter(lambda x: x.statement_type != StatementType.FUNCTION, new_statements))
-    #original_statements = set(filter(lambda x: x.statement_type != StatementType.FUNCTION, original_statements))
     if not __filter_anti_dependence(new_statements, original_statements, manager):
         return False
     if not __filter_more_than_one_outgoing(slice_candidate, manager):

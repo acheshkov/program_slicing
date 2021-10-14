@@ -10,7 +10,6 @@ import unittest
 from program_slicing.decomposition.block.extension import slicing
 from program_slicing.decomposition.block.extension.slicing import get_extended_block_slices_ordered, \
     get_extended_block_slices
-from program_slicing.decomposition.block.slicing import get_block_slices
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import Lang
@@ -726,7 +725,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         code = """
         public void methodEx() {
             for (int i = 0; i < 10; i++) {
-                do1(i);  
+                do1(i);
             }
         }
         """
@@ -746,7 +745,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         public void methodEx() {
             int i = 1;
             while (i < 10) {
-                do1(i);  
+                do1(i);
                 i++;
             }
         }
