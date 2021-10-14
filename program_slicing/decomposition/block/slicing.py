@@ -105,7 +105,7 @@ def __full_control_construction(statements: Set[Statement], manager: ProgramGrap
         scope_statement = manager.get_scope_statement(statement)
         if scope_statement is None:
             continue
-        if scope_statement.statement_type in {StatementType.LOOP, StatementType.BRANCH} and \
+        if scope_statement.statement_type in {StatementType.LOOP, StatementType.BRANCH, StatementType.GOTO} and \
                 scope_statement not in statements:
             return False
     return True

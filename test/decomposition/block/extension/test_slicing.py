@@ -735,7 +735,6 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_ranges.append(_range)
         expected_extension_ranges = [[(2, 4)], [(3, 3)]]
-        print([x.ranges_compact for x in ext_blocks])
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_ranges))
@@ -756,6 +755,35 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_ranges.append(_range)
         expected_extension_ranges = [[(2, 2)], [(4, 4)], [(5, 5)], [(4, 5)], [(3, 6)], [(2, 6)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_ranges))
+
+    def test_return(self):
+        code = """
+        public int methodEx() {
+            int i = 1;
+            while (i < 10) {
+                do1(i);
+                i++;
+            }
+            return i;
+        }
+        """
+        ext_blocks = get_extended_block_slices(code, Lang.JAVA)
+        result_ranges = []
+        for ext in ext_blocks:
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_ranges.append(_range)
+        expected_extension_ranges = [[(2, 2)],
+                                     [(4, 4)],
+                                     [(5, 5)],
+                                     [(4, 5)],
+                                     [(3, 6)],
+                                     [(2, 6)],
+                                     [(3, 7)],
+                                     [(2, 7)],
+                                     [(7, 7)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_ranges))
