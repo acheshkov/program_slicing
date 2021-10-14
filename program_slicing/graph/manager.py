@@ -339,21 +339,18 @@ class ProgramGraphsManager:
             (end_point is None or end_point >= statements[idx].end_point)
         )
 
-    def get_exit_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
+    def get_exit_statements(self, statements: Set[Statement]) -> Set[Statement]:
         """
         Get Statements that are Flow Dependence children of the given statements but not one of them.
         :param statements: set of Statements for which exit Statements should to be obtained.
         :return: set of exit Statements (may have not only EXIT type).
         """
-        start_point = min(statement.start_point for statement in statements)
-        end_point = max(statement.end_point for statement in statements)
-        exit_statements = set()
+        flow_statements = set()
         for statement in statements:
             if statement not in self.control_dependence_graph.control_flow:
                 continue
-            for flow_statement in self.control_dependence_graph.control_flow[statement]:
-                if flow_statement.start_point < start_point or flow_statement.end_point > end_point:
-                    exit_statements.add(flow_statement)
+            flow_statements.update(self.control_dependence_graph.control_flow[statement])
+        exit_statements = {flow_statement for flow_statement in flow_statements if flow_statement not in statements}
         return exit_statements
 
     def get_affecting_statements(self, statements: Set[Statement]) -> Set[Statement]:

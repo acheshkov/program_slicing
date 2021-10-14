@@ -377,6 +377,8 @@ class SlicePredicate:
                 if variable and variable.name != statement.name:
                     continue
                 scope = context.get_scope_statement(statement)
+                if scope is None:
+                    return self.__has_returnable_variable
                 if (scope.statement_type == StatementType.SCOPE or scope.statement_type == StatementType.FUNCTION) and \
                         scope.start_point <= start_point and scope.end_point >= end_point:
                     return self.__has_returnable_variable
