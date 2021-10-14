@@ -11,16 +11,16 @@ from program_slicing.graph.point import Point
 
 
 class StatementType(Enum):
-    FUNCTION = "FUNCTION"
-    VARIABLE = "VARIABLE"
+    FUNCTION = "FUNCTION_DECLARATION"
+    VARIABLE = "VARIABLE_DECLARATION"
     ASSIGNMENT = "ASSIGNMENT"
-    CALL = "CALL"
+    CALL = "FUNCTION_CALL"
     SCOPE = "SCOPE"
     BRANCH = "BRANCH"
     LOOP = "LOOP"
-    GOTO = "GOTO"
+    GOTO = "BREAK_CONTINUE_ELSE_RETURN_GOTO"
     UNKNOWN = "UNKNOWN"
-    EXIT = "EXIT"
+    EXIT = "FUNCTION_EXIT"
 
 
 VariableName = str
@@ -71,7 +71,7 @@ class Statement:
             "{name}" \
             "{affected_by}" \
             "position in code: {start_point} - {end_point}".format(
-                statement_type=self.__statement_type.value,
+                statement_type=self.__statement_type.name,
                 ast_node_type=self.__ast_node_type,
                 name=short_name,
                 affected_by=affected_by,

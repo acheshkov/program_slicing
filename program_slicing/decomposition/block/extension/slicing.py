@@ -52,7 +52,7 @@ def get_extended_block_slices(
             include_noneffective=include_noneffective,
             may_cause_code_duplication=True,
             unite_statements_into_groups=False):
-        raw_block_statements = raw_block.statements
+        raw_block_statements = set(filter(lambda x: x.statement_type != StatementType.EXIT, raw_block.statements))
         for extended_block in __get_block_extensions(
                 raw_block_statements,
                 manager,
@@ -65,6 +65,24 @@ def get_extended_block_slices(
 
 def get_extended_block_slices_ordered(code_ex: str, slice_to_expand: Tuple[int, int]) -> Set[ProgramSlice]:
     raise NotImplementedError("ordering not implemented yet")
+
+
+def get_continuous_range_extensions(
+        source_code: str,
+        line_range: Tuple[int, int],
+        lang: Lang) -> Set[ProgramSlice]:
+    """
+    API to generate all extensions based on provided line range.
+    :param source_code: source code that should be decomposed.
+    :param line_range: range of line numbers in source code.
+    :param lang: the source code Lang.
+    :return: set of the ProgramSlices.
+    """
+    manager = ProgramGraphsManager(source_code, lang)
+    block_statements = manager.get_statements_in_range(
+        Point(line_range[0], 0),
+        Point(line_range[1], 10000))
+    return __get_block_extensions(block_statements, manager, source_code.split("\n"))
 
 
 def __get_block_extensions(
@@ -85,9 +103,14 @@ def __get_block_extensions(
             source_lines,
             context=manager if include_noneffective else None).from_statements(full_extension)
         if extension_program_slice not in result:
-            if __filter_valid(full_extension, block_statements, manager):
-                result.add(extension_program_slice)
-    if __filter_valid(block_statements, block_statements, manager):
+            if len(manager.get_exit_statements(full_extension)) > 1:
+                continue
+            if not __filter_valid(full_extension, manager, original_statements=block_statements):
+                continue
+            if not __full_control_construction(full_extension, manager):
+                continue
+            result.add(extension_program_slice)
+    if __filter_valid(block_statements, manager) and __full_control_construction(block_statements, manager) :
         block_slice = ProgramSlice(
             source_lines,
             context=manager if include_noneffective else None).from_statements(block_statements)
@@ -95,15 +118,15 @@ def __get_block_extensions(
     return result
 
 
-def __get_continuous_range_extensions(
-        source_code: str,
-        line_range: Tuple[int, int],
-        lang: Lang) -> Set[ProgramSlice]:
-    manager = ProgramGraphsManager(source_code, lang)
-    block_statements = manager.get_statements_in_range(
-        Point(line_range[0], 0),
-        Point(line_range[1], 10000))
-    return __get_block_extensions(block_statements, manager, source_code.split("\n"))
+def __full_control_construction(statements: Set[Statement], manager: ProgramGraphsManager) -> bool:
+    for statement in statements:
+        scope_statement = manager.get_scope_statement(statement)
+        if scope_statement is None:
+            continue
+        if scope_statement.statement_type in {StatementType.LOOP, StatementType.BRANCH, StatementType.GOTO} and \
+                scope_statement not in statements:
+            return False
+    return True
 
 
 def __get_incoming_variables(
@@ -246,7 +269,7 @@ def __compute_forward_slice_recursive(
                 continue
             if recursion:
                 forward_slice.add(data_successor)
-                forward_slice |= set(__obtain_extension(manager, data_successor))
+                forward_slice.update(set(__obtain_extension(manager, data_successor)))
                 __compute_forward_slice_recursive(data_successor, forward_slice, manager, recursion)
             else:
                 continue
@@ -279,12 +302,12 @@ def __extend_block_singleton(
         if var_name in incoming_variables:
             variable_use = incoming_variables[var_name]
             backward_slice = __compute_backward_slice(variable_use, var_name, block_statements, manager)
-            new_block |= backward_slice
+            new_block.update(backward_slice)
             del new_incoming_variables[var_name]
         if var_name in outgoing_variables:
             variable_def = outgoing_variables[var_name]
             forward_slice = __compute_forward_slice(variable_def, manager)
-            new_block |= forward_slice
+            new_block.update(forward_slice)
             del new_outgoing_variables[var_name]
         singleton_extensions.append((
             new_block,
@@ -300,10 +323,14 @@ def __filter_anti_dependence(
         manager: ProgramGraphsManager) -> bool:
     ddg = manager.data_dependence_graph
     for statement in new_statements:
+        if statement.statement_type == StatementType.FUNCTION:
+            continue
         for data_successor in ddg.successors(statement):
             if data_successor in original_statements.union(new_statements):
                 continue
-            if __flow_dep_given_data_dep(data_successor, statement):
+            if __flow_dep_given_data_dep(data_successor, statement) and all(
+                    (x.statement_type == StatementType.FUNCTION or data_successor not in ddg.successors(x))
+                    for x in original_statements):
                 return False
     return True
 
@@ -313,16 +340,22 @@ def __filter_control_dependence(
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
     cdg = manager.control_dependence_graph
+    missing_cdg_parents = set()
     for statement in new_statements:
+        if statement.statement_type == StatementType.FUNCTION:
+            continue
         for control_successor in cdg.successors(statement):
             if control_successor not in new_statements.union(original_statements):
                 return False
         for control_predecessor in cdg.predecessors(statement):
-            if control_predecessor.statement_type == StatementType.FUNCTION:
-                continue
             if control_predecessor not in new_statements.union(original_statements):
-                return False
-    return True
+                missing_cdg_parents.add(control_predecessor)
+    missing_cdg_parents.update(reduce(
+        lambda x, y: x.union(set(cdg.predecessors(y))),
+        {x for x in original_statements if x.statement_type != StatementType.FUNCTION},
+        set()))
+    missing_cdg_parents = missing_cdg_parents.difference(original_statements.union(new_statements))
+    return len(missing_cdg_parents) <= 1
 
 
 def __filter_more_than_one_outgoing(
@@ -334,9 +367,13 @@ def __filter_more_than_one_outgoing(
 
 def __filter_valid(
         slice_candidate: Set[Statement],
-        original_statements: Set[Statement],
-        manager: ProgramGraphsManager) -> bool:
-    new_statements = slice_candidate.difference(original_statements)
+        manager: ProgramGraphsManager,
+        original_statements: Set[Statement] = None) -> bool:
+    if original_statements:
+        new_statements = slice_candidate.difference(original_statements)
+    else:
+        new_statements = slice_candidate
+        original_statements = slice_candidate
     if not __filter_anti_dependence(new_statements, original_statements, manager):
         return False
     if not __filter_more_than_one_outgoing(slice_candidate, manager):
