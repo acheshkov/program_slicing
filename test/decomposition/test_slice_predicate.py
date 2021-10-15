@@ -7,6 +7,7 @@ __date__ = '2021/06/07'
 from unittest import TestCase
 from typing import List, Tuple
 
+from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.statement import Statement, StatementType
 from program_slicing.graph.point import Point
 from program_slicing.decomposition.program_slice import ProgramSlice
@@ -133,3 +134,43 @@ class CheckSliceTestCase(TestCase):
                 has_returnable_variable=True
             )
         )
+
+    def test_context(self) -> None:
+        code = """
+        int a = 0;
+        int b = 0;
+        while(a < 10) {
+            if foo(a + b) {
+                return 0;
+            }
+            if (a > 10) {
+                throw new Exception();
+            }
+        }
+        """
+        manager = ProgramGraphsManager(code, parse.Lang.JAVA)
+        program_slice = ProgramSlice(code.split("\n"), context=manager).from_ranges(
+            [
+                (Point(1, 8), Point(1, 18)),
+                (Point(3, 8), Point(6, 13)),
+                (Point(10, 8), Point(10, 9))
+            ]
+        )
+        self.assertFalse(
+            check_slice(
+                program_slice,
+                min_amount_of_exit_statements=1,
+                max_amount_of_exit_statements=1,
+                context=manager))
+        self.assertTrue(
+            check_slice(
+                program_slice,
+                min_amount_of_exit_statements=2,
+                max_amount_of_exit_statements=2,
+                context=manager))
+        self.assertFalse(
+            check_slice(
+                program_slice,
+                min_amount_of_exit_statements=3,
+                max_amount_of_exit_statements=3,
+                context=manager))
