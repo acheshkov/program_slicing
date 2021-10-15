@@ -6,6 +6,8 @@ __date__ = '2021/06/03'
 
 from typing import Set, Optional, Iterable, Tuple
 
+import networkx
+
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import parse
@@ -208,6 +210,11 @@ class SlicePredicate:
             context = None if self.__program_slice is None else self.__program_slice.context
             if context is None:
                 raise ValueError("context has to be specified to check if slice cause code duplication")
+        controlled_statements = set()
+        for statement in self.__statements:
+            controlled_statements.update(networkx.descendants(context.control_dependence_graph, statement))
+        if any(statement not in self.__statements for statement in controlled_statements):
+            return self.__cause_code_duplication
         affecting_statements = context.get_affecting_statements(self.__statements)
         if len(context.get_involved_variables_statements(affecting_statements)) > 1:
             return self.__cause_code_duplication

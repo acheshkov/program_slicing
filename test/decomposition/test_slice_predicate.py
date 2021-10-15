@@ -140,7 +140,7 @@ class CheckSliceTestCase(TestCase):
         int a = 0;
         int b = 0;
         while(a < 10) {
-            if foo(a + b) {
+            if (foo(a + b)) {
                 return 0;
             }
             if (a > 10) {
@@ -152,10 +152,16 @@ class CheckSliceTestCase(TestCase):
         program_slice = ProgramSlice(code.split("\n"), context=manager).from_ranges(
             [
                 (Point(1, 8), Point(1, 18)),
-                (Point(3, 8), Point(6, 13)),
-                (Point(10, 8), Point(10, 9))
+                (Point(3, 8), Point(6, 13))
             ]
         )
+        general_statements = program_slice.general_statements
+        self.assertEqual(7, len(general_statements))
+        [loop] = filter(lambda x: x.statement_type == StatementType.LOOP, manager.control_dependence_graph)
+        scopes = filter(lambda x: x.statement_type == StatementType.SCOPE, manager.control_dependence_graph)
+        program_slice.add_statement(loop)
+        for scope in scopes:
+            program_slice.add_statement(scope)
         self.assertFalse(
             check_slice(
                 program_slice,
@@ -173,4 +179,14 @@ class CheckSliceTestCase(TestCase):
                 program_slice,
                 min_amount_of_exit_statements=3,
                 max_amount_of_exit_statements=3,
+                context=manager))
+        self.assertTrue(
+            check_slice(
+                program_slice,
+                cause_code_duplication=True,
+                context=manager))
+        self.assertFalse(
+            check_slice(
+                program_slice,
+                cause_code_duplication=False,
                 context=manager))
