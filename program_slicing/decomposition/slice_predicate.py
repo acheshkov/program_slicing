@@ -210,15 +210,17 @@ class SlicePredicate:
             context = None if self.__program_slice is None else self.__program_slice.context
             if context is None:
                 raise ValueError("context has to be specified to check if slice cause code duplication")
-        controlled_statements = set()
-        for statement in self.__statements:
-            controlled_statements.update(networkx.descendants(context.control_dependence_graph, statement))
-        if any(statement not in self.__statements for statement in controlled_statements):
-            return self.__cause_code_duplication
         affecting_statements = context.get_affecting_statements(self.__statements)
         if len(context.get_involved_variables_statements(affecting_statements)) > 1:
             return self.__cause_code_duplication
         if self.__contain_redundant_statements(context, self.__statements):
+            return self.__cause_code_duplication
+        controlled_statements = set()
+        for statement in sorted(self.__statements, key=lambda x: (x.start_point, -x.end_point)):
+            if statement in controlled_statements:
+                continue
+            controlled_statements.update(networkx.descendants(context.control_dependence_graph, statement))
+        if any(statement not in self.__statements for statement in controlled_statements):
             return self.__cause_code_duplication
         return not self.__cause_code_duplication
 
