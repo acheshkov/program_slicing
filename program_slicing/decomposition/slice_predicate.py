@@ -211,7 +211,7 @@ class SlicePredicate:
         affecting_statements = context.get_affecting_statements(self.__statements)
         if len(context.get_involved_variables_statements(affecting_statements)) > 1:
             return self.__cause_code_duplication
-        if context.contain_redundant_statements(self.__statements):
+        if self.__contain_redundant_statements(context, self.__statements):
             return self.__cause_code_duplication
         return not self.__cause_code_duplication
 
@@ -435,6 +435,44 @@ class SlicePredicate:
                 max(s.end_point for s in self.__general_statements)
             )
         return self.__bounds
+
+    def __contain_redundant_statements(self, context: ProgramGraphsManager, statements: Set[Statement]) -> bool:
+        """
+        Check if the given set of Statements contain part of some construction not fully included in the given set.
+        :param context: a ProgramGraphsManager that defines context of the given ProgramSlice.
+        :param statements: set of Statements for which check on redundant Statements presence should to be done.
+        :return: True if the given set contains redundant Statements.
+        """
+        for statement in statements:
+            if statement.ast_node_type == "else" or statement.ast_node_type == "catch_clause":
+                for predecessor in context.control_dependence_graph.predecessors(statement):
+                    if predecessor not in statements:
+                        return True
+            elif statement.ast_node_type == "finally_clause" and \
+                    self.__is_redundant_finally(context, statement, statements):
+                return True
+            elif statement.ast_node_type == "if_statement" and \
+                    self.__is_redundant_if(context, statement, statements):
+                return True
+        return False
+
+    @staticmethod
+    def __is_redundant_finally(context: ProgramGraphsManager, statement: Statement, statements: Set[Statement]) -> bool:
+        finally_block = context.get_basic_block(statement)
+        if finally_block is None:
+            return True
+        for predecessor_block in context.control_flow_graph.predecessors(finally_block):
+            if predecessor_block.statements and predecessor_block.statements[-1] not in statements:
+                return True
+        return False
+
+    @staticmethod
+    def __is_redundant_if(context: ProgramGraphsManager, statement: Statement, statements: Set[Statement]) -> bool:
+        if statement in context.control_dependence_graph.control_flow:
+            for successor in context.control_dependence_graph.control_flow[statement]:
+                if successor.ast_node_type == "else" and successor not in statements:
+                    return True
+        return False
 
     @staticmethod
     def __traverse(root):
