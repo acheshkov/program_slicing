@@ -339,7 +339,7 @@ class ProgramGraphsManager:
             (end_point is None or end_point >= statements[idx].end_point)
         )
 
-    def get_exit_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
+    def get_exit_statements(self, statements: Set[Statement]) -> Set[Statement]:
         """
         Get Statements that are Flow Dependence children of the given statements but not one of them.
         :param statements: set of Statements for which exit Statements should to be obtained.
@@ -348,12 +348,25 @@ class ProgramGraphsManager:
         start_point = min(statement.start_point for statement in statements)
         end_point = max(statement.end_point for statement in statements)
         exit_statements = set()
+        flow_statements = set()
         for statement in statements:
             if statement not in self.control_dependence_graph.control_flow:
                 continue
-            for flow_statement in self.control_dependence_graph.control_flow[statement]:
+            flow_statements.update(self.control_dependence_graph.control_flow[statement])
+        visited = set()
+        while flow_statements:
+            level = set()
+            for flow_statement in flow_statements:
+                if flow_statement in statements:
+                    continue
                 if flow_statement.start_point < start_point or flow_statement.end_point > end_point:
                     exit_statements.add(flow_statement)
+                elif flow_statement.statement_type == StatementType.EXIT:
+                    exit_statements.add(flow_statement)
+                elif flow_statement not in visited and flow_statement in self.control_dependence_graph.control_flow:
+                    level.update(self.control_dependence_graph.control_flow[flow_statement])
+                    visited.add(flow_statement)
+            flow_statements = level
         return exit_statements
 
     def get_affecting_statements(self, statements: Set[Statement]) -> Set[Statement]:
@@ -417,23 +430,6 @@ class ProgramGraphsManager:
                 if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
                     involved_variables.add(ancestor)
         return involved_variables
-
-    def contain_redundant_statements(self, statements: Set[Statement]) -> bool:
-        """
-        Check if the given set of Statements contain part of some construction not fully included in the given set.
-        :param statements: set of Statements for which check on redundant Statements presence should to be done.
-        :return: True if the given set contains redundant Statements.
-        """
-        for statement in statements:
-            if statement.ast_node_type == "else" or statement.ast_node_type == "catch_clause":
-                for predecessor in self.control_dependence_graph.predecessors(statement):
-                    if predecessor not in statements:
-                        return True
-            elif statement.ast_node_type == "finally_clause" and self.__is_redundant_finally(statement, statements):
-                return True
-            elif statement.ast_node_type == "if_statement" and self.__is_redundant_if(statement, statements):
-                return True
-        return False
 
     def __build_basic_blocks(self) -> Dict[Statement, BasicBlock]:
         basic_blocks = {}
@@ -499,22 +495,6 @@ class ProgramGraphsManager:
                     if predecessor not in statements:
                         arg_statements_by_arg_name[predecessor.name].add(statement)
         return arg_statements_by_arg_name
-
-    def __is_redundant_finally(self, statement: Statement, statements: Set[Statement]) -> bool:
-        finally_block = self.get_basic_block(statement)
-        if finally_block is None:
-            return True
-        for predecessor_block in self.control_flow_graph.predecessors(finally_block):
-            if predecessor_block.statements and predecessor_block.statements[-1] not in statements:
-                return True
-        return False
-
-    def __is_redundant_if(self, statement: Statement, statements: Set[Statement]) -> bool:
-        if statement in self.control_dependence_graph.control_flow:
-            for successor in self.control_dependence_graph.control_flow[statement]:
-                if successor.ast_node_type == "else" and successor not in statements:
-                    return True
-        return False
 
     def __bisect_range_left(self, start_point: Point, end_point: Point) -> int:
         searching_range = (start_point, -end_point)

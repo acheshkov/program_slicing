@@ -310,7 +310,7 @@ class ManagerTestCase(TestCase):
         };
         '''
         manager = ProgramGraphsManager(block_without_try, Lang.JAVA)
-        self.assertEqual(5, len(list(manager.scope_statements)))
+        self.assertEqual(6, len(list(manager.scope_statements)))
 
     def test_identify_unique_blocks_with_lambda(self) -> None:
         block_with_lambda = '''

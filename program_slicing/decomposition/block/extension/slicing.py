@@ -50,7 +50,6 @@ def get_extended_block_slices(
             source_lines,
             manager,
             include_noneffective=include_noneffective,
-            may_cause_code_duplication=True,
             unite_statements_into_groups=False):
         raw_block_statements = set(filter(lambda x: x.statement_type != StatementType.EXIT, raw_block.statements))
         for extended_block in __get_block_extensions(

@@ -39,8 +39,10 @@ def main():
                 Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=6,
-                    min_amount_of_statements=5,
+                    min_amount_of_statements=4,
                     max_percentage_of_lines=0.8,
+                    max_amount_of_exit_statements=1,
+                    cause_code_duplication=False,
                     lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )

@@ -21,38 +21,33 @@ def get_variable_slices(
         source_code: str,
         lang: Lang,
         slice_predicate: SlicePredicate = None,
-        include_noneffective: bool = True,
-        may_cause_code_duplication: bool = True) -> Iterator[ProgramSlice]:
+        include_noneffective: bool = True) -> Iterator[ProgramSlice]:
     """
     For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
     :param lang: the source code Lang.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :param include_noneffective: include comments and blank lines to a slice if True.
-    :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
     return get_complete_computation_slices(
         source_code,
         lang,
         slice_predicate=slice_predicate,
-        include_noneffective=include_noneffective,
-        may_cause_code_duplication=may_cause_code_duplication)
+        include_noneffective=include_noneffective)
 
 
 def get_complete_computation_slices(
         source_code: str,
         lang: Lang,
         slice_predicate: SlicePredicate = None,
-        include_noneffective: bool = True,
-        may_cause_code_duplication: bool = True) -> Iterator[ProgramSlice]:
+        include_noneffective: bool = True) -> Iterator[ProgramSlice]:
     """
     For each function and variable in a specified source code generate list of Program Slices.
     :param source_code: source code that should be decomposed.
     :param lang: the source code Lang.
     :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
     :param include_noneffective: include comments and blank lines to a slice if True.
-    :param may_cause_code_duplication: allow to generate slices which extraction will cause code duplication if True.
     :return: generator of the ProgramSlices.
     """
     code_lines = str(source_code).split("\n")
@@ -69,14 +64,16 @@ def get_complete_computation_slices(
             complete_computation_slice = complete_computation_slices.get(variable_basic_block, [])
             if not complete_computation_slice:
                 continue
-            if not may_cause_code_duplication:
-                affecting_statements = manager.get_affecting_statements(complete_computation_slice)
-                if len(manager.get_involved_variables_statements(affecting_statements)) > 1:
+            if slice_predicate is not None:
+                if not slice_predicate.check_statements(
+                        {
+                            statement
+                            for statement in manager.general_statements
+                            if statement in complete_computation_slice
+                        },
+                        statements=complete_computation_slice,
+                        context=manager):
                     continue
-                if manager.contain_redundant_statements(complete_computation_slice):
-                    continue
-            if len(manager.get_exit_statements(complete_computation_slice)) > 1:
-                continue
             program_slice = ProgramSlice(
                 code_lines,
                 context=manager if include_noneffective else None

@@ -253,7 +253,14 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code, Lang.JAVA)
+            for program_slice in get_block_slices(
+                code,
+                Lang.JAVA,
+                slice_predicate=SlicePredicate(
+                    max_amount_of_exit_statements=1,
+                    cause_code_duplication=False
+                )
+            )
         }
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the current scope which is depended on
@@ -281,7 +288,14 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(code_with_usage_inside_inner_scope, Lang.JAVA)
+            for program_slice in get_block_slices(
+                code_with_usage_inside_inner_scope,
+                Lang.JAVA,
+                slice_predicate=SlicePredicate(
+                    max_amount_of_exit_statements=1,
+                    cause_code_duplication=False
+                )
+            )
         }
         # ignore opportunities where we have 2 var declarations
         # and there are lines in the inner scope which is depended on
@@ -314,6 +328,8 @@ class BlockSlicingTestCase(TestCase):
                 Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=2,
+                    max_amount_of_exit_statements=1,
+                    cause_code_duplication=False,
                     lang_to_check_parsing=Lang.JAVA,
                     lines_are_full=True
                 )
@@ -377,7 +393,14 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(diff_scope, Lang.JAVA)
+            for program_slice in get_block_slices(
+                diff_scope,
+                Lang.JAVA,
+                slice_predicate=SlicePredicate(
+                    max_amount_of_exit_statements=1,
+                    cause_code_duplication=False
+                )
+            )
         }
         self.assertTrue((3, 4) not in found_opportunities)
         self.assertTrue((3, 5) not in found_opportunities)
@@ -399,7 +422,14 @@ class BlockSlicingTestCase(TestCase):
         '''
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
-            for program_slice in get_block_slices(diff_scope, Lang.JAVA)
+            for program_slice in get_block_slices(
+                diff_scope,
+                Lang.JAVA,
+                slice_predicate=SlicePredicate(
+                    max_amount_of_exit_statements=1,
+                    cause_code_duplication=False
+                )
+            )
         }
         self.assertTrue((3, 4) not in found_opportunities)
         self.assertTrue((3, 5) not in found_opportunities)
@@ -417,7 +447,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -434,7 +464,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -452,7 +482,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -471,7 +501,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -490,7 +520,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
@@ -524,7 +554,7 @@ class BlockSlicingTestCase(TestCase):
         slice_predicate = SlicePredicate(
             lang_to_check_parsing=Lang.JAVA,
             lines_are_full=True,
-            is_whole_scope=False
+            is_whole_scope=True
         )
         found_opportunities = {
             (program_slice.ranges[0][0].line_number, program_slice.ranges[-1][1].line_number)
