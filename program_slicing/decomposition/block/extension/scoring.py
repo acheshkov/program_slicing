@@ -70,7 +70,7 @@ def nesting_depth_score_hh(
 def nesting_area_score_hh(
         extraction: ProgramSlice,
         statement_to_depth: Dict[Statement, int] = None,
-        method_statements: Set[Statement] = None) -> int:
+        method_statements: Set[Statement] = None) -> float:
     """
     A_reduction = min (Am − Ac,Am − Ar),
     Am - nesting area of original method, A_c - of extraction, A_r - of remainder
@@ -78,7 +78,9 @@ def nesting_area_score_hh(
     D_m - depth of orig method
     """
     manager = extraction.context
-    if statement_to_depth is None or method_statements is None:
+    if statement_to_depth is None:
+        statement_to_depth = dict()
+    if method_statements is None:
         extraction_general_statements = sorted(
             extraction.general_statements,
             key=lambda x: (x.start_point, -x.end_point))
@@ -90,7 +92,6 @@ def nesting_area_score_hh(
             for statement in manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
             if statement in manager.general_statements
         ]
-        statement_to_depth = dict()
 
     area_method = sum([
         __nesting_depth_recursive(statement, manager, statement_to_depth)
