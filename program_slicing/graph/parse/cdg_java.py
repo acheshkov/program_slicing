@@ -25,6 +25,34 @@ def __handle_statement(
         exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     siblings = [statement]
+    exit_points = [statement]
+    return siblings, exit_points
+
+
+def __handle_expression(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    siblings = [statement]
+    exit_points = [statement]
+    return siblings, exit_points
+
+
+def __handle_block(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    siblings = [statement]
     entry_points = [statement]
     name = ast.child_by_field_name("name")
     for child in ast.children:
@@ -52,7 +80,7 @@ def __handle_variable(
         exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     variable_names.add(tree_sitter_parsers.node_name(source_code_bytes, ast))
-    return __handle_statement(
+    return __handle_expression(
         statement,
         source_code_bytes,
         ast,
@@ -710,13 +738,13 @@ statement_type_and_handler_map = {
     "update_expression":
         (StatementType.ASSIGNMENT, __handle_update),
     "method_invocation":
-        (StatementType.CALL, __handle_statement),
+        (StatementType.CALL, __handle_expression),
     "block":
-        (StatementType.SCOPE, __handle_statement),
+        (StatementType.SCOPE, __handle_block),
     "constructor_body":
-        (StatementType.SCOPE, __handle_statement),
+        (StatementType.SCOPE, __handle_block),
     "class_body":
-        (StatementType.SCOPE, __handle_statement),
+        (StatementType.SCOPE, __handle_block),
     "continue_statement":
         (StatementType.GOTO, __handle_continue),
     "break_statement":
@@ -867,7 +895,7 @@ def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlD
 
 
 def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callable]:
-    return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_statement))
+    return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_block))
 
 
 def __parse_position_range(ast: Node) -> Tuple[Point, Point]:

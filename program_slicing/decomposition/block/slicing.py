@@ -5,7 +5,7 @@ __maintainer__ = 'lyriccoder'
 __date__ = '2021/05/20'
 
 from itertools import combinations_with_replacement
-from typing import Iterator, List, Tuple, Set
+from typing import Iterator, List, Tuple
 
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.decomposition.slice_predicate import SlicePredicate

@@ -109,7 +109,7 @@ def __get_block_extensions(
             if not __full_control_construction(full_extension, manager):
                 continue
             result.add(extension_program_slice)
-    if __filter_valid(block_statements, manager) and __full_control_construction(block_statements, manager) :
+    if __filter_valid(block_statements, manager) and __full_control_construction(block_statements, manager):
         block_slice = ProgramSlice(
             source_lines,
             context=manager if include_noneffective else None).from_statements(block_statements)

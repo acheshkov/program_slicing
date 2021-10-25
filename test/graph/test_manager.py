@@ -310,14 +310,14 @@ class ManagerTestCase(TestCase):
         };
         '''
         manager = ProgramGraphsManager(block_without_try, Lang.JAVA)
-        self.assertEqual(6, len(list(manager.scope_statements)))
+        self.assertEqual(1, len(list(manager.scope_statements)))
 
     def test_identify_unique_blocks_with_lambda(self) -> None:
         block_with_lambda = '''
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
         manager = ProgramGraphsManager(block_with_lambda, Lang.JAVA)
-        self.assertEqual(3, len(list(manager.scope_statements)))
+        self.assertEqual(1, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_break(self) -> None:
         while_block = '''

@@ -95,7 +95,7 @@ class CDGTestCase(TestCase):
         ])
         ddg.add_node("exit_point")
         ddg.add_node("loop body")
-        ddg.add_nodes_from(range(36))
+        ddg.add_nodes_from(range(19))
         return ddg
 
     @staticmethod
@@ -121,11 +121,11 @@ class CDGTestCase(TestCase):
         pdg.add_edge("loop", "if (i > 6)")
         pdg.add_edge("loop", "i += 1")
         pdg.add_edge("loop", "i from i += 1")
-        pdg.add_nodes_from(range(36, 40))
-        pdg.add_edges_from([(0, i) for i in range(1, 8)])
-        pdg.add_edges_from([("loop", i) for i in range(8, 11)])
-        pdg.add_edges_from([("if (i < 4)", i) for i in range(11, 20)])
-        pdg.add_edges_from([("if (i > 6)", i) for i in range(20, 37)])
+        pdg.add_nodes_from(range(20, 23))
+        pdg.add_edges_from([(0, i) for i in range(1, 6)])
+        pdg.add_edges_from([("loop", i) for i in range(6, 9)])
+        pdg.add_edges_from([("if (i < 4)", i) for i in range(9, 13)])
+        pdg.add_edges_from([("if (i > 6)", i) for i in range(13, 20)])
         return pdg
 
     @staticmethod
@@ -171,10 +171,9 @@ class CDGTestCase(TestCase):
         ddg.add_edges_from([
             ("Exception e", "e.printStackTrace();"),
             ("Exception e", "e.printStackTrace()"),
-            ("Exception e", "e from e.printStackTrace()"),
             ("MyException e", "catch (MyException e)"),
         ])
-        ddg.add_nodes_from(range(27))
+        ddg.add_nodes_from(range(17))
         return ddg
 
     @staticmethod
@@ -214,8 +213,6 @@ class CDGTestCase(TestCase):
         cfg.add_edge("1_3_beginning", "3_10_block")
         cfg.add_edge("1_3_beginning", "11_11_ending")
         cfg.add_edge("3_10_block", "11_11_ending")
-        cfg.add_node("5_6_block")
-        cfg.add_node("8_9_block")
         return cfg
 
     @staticmethod
@@ -224,17 +221,11 @@ class CDGTestCase(TestCase):
         ddg.add_edges_from([
             ("flipNode", "context...;"),
             ("flipNode", "context"),
-            ("flipNode", "(flipNode.getIndex(), flipNode.getDepth())"),
-            ("flipNode", "flipNode.getIndex()"),
-            ("flipNode", "flipNode.getDepth()"),
-            ("flipNode", "flipNode.getIndex"),
-            ("flipNode", "flipNode.getDepth"),
             ("flipNode", "if (flipNode.isExclusive())"),
             ("flipNode", "(flipNode.isExclusive())"),
-            ("flipNode", "flipNode.isExclusive()"),
-            ("flipNode", "flipNode.isExclusive")
+            ("flipNode", "flipNode.isExclusive()")
         ])
-        ddg.add_nodes_from(range(30))
+        ddg.add_nodes_from(range(7))
         return ddg
 
     @staticmethod
@@ -309,15 +300,11 @@ class CDGTestCase(TestCase):
             ("int a = 2", "9_9_for"),
             ("int a = 2", "foo(a);"),
             ("int a = 2", "foo(a)"),
-            ("int a = 2", "(a) from foo(a)"),
-            ("int a = 2", "a from foo(a)"),
             ("int a = 22", "a < 10 * n"),
             ("int a = 22", "a from a < 10 * n"),
             ("int a = 22", "12_12_for"),
             ("int a = 22", "boo(a);"),
             ("int a = 22", "boo(a)"),
-            ("int a = 22", "(a) from boo(a)"),
-            ("int a = 22", "a from boo(a)"),
             ("int a = 22", "a++"),
             ("int a = 22", "a from a++"),
             ("a++", "a < 10 * n"),
@@ -325,16 +312,13 @@ class CDGTestCase(TestCase):
             ("a++", "12_12_for"),
             ("a++", "boo(a);"),
             ("a++", "boo(a)"),
-            ("a++", "(a) from boo(a)"),
-            ("a++", "a from boo(a)"),
             ("a++", "a++"),
             ("a++", "a from a++"),
             ("Exception a", "catch"),
             ("Exception a", "a.printStackTrace();"),
-            ("Exception a", "a.printStackTrace()"),
-            ("Exception a", "a from a.printStackTrace()")
+            ("Exception a", "a.printStackTrace()")
         ])
-        ddg.add_nodes_from(range(42))
+        ddg.add_nodes_from(range(34))
         return ddg
 
     @staticmethod
@@ -364,6 +348,11 @@ class CDGTestCase(TestCase):
             successors = [str(successor) for successor in graph.successors(node)]
             if successors:
                 result.append(str(node) + ":\n\t" + "\n\t".join(successors))
+        # result.append("")
+        # for node in graph:
+        #     successors = [str(successor) for successor in graph.successors(node)]
+        #     if not successors:
+        #         result.append(str(node))
         return "\n".join(result)
 
     def assertIsomorphic(self, graph1, graph2) -> None:
