@@ -401,13 +401,16 @@ class ProgramGraphsManager:
         :return: set of changed variables (Statements with VARIABLE type).
         """
         changed_variables = set()
+        ddg = self.data_dependence_graph
         for statement in statements:
+            if statement not in ddg:
+                continue
             if statement.statement_type == StatementType.VARIABLE:
                 changed_variables.add(statement)
             if statement.statement_type == StatementType.ASSIGNMENT:
                 if statement not in self.data_dependence_graph:
                     continue
-                for ancestor in networkx.ancestors(self.data_dependence_graph, statement):
+                for ancestor in networkx.ancestors(ddg, statement):
                     if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
                         changed_variables.add(ancestor)
         return changed_variables
@@ -427,7 +430,7 @@ class ProgramGraphsManager:
                 involved_variables.add(statement)
                 continue
             for ancestor in networkx.ancestors(ddg, statement):
-                if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
+                if ancestor.statement_type == StatementType.VARIABLE and ancestor.name in statement.affected_by:
                     involved_variables.add(ancestor)
         return involved_variables
 

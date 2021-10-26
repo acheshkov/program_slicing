@@ -211,7 +211,7 @@ class SlicePredicate:
             if context is None:
                 raise ValueError("context has to be specified to check if slice cause code duplication")
         affecting_statements = context.get_affecting_statements(self.__statements)
-        if len(context.get_involved_variables_statements(affecting_statements)) > 1:
+        if len(context.get_changed_variables_statements(affecting_statements)) > 1:
             return self.__cause_code_duplication
         if self.__contain_redundant_statements(context, self.__statements):
             return self.__cause_code_duplication
