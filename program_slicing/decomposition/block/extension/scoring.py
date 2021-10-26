@@ -1,7 +1,12 @@
+__licence__ = 'MIT'
+__author__ = 'KatGarmash'
+__credits__ = ['KatGarmash', 'kuyaki']
+__maintainer__ = 'KatGarmash'
+__date__ = '2021/10/18'
+
+from collections import defaultdict
 from functools import reduce
 from typing import List, Set, Dict
-
-import networkx
 
 from program_slicing.decomposition.block.extension.slicing import __get_incoming_variables, __get_outgoing_variables
 from program_slicing.decomposition.program_slice import ProgramSlice
@@ -23,7 +28,7 @@ def length_score_hh(
     :return: score value
     """
     length_extraction = reduce(lambda x, y: x + y[1].line_number - y[0].line_number + 1, extraction.ranges_compact, 0)
-    length_remainder = len(source_lines) - length_extraction
+    length_remainder = len(source_lines) - length_extraction - 1
     return min(line_weight * min(length_extraction, length_remainder), max_score_length)
 
 
@@ -38,7 +43,7 @@ def nesting_depth_score_hh(
     :return:
     """
     manager = extraction.context
-    if statement_to_depth is None or method_statements is None:
+    if method_statements is None:
         extraction_general_statements = sorted(
             extraction.general_statements,
             key=lambda x: (x.start_point, -x.end_point))
@@ -50,15 +55,20 @@ def nesting_depth_score_hh(
             for statement in manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
             if statement in manager.general_statements
         ]
+    if statement_to_depth is None:
         statement_to_depth = dict()
     max_depth_method = max([
         __nesting_depth_recursive(statement, manager, statement_to_depth)
         for statement in method_statements
     ])
-    max_depth_extraction = max([
+    min_depth_extraction = min([
         __nesting_depth_recursive(statement, manager, statement_to_depth)
         for statement in extraction.general_statements
     ])
+    max_depth_extraction = max([
+        __nesting_depth_recursive(statement, manager, statement_to_depth)
+        for statement in extraction.general_statements
+    ]) - min_depth_extraction
     remainder_statements = set(method_statements).difference(set(extraction.general_statements))
     max_depth_remainder = max([
         __nesting_depth_recursive(statement, manager, statement_to_depth)
@@ -93,28 +103,44 @@ def nesting_area_score_hh(
             if statement in manager.general_statements
         ]
 
+    general_statements_by_line = defaultdict(lambda: set())
+    for statement in method_statements:
+        if statement.statement_type == StatementType.SCOPE:
+            continue
+        general_statements_by_line[statement.start_point.line_number].add(statement)
+    real_statements_all = set()
+    for k, statements in general_statements_by_line.items():
+        _widest = list(sorted(
+            statements,
+            key=lambda x: (x.start_point.column_number, -x.end_point.line_number, -x.end_point.column_number)))[0]
+        real_statements_all.add(_widest)
+    real_statements_extraction = real_statements_all.intersection(extraction.general_statements)
+    real_statements_remainder = real_statements_all.difference(real_statements_extraction)
+
     area_method = sum([
         __nesting_depth_recursive(statement, manager, statement_to_depth)
-        for statement in method_statements
+        for statement in real_statements_all
+    ])
+    min_depth_extraction = min([
+        __nesting_depth_recursive(statement, manager, statement_to_depth)
+        for statement in real_statements_extraction
     ])
     area_extraction = sum([
-        __nesting_depth_recursive(statement, manager, statement_to_depth)
-        for statement in extraction.general_statements
+        __nesting_depth_recursive(statement, manager, statement_to_depth) - min_depth_extraction
+        for statement in real_statements_extraction
     ])
-    remainder_statements = set(method_statements).difference(set(extraction.general_statements))
     area_remainder = sum([
         __nesting_depth_recursive(statement, manager, statement_to_depth)
-        for statement in remainder_statements
-    ])
+        for statement in real_statements_remainder
+    ]) + min_depth_extraction
     area_reduction = min(area_method - area_remainder, area_method - area_extraction)
-    max_depth_orig = max(statement_to_depth.values())
+    max_depth_orig = max(
+        [__nesting_depth_recursive(statement, manager, statement_to_depth) for statement in real_statements_all])
     return 2 * max_depth_orig * (area_reduction / area_method)
 
 
 def parameters_score_hh(
         extraction: ProgramSlice,
-        source_code: str,
-        lang: Lang,
         max_score: int = 4) -> int:
     """
     Parameter scoring function from Haas&Hummel 2016:
@@ -123,18 +149,46 @@ def parameters_score_hh(
     MAX_scoreParam = 4 (from paper)
     :return:
     """
-    manager = ProgramGraphsManager(source_code, lang)
+    manager = extraction.context
     extraction_statements = extraction.statements
-    n_in = __get_incoming_variables(extraction_statements, manager)
-    n_out = __get_outgoing_variables(extraction_statements, manager)
+    n_in = len(__get_incoming_variables(extraction_statements, manager))
+    n_out = len(__get_outgoing_variables(extraction_statements, manager))
     return max_score - n_out - n_in
 
 
-def aggregate_score_hh():
-    pass
+def aggregate_score_hh(
+        source_code: str,
+        extraction: ProgramSlice,
+        nesting_area_hh: int = None,
+        nesting_depth_hh: float = None,
+        length_hh: float = None,
+        params_hh: int = None):
+    if nesting_area_hh is None or nesting_depth_hh is None:
+        manager = extraction.context
+        statement_to_depth = dict()
+        extraction_general_statements = sorted(
+            extraction.general_statements,
+            key=lambda x: (x.start_point, -x.end_point))
+        if not extraction_general_statements:
+            raise ValueError("Couldn't find general statements in extraction slice")
+        method_statement = manager.get_function_statement(extraction_general_statements[0])
+        method_statements = [
+            statement
+            for statement in
+            manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
+            if statement in manager.general_statements
+        ]
+        nesting_depth_hh = nesting_depth_score_hh(extraction, statement_to_depth, method_statements)
+        nesting_area_hh = nesting_area_score_hh(extraction, statement_to_depth, method_statements)
+    if length_hh is None:
+        length_hh = length_score_hh(source_code.split("\n"), extraction)
+    if params_hh is None:
+        params_hh = parameters_score_hh(extraction)
+    return nesting_depth_hh + nesting_area_hh + length_hh + params_hh
 
 
-def score_silva_vars():
+def score_silva_vars(extraction: ProgramSlice):
+    #def_and_ref_vars =
     pass
 
 
