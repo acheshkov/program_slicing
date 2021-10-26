@@ -6,12 +6,11 @@ __date__ = '2021/10/18'
 
 from collections import defaultdict
 from functools import reduce
-from typing import List, Set, Dict
+from typing import List, Set, Dict, Iterable
 
 from program_slicing.decomposition.block.extension.slicing import __get_incoming_variables, __get_outgoing_variables
 from program_slicing.decomposition.program_slice import ProgramSlice
 from program_slicing.graph.manager import ProgramGraphsManager
-from program_slicing.graph.parse import Lang
 from program_slicing.graph.statement import Statement, StatementType
 
 
@@ -187,9 +186,40 @@ def aggregate_score_hh(
     return nesting_depth_hh + nesting_area_hh + length_hh + params_hh
 
 
-def score_silva_vars(extraction: ProgramSlice):
-    #def_and_ref_vars =
-    pass
+def score_silva_vars(extraction: ProgramSlice) -> float:
+    manager = extraction.context
+    extraction_general_statements = sorted(
+        extraction.general_statements,
+        key=lambda x: (x.start_point, -x.end_point))
+    if not extraction_general_statements:
+        raise ValueError("Couldn't find general statements in extraction slice")
+    method_statement = manager.get_function_statement(extraction_general_statements[0])
+    method_statements = [
+        statement
+        for statement in
+        manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
+        if statement in manager.general_statements
+    ]
+    extracted_statements = set(extraction_general_statements)
+    remained_statements = {statement for statement in method_statements if statement not in extracted_statements}
+    return __distance_silva(manager, extracted_statements, remained_statements)
+
+
+def __distance_silva(
+        manager: ProgramGraphsManager,
+        extracted: Iterable[Statement],
+        remained: Iterable[Statement]) -> float:
+    involved_extracted = manager.get_involved_variables_statements(extracted)
+    involved_remained = manager.get_involved_variables_statements(remained)
+    involved_intersected = involved_extracted.intersection(involved_remained)
+    involved_only_extracted = involved_extracted.difference(involved_intersected)
+    involved_only_remained = involved_remained.difference(involved_intersected)
+    i = len(involved_intersected)
+    e = len(involved_only_extracted)
+    r = len(involved_only_remained)
+    if i == 0 and (e == 0 or r == 0):
+        return 1
+    return 1 - (i / (i + e) + i / (i + r)) / 2
 
 
 def __nesting_depth_recursive(statement: Statement, manager: ProgramGraphsManager, result: Dict[Statement, int]) -> int:
@@ -210,11 +240,3 @@ def __nesting_depth_recursive(statement: Statement, manager: ProgramGraphsManage
         result[statement] = -1
         return -1
     return max(parents_d) + 1
-
-
-def __distance_silva(dependency_set_1: Set, dependency_set_2: Set) -> float:
-    set_intersection = dependency_set_1.intersection(dependency_set_2)
-    diff_1 = dependency_set_1.difference(dependency_set_2)
-    diff_2 = dependency_set_2.difference(dependency_set_1)
-    return 1 - 0.5 * (len(set_intersection) / (len(set_intersection) + len(diff_1)) +\
-                      len(set_intersection) / (len(set_intersection) + len(diff_2)))

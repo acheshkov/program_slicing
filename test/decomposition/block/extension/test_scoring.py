@@ -32,7 +32,7 @@ class SliceScoringTestCase(unittest.TestCase):
         """
         manager = ProgramGraphsManager(code, Lang.JAVA)
         slice_statements = manager.get_statements_in_range(Point(4, 0), Point(6, 10000))
-        extraction = ProgramSlice(code, context=manager).from_statements(slice_statements)
+        extraction = ProgramSlice(code.split("\n"), context=manager).from_statements(slice_statements)
         length_score = length_score_hh(code.split("\n")[1:], extraction)
         self.assertEqual(0.3, np.around(length_score, decimals=1))
         method_statements = None
@@ -45,9 +45,9 @@ class SliceScoringTestCase(unittest.TestCase):
         self.assertEqual(3, parameters_score)
         aggregate_score = aggregate_score_hh(code, extraction)
         self.assertEqual(6.3, aggregate_score)
-        #TODO: silva
+        # TODO: silva
 
-    def test_all_scoring_functions(self) -> None:
+    def test_all_scoring_functions_double_loop(self) -> None:
         code = """
         public void methodEx() {
             while (cond()) {
@@ -64,7 +64,7 @@ class SliceScoringTestCase(unittest.TestCase):
         """
         manager = ProgramGraphsManager(code, Lang.JAVA)
         slice_statements = manager.get_statements_in_range(Point(8, 0), Point(11, 10000))
-        extraction = ProgramSlice(code, context=manager).from_statements(slice_statements)
+        extraction = ProgramSlice(code.split("\n"), context=manager).from_statements(slice_statements)
         length_score = length_score_hh(code.split("\n")[1:], extraction)
         self.assertEqual(0.4, np.around(length_score, decimals=1))
         method_statements = None
@@ -72,9 +72,9 @@ class SliceScoringTestCase(unittest.TestCase):
         depth_score = nesting_depth_score_hh(extraction, statement_dic, method_statements)
         self.assertEqual(0, depth_score)
         area_score = nesting_area_score_hh(extraction, statement_dic, method_statements)
-        self.assertEqual(4/3, area_score)
+        self.assertEqual(4 / 3, area_score)
         parameters_score = parameters_score_hh(extraction)
         self.assertEqual(4, parameters_score)
         aggregate_score = aggregate_score_hh(code, extraction)
         self.assertEqual(4.4 + 4 / 3, aggregate_score)
-        #TODO: silva
+        # TODO: silva

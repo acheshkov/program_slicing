@@ -10,17 +10,17 @@ from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import Lang
 from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.decomposition.block.slicing import get_block_slices
-from program_slicing.decomposition.variable.slicing import get_variable_slices
 from program_slicing.decomposition.block.extension.slicing import get_extended_block_slices
 from program_slicing.decomposition.block.extension.scoring import length_score_hh,\
-    nesting_depth_score_hh, nesting_area_score_hh, parameters_score_hh, score_silva_vars, aggregate_score_hh
+    nesting_depth_score_hh, nesting_area_score_hh, parameters_score_hh, aggregate_score_hh
 
 
 def __traverse(root):
-        yield root
-        for child in root.children:
-            for result in __traverse(child):
-                yield result
+    yield root
+    for child in root.children:
+        for result in __traverse(child):
+            yield result
+
 
 def __score_slice(score_stats, slice, slice_type, code_lines, manager, method_statements, nesting_depth_dic):
     _length_score = length_score_hh(code_lines, slice)
@@ -33,14 +33,14 @@ def __score_slice(score_stats, slice, slice_type, code_lines, manager, method_st
     score_stats["parameters_score_hh"][_params_score].add(slice_type)
     _score_hh = aggregate_score_hh(code, slice, _area_score, _depth_score, _length_score, _params_score)
     score_stats["aggregate_score_hh"][_score_hh].add(slice_type)
-    #_score_silva = score_silva_vars(slice)
-    #score_stats["score_silva_vars"][_score_silva].add(slice_type)
+    # _score_silva = score_silva_vars(slice)
+    # score_stats["score_silva_vars"][_score_silva].add(slice_type)
 
 
 if __name__ == "__main__":
     dir_with_slice_stats = argv[1]
     output_dir = argv[2]
-    lang = Lang.JAVA 
+    lang = Lang.JAVA
     min_amount_of_lines = 4
     min_amount_of_statements = 3
 
@@ -69,10 +69,10 @@ if __name__ == "__main__":
         "nesting_area_score_hh",
         "parameters_score_hh",
         "aggregate_score_hh"]
-        #"score_silva_vars"]
+    # "score_silva_vars"]
     output_dic = {"method": []}
     for score_f in score_function_names:
-        output_dic[score_f+"_top_1_block"] = []
+        output_dic[score_f + "_top_1_block"] = []
         output_dic[score_f + "_top_1_ext_block"] = []
         output_dic[score_f + "_top_1_shared"] = []
         output_dic[score_f + "_top_3_block"] = []
@@ -102,7 +102,14 @@ if __name__ == "__main__":
                 nesting_depth_dic = None
                 score_stats = {k: defaultdict(lambda: set()) for k in score_function_names}
                 for _slice in block_slices:
-                    __score_slice(score_stats, _slice, 'block', code_lines, manager, method_statements, nesting_depth_dic)
+                    __score_slice(
+                        score_stats,
+                        _slice,
+                        'block',
+                        code_lines,
+                        manager,
+                        method_statements,
+                        nesting_depth_dic)
                 for _slice in diff_extended:
                     __score_slice(score_stats, _slice, 'ext_block', code_lines, manager, method_statements,
                                   nesting_depth_dic)
