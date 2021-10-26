@@ -198,11 +198,10 @@ def score_silva_vars(extraction: ProgramSlice) -> float:
         statement
         for statement in
         manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
-        if statement in manager.general_statements
     ]
-    extracted_statements = set(extraction_general_statements)
+    extracted_statements = extraction.statements
     remained_statements = {statement for statement in method_statements if statement not in extracted_statements}
-    return __distance_silva(manager, extracted_statements, remained_statements)
+    return __distance_silva(manager, extraction.statements, remained_statements)
 
 
 def __distance_silva(
