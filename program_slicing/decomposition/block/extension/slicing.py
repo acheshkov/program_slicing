@@ -6,7 +6,7 @@ __date__ = '2021/09/14'
 
 from functools import reduce
 from itertools import chain, combinations
-from typing import Set, Tuple, Dict, List
+from typing import Set, Tuple, Dict, List, Iterable
 
 from program_slicing.decomposition.block.slicing import get_block_slices_from_manager
 from program_slicing.decomposition.program_slice import ProgramSlice
@@ -380,3 +380,17 @@ def __filter_valid(
     if not __filter_control_dependence(new_statements, original_statements, manager):
         return False
     return True
+
+
+def mega_distance(manager: ProgramGraphsManager, extracted: Iterable[Statement], remained: Iterable[Statement]):
+    involved_extracted = manager.get_involved_variables_statements(extracted)
+    involved_remained = manager.get_involved_variables_statements(remained)
+    involved_intersected = involved_extracted.intersection(involved_remained)
+    involved_only_extracted = involved_extracted.difference(involved_intersected)
+    involved_only_remained = involved_remained.difference(involved_intersected)
+    i = len(involved_intersected)
+    e = len(involved_only_extracted)
+    r = len(involved_only_remained)
+    if i == 0 and (e == 0 or r == 0):
+        return 1
+    return 1 - (i / (i + e) + i / (i + r)) / 2
