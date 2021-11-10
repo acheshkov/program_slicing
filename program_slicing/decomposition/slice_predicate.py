@@ -215,6 +215,8 @@ class SlicePredicate:
             return self.__cause_code_duplication
         if self.__contain_redundant_statements(context, self.__statements):
             return self.__cause_code_duplication
+        if self.__affects_inner_statements(context, affecting_statements):
+            return self.__cause_code_duplication
         controlled_statements = set()
         for statement in sorted(self.__statements, key=lambda x: (x.start_point, -x.end_point)):
             if statement in controlled_statements:
@@ -462,6 +464,19 @@ class SlicePredicate:
                 return True
             elif statement.ast_node_type == "if_statement" and \
                     self.__is_redundant_if(context, statement, statements):
+                return True
+        return False
+
+    def __affects_inner_statements(
+            self,
+            context: ProgramGraphsManager,
+            affecting_statements: Iterable[Statement]) -> bool:
+        start_point = min(statement.start_point for statement in self.__general_statements)
+        end_point = max(statement.end_point for statement in self.__general_statements)
+        for affecting_statement in affecting_statements:
+            if any(
+                    s not in self.__statements and s.end_point < end_point and s.start_point > start_point
+                    for s in context.data_dependence_graph.successors(affecting_statement)):
                 return True
         return False
 
