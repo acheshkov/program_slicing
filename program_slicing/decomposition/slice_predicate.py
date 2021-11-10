@@ -467,12 +467,11 @@ class SlicePredicate:
                 return True
         return False
 
-    def __affects_inner_statements(
-            self,
-            context: ProgramGraphsManager,
-            affecting_statements: Iterable[Statement]) -> bool:
-        start_point = min(statement.start_point for statement in self.__general_statements)
-        end_point = max(statement.end_point for statement in self.__general_statements)
+    def __affects_inner_statements(self, context: ProgramGraphsManager, affecting_statements: Set[Statement]) -> bool:
+        if len(affecting_statements) == 0:
+            return False
+        start_point = min(statement.start_point for statement in affecting_statements)
+        end_point = max(statement.end_point for statement in affecting_statements)
         for affecting_statement in affecting_statements:
             if any(
                     s not in self.__statements and s.end_point < end_point and s.start_point > start_point
