@@ -60,6 +60,34 @@ class VariableSlicingTestCase(TestCase):
         self.assertFalse(is_slicing_criterion(c, b))
         self.assertTrue(is_slicing_criterion(c, c))
 
+    def test_special_case(self):
+        code = """public void bla() {
+            int n = 0;
+            int a = 10;
+            int b = 10;
+            if (n < 10)
+                b = n;
+            else
+                a = n;
+                n = a + b;
+            foo();
+            return a;
+        }"""
+        slices = [s for s in get_variable_slices(
+            code,
+            Lang.JAVA,
+            slice_predicate=SlicePredicate(
+                min_amount_of_lines=4,
+                min_amount_of_statements=4,
+                max_percentage_of_lines=0.8,
+                lang_to_check_parsing=Lang.JAVA,
+                has_returnable_variable=True,
+                cause_code_duplication=False
+            ),
+            include_noneffective=True
+        )]
+        self.assertEqual(1, len(slices))
+
     def test_get_complete_computation_slices(self):
         source_code = """
         int n = 0;
