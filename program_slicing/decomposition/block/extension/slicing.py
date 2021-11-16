@@ -4,6 +4,7 @@ __credits__ = ['KatGarmash', 'kuyaki']
 __maintainer__ = 'KatGarmash'
 __date__ = '2021/09/14'
 
+from collections import defaultdict
 from functools import reduce
 from itertools import chain, combinations
 from typing import Set, Tuple, Dict, List
@@ -55,7 +56,7 @@ def get_extended_block_slices_corresponding(
         source_code: str,
         lang: Lang,
         slice_predicate: SlicePredicate = None,
-        include_noneffective: bool = True) -> Dict[ProgramSlice, ProgramSlice]:
+        include_noneffective: bool = True) -> Dict[ProgramSlice, List[ProgramSlice]]:
     """
     For each a specified source code generate list of Program Slices based on extended continuous blocks
     and corresponding continuous block that is extended.
@@ -67,7 +68,7 @@ def get_extended_block_slices_corresponding(
     """
     manager = ProgramGraphsManager(source_code, lang)
     source_lines = source_code.split("\n")
-    slices_so_far = dict()
+    slices_so_far = defaultdict(list)
     for raw_block in get_block_slices_from_manager(
             source_lines,
             manager,
@@ -80,7 +81,7 @@ def get_extended_block_slices_corresponding(
                 source_lines,
                 include_noneffective=include_noneffective):
             if slice_predicate is None or slice_predicate(extended_block, context=manager):
-                slices_so_far[extended_block] = raw_block
+                slices_so_far[extended_block].append(raw_block)
     return slices_so_far
 
 
