@@ -43,9 +43,31 @@ def get_extended_block_slices(
     :param include_noneffective: include comments and blank lines to a slice if True.
     :return: set of the ProgramSlices.
     """
+    return set(get_extended_block_slices_corresponding(
+        source_code,
+        lang,
+        slice_predicate=slice_predicate,
+        include_noneffective=include_noneffective
+    ).keys())
+
+
+def get_extended_block_slices_corresponding(
+        source_code: str,
+        lang: Lang,
+        slice_predicate: SlicePredicate = None,
+        include_noneffective: bool = True) -> Dict[ProgramSlice, ProgramSlice]:
+    """
+    For each a specified source code generate list of Program Slices based on extended continuous blocks
+    and corresponding continuous block that is extended.
+    :param source_code: source code that should be decomposed.
+    :param lang: the source code Lang.
+    :param slice_predicate: SlicePredicate object that describes which slices should be filtered. No filtering if None.
+    :param include_noneffective: include comments and blank lines to a slice if True.
+    :return: set of the ProgramSlices.
+    """
     manager = ProgramGraphsManager(source_code, lang)
     source_lines = source_code.split("\n")
-    slices_so_far = set()
+    slices_so_far = dict()
     for raw_block in get_block_slices_from_manager(
             source_lines,
             manager,
@@ -58,7 +80,7 @@ def get_extended_block_slices(
                 source_lines,
                 include_noneffective=include_noneffective):
             if slice_predicate is None or slice_predicate(extended_block, context=manager):
-                slices_so_far.add(extended_block)
+                slices_so_far[extended_block] = raw_block
     return slices_so_far
 
 
