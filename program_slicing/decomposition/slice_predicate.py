@@ -126,7 +126,7 @@ class SlicePredicate:
 
     @property
     def max_amount_of_exit_statements(self) -> int:
-        return self.__min_amount_of_exit_statements
+        return self.__max_amount_of_exit_statements
 
     @property
     def min_percentage_of_statements(self) -> float:
