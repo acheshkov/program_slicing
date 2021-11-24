@@ -97,12 +97,13 @@ class CDGJavaTestCase(TestCase):
         class A {
             int main(String word) {
                 for (char a : word) {
+                    foo(a);
                 }
             }
         }
         """
         cdg = cdg_java.parse(source_code)
-        self.assertEqual(12, len(cdg.nodes))
+        self.assertEqual(14, len(cdg.nodes))
         entry_points = [entry_point for entry_point in cdg.entry_points]
         self.assertEqual(1, len(entry_points))
         self.__check_cdg_children(entry_points, {
@@ -117,10 +118,12 @@ class CDGJavaTestCase(TestCase):
             6: StatementType.EXIT
         })
         loop_children = [child for child in cdg.successors(function_children[5])]
-        self.assertEqual(1, len(loop_children))
+        self.assertEqual(3, len(loop_children))
         self.__check_cdg_children(loop_children, {
-            0: StatementType.SCOPE
+            0: StatementType.SCOPE,
+            2: StatementType.CALL
         })
+        self.assertEqual({"a"}, loop_children[2].affected_by)
 
     def test_for_each_modifiers(self) -> None:
         source_code = """
