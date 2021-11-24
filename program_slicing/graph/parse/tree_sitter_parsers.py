@@ -38,7 +38,7 @@ def node_name(source_code_bytes: bytes, ast: Node) -> Optional[str]:
     :param ast: Tree Sitter AST Node.
     :return: string with the node's name if it exists, none otherwise.
     """
-    if ast.type == "variable_declarator":
+    if ast.type in {"variable_declarator", "formal_parameter"}:
         return node_name(source_code_bytes, ast.child_by_field_name("name"))
     elif ast.type == "assignment_expression":
         return node_name(source_code_bytes, ast.child_by_field_name("left"))
