@@ -28,6 +28,7 @@ def main():
                 Lang.JAVA,
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=6,
+                    max_amount_of_effective_lines=51,
                     min_amount_of_statements=4,
                     max_percentage_of_lines=0.8,
                     max_amount_of_exit_statements=1,

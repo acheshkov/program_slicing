@@ -29,6 +29,7 @@ def main():
                 slice_predicate=SlicePredicate(
                     min_amount_of_lines=4,
                     min_amount_of_statements=2,
+                    max_amount_of_effective_lines=51,
                     max_percentage_of_lines=0.8,
                     max_amount_of_exit_statements=1,
                     cause_code_duplication=False,
