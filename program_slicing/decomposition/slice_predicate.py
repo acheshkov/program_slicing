@@ -24,6 +24,8 @@ class SlicePredicate:
             self,
             min_amount_of_lines: int = None,
             max_amount_of_lines: int = None,
+            min_amount_of_effective_lines: int = None,
+            max_amount_of_effective_lines: int = None,
             min_amount_of_statements: int = None,
             max_amount_of_statements: int = None,
             min_amount_of_exit_statements: int = None,
@@ -42,6 +44,8 @@ class SlicePredicate:
         self.__max_amount_of_statements = max_amount_of_statements
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
+        self.__min_amount_of_effective_lines = min_amount_of_effective_lines
+        self.__max_amount_of_effective_lines = max_amount_of_effective_lines
         self.__min_amount_of_exit_statements = min_amount_of_exit_statements
         self.__max_amount_of_exit_statements = max_amount_of_exit_statements
         self.__min_percentage_of_statements = min_percentage_of_statements
@@ -68,6 +72,8 @@ class SlicePredicate:
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
+            self.__check_min_amount_of_effective_lines,
+            self.__check_max_amount_of_effective_lines,
             self.__check_min_percentage_of_lines,
             self.__check_max_percentage_of_lines,
             self.__check_lines_are_full,
@@ -111,6 +117,14 @@ class SlicePredicate:
     @property
     def max_amount_of_lines(self) -> int:
         return self.__max_amount_of_lines
+
+    @property
+    def min_amount_of_effective_lines(self) -> int:
+        return self.__min_amount_of_effective_lines
+
+    @property
+    def max_amount_of_effective_lines(self) -> int:
+        return self.__max_amount_of_effective_lines
 
     @property
     def min_amount_of_statements(self) -> int:
@@ -297,6 +311,20 @@ class SlicePredicate:
         if self.__max_amount_of_lines is None:
             return True
         if len(self.__program_slice.lines) > self.__max_amount_of_lines:
+            return False
+        return True
+
+    def __check_min_amount_of_effective_lines(self, **kwargs) -> bool:
+        if self.__min_amount_of_effective_lines is None:
+            return True
+        if len(self.__program_slice.effective_lines) < self.__min_amount_of_effective_lines:
+            return False
+        return True
+
+    def __check_max_amount_of_effective_lines(self, **kwargs) -> bool:
+        if self.__max_amount_of_effective_lines is None:
+            return True
+        if len(self.__program_slice.effective_lines) > self.__max_amount_of_effective_lines:
             return False
         return True
 
@@ -510,6 +538,8 @@ def check_slice(
         program_slice: ProgramSlice,
         min_amount_of_lines: int = None,
         max_amount_of_lines: int = None,
+        min_amount_of_effective_lines: int = None,
+        max_amount_of_effective_lines: int = None,
         min_amount_of_statements: int = None,
         max_amount_of_statements: int = None,
         min_amount_of_exit_statements: int = None,
@@ -530,6 +560,8 @@ def check_slice(
     :param program_slice: slice that should to be checked.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
+    :param min_amount_of_effective_lines: minimal acceptable amount of effective lines.
+    :param max_amount_of_effective_lines: maximal acceptable amount of effective lines.
     :param min_amount_of_statements: minimal acceptable amount of Statements.
     Will raise Exception if lang_to_check_parsing is not specified.
     :param max_amount_of_statements: maximal acceptable amount of Statements.
@@ -558,6 +590,8 @@ def check_slice(
     return SlicePredicate(
         min_amount_of_lines=min_amount_of_lines,
         max_amount_of_lines=max_amount_of_lines,
+        min_amount_of_effective_lines=min_amount_of_effective_lines,
+        max_amount_of_effective_lines=max_amount_of_effective_lines,
         min_amount_of_statements=min_amount_of_statements,
         max_amount_of_statements=max_amount_of_statements,
         min_amount_of_exit_statements=min_amount_of_exit_statements,
