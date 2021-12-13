@@ -91,6 +91,7 @@ def get_block_slices_from_manager(
                 context=manager if include_noneffective else None
             ).from_statements(extended_statements)
             if slice_predicate is None or slice_predicate(program_slice, context=manager):
+                program_slice.function = function_statement
                 yield program_slice
 
 
