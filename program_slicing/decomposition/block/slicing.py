@@ -78,6 +78,8 @@ def get_block_slices_from_manager(
             extended_statements = manager.get_statements_in_range(
                 current_groups[0][0].start_point,
                 current_groups[-1][-1].end_point)
+            if "formal_parameters" in {statement.ast_node_type for statement in extended_statements}:
+                continue
             if slice_predicate is not None:
                 if not slice_predicate.check_statements(
                         {statement for statement in extended_statements if statement in manager.general_statements},

@@ -95,7 +95,7 @@ class CDGTestCase(TestCase):
         ])
         ddg.add_node("exit_point")
         ddg.add_node("loop body")
-        ddg.add_nodes_from(range(19))
+        ddg.add_nodes_from(range(20))
         return ddg
 
     @staticmethod
@@ -110,6 +110,7 @@ class CDGTestCase(TestCase):
         pdg.add_edge(0, "n from return n")
         pdg.add_edge(0, "return n")
         pdg.add_edge(0, "exit_point")
+        pdg.add_edge(0, "parameters")
         pdg.add_edge("loop", "loop body")
         pdg.add_edge("loop", "(i < 4)")
         pdg.add_edge("loop", "i < 4")
@@ -172,8 +173,11 @@ class CDGTestCase(TestCase):
             ("Exception e", "e.printStackTrace();"),
             ("Exception e", "e.printStackTrace()"),
             ("MyException e", "catch (MyException e)"),
+            ("String args", "a = args[10];"),
+            ("String args", "a = args[10]"),
+            ("String args", "args[10]"),
         ])
-        ddg.add_nodes_from(range(17))
+        ddg.add_nodes_from(range(15))
         return ddg
 
     @staticmethod
@@ -318,7 +322,7 @@ class CDGTestCase(TestCase):
             ("Exception a", "a.printStackTrace();"),
             ("Exception a", "a.printStackTrace()")
         ])
-        ddg.add_nodes_from(range(34))
+        ddg.add_nodes_from(range(35))
         return ddg
 
     @staticmethod

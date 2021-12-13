@@ -79,7 +79,7 @@ def __handle_variable(
         continue_statements: List[Statement],
         exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
-    variable_names.add(tree_sitter_parsers.node_name(source_code_bytes, ast))
+    variable_names.add(statement.name)
     return __handle_expression(
         statement,
         source_code_bytes,
@@ -460,13 +460,15 @@ def __handle_for_each(
     else:
         start_point, _ = __parse_position_range(modifiers_ast)
     _, end_point = __parse_position_range(name_ast)
+    variable_name = tree_sitter_parsers.node_name(source_code_bytes, name_ast)
     variable = Statement(
         StatementType.VARIABLE,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
-        name=tree_sitter_parsers.node_name(source_code_bytes, name_ast),
+        name=variable_name,
         ast_node_type="enhanced_for_variable_declarator")
+    variable_names.add(variable_name)
     cdg.add_node(variable)
     siblings = [variable]
     entry_points = [variable]
@@ -851,7 +853,7 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             declaration = node.prev_named_sibling
             entry_point = Statement(
                 StatementType.FUNCTION,
-                start_point=Point.from_tuple(node.start_point),
+                start_point=Point.from_tuple(declaration.start_point),
                 end_point=Point.from_tuple(scope.end_point),
                 affected_by=set(),
                 name=tree_sitter_parsers.node_name(source_code_bytes, declaration.children[-1]),

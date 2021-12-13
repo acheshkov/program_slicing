@@ -64,6 +64,8 @@ def get_complete_computation_slices(
             complete_computation_slice = complete_computation_slices.get(variable_basic_block, [])
             if not complete_computation_slice:
                 continue
+            if "formal_parameters" in {statement.ast_node_type for statement in complete_computation_slice}:
+                continue
             if slice_predicate is not None:
                 if not slice_predicate.check_statements(
                         {
