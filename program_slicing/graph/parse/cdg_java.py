@@ -105,6 +105,16 @@ def __handle_method_declaration(
     local_exit_statements = []
     children = __parse(
         source_code_bytes,
+        ast.child_by_field_name("parameters"),
+        cdg,
+        entry_points,
+        break_statements=break_statements,
+        continue_statements=continue_statements,
+        exit_statements=local_exit_statements,
+        variable_names=variable_names
+    )
+    children += __parse(
+        source_code_bytes,
         ast.child_by_field_name("body"),
         cdg,
         entry_points,
@@ -709,6 +719,8 @@ def __handle_throw(
 statement_type_and_handler_map = {
     "variable_declarator":
         (StatementType.VARIABLE, __handle_variable),
+    "formal_parameter":
+        (StatementType.VARIABLE, __handle_variable),
     "method_declaration":
         (StatementType.FUNCTION, __handle_method_declaration),
     "constructor_declaration":
@@ -841,7 +853,7 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             declaration = node.prev_named_sibling
             entry_point = Statement(
                 StatementType.FUNCTION,
-                start_point=Point.from_tuple(node.start_point),
+                start_point=Point.from_tuple(declaration.start_point),
                 end_point=Point.from_tuple(scope.end_point),
                 affected_by=set(),
                 name=tree_sitter_parsers.node_name(source_code_bytes, declaration.children[-1]),
@@ -850,6 +862,9 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             cdg.add_entry_point(entry_point)
             entry_points = [entry_point]
             exit_statements = []
+            for parameter in node.children:
+                for child in __parse(source_code_bytes, parameter, cdg, entry_points, [], [], exit_statements, set()):
+                    cdg.add_edge(entry_point, child)
             for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], exit_statements, set()):
                 cdg.add_edge(entry_point, child)
             exit_point = __add_exit_point(cdg, entry_point, entry_points + exit_statements)

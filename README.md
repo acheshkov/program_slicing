@@ -4,8 +4,9 @@ ___
 ## Installation
 
 1. ```$ git clone git@github.com:acheshkov/program_slicing.git```
-2. ```$ git submodule update --recursive --init```
-3. ```$ pip3 install ./program_slicing```
+2. ```$ cd program_slicing```
+3. ```$ git submodule update --recursive --init```
+4. ```$ pip3 install ./program_slicing```
 
 You should have access to global network to use pip.
 Python 3.9 with corresponding C compiler is required.
@@ -277,6 +278,15 @@ from program_slicing.graph.pdg import ProgramDependenceGraph
 from program_slicing.graph.parse import program_dependence_graph, Lang
 
 pdg: ProgramDependenceGraph = program_dependence_graph(source_code, Lang.JAVA)
+```
+
+- **tree_sitter_ast** - parse an _Abstract Syntax Tree_:
+
+```python
+from tree_sitter import Tree
+from program_slicing.graph.parse import tree_sitter_ast, Lang
+
+ast: Tree = tree_sitter_ast(source_code, Lang.JAVA)
 ```
 
 ___

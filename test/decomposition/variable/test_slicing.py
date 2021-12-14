@@ -202,7 +202,7 @@ class VariableSlicingTestCase(TestCase):
     def test_get_complete_computation_slices_try(self):
         source_code = """
         class A {
-            int main(String args) {
+            int main() {
                 char a;
                 try {
                     a = args[10];
@@ -242,7 +242,7 @@ class VariableSlicingTestCase(TestCase):
     def test_get_complete_computation_slices_switch(self):
         source_code = """
         class A {
-            int main(String args) {
+            int main() {
                 int a = 10;
                 for (int i = 0; i < 10; i++) {
                     switch(a) {
@@ -294,7 +294,7 @@ class VariableSlicingTestCase(TestCase):
     def test_get_complete_computation_slices_synchronized(self):
         source_code = """
         class A {
-            int main(String args) {
+            int main() {
                 int a = 0;
                 int b = 1;
                 synchronized(a) {
@@ -333,7 +333,7 @@ class VariableSlicingTestCase(TestCase):
     def test_get_complete_computation_slices_linear_scopes(self):
         source_code = """
         class A {
-            int main(String args) {
+            int main() {
                 {
                     int b = 1;
                     {
@@ -363,7 +363,7 @@ class VariableSlicingTestCase(TestCase):
     def test_get_complete_computation_slices_double_for(self):
         source_code = """
         class A {
-            int main(String args) {
+            int main() {
                 for (int a = 0; a < n; a++) {
                 }
                 for (int a = 0; a < n; a++) {
@@ -386,7 +386,7 @@ class VariableSlicingTestCase(TestCase):
     def test_get_complete_computation_slices_unreachable(self):
         source_code = """
         class A {
-            int main(String args) {
+            int main() {
                 int a = 10;
                 while (1) {
                     if (a < 10) {

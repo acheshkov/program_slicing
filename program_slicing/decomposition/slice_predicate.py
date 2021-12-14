@@ -439,10 +439,11 @@ class SlicePredicate:
         slice_function = context.get_function_statement_by_range(start_point, end_point)
         if slice_function is None:
             return 1
-        if len(context.get_statements_in_scope(slice_function)) > 1:
+        if any(
+                statement.start_point == slice_function.start_point
+                for statement in context.get_statements_in_scope(slice_function)):
             return slice_function.end_point.line_number - slice_function.start_point.line_number + 1
         return max(1, (slice_function.end_point.line_number - slice_function.start_point.line_number - 1))
-        # return 1 if slice_function is None else max(1, len(context.get_statement_line_numbers(slice_function)))
 
     def __get_number_of_statements(self, context: ProgramGraphsManager) -> int:
         bounds = self.__get_bounds()
