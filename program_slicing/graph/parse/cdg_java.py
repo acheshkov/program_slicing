@@ -862,10 +862,11 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             cdg.add_entry_point(entry_point)
             entry_points = [entry_point]
             exit_statements = []
+            names = set()
             for parameter in node.children:
-                for child in __parse(source_code_bytes, parameter, cdg, entry_points, [], [], exit_statements, set()):
+                for child in __parse(source_code_bytes, parameter, cdg, entry_points, [], [], exit_statements, names):
                     cdg.add_edge(entry_point, child)
-            for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], exit_statements, set()):
+            for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], exit_statements, names):
                 cdg.add_edge(entry_point, child)
             exit_point = __add_exit_point(cdg, entry_point, entry_points + exit_statements)
             cdg.add_edge(entry_point, exit_point)
