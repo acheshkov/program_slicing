@@ -188,6 +188,8 @@ def __flow_dep_given_data_dep(
         if variable_name is not None:
             return statement_2.name == variable_name
         return True
+    if statement_1.ast_subtype == "update_expression":
+        return True
     return False
 
 
@@ -223,7 +225,8 @@ def __compute_backward_slice_recursive(
     for predecessor in set(chain(cdg_predecessors, flow_predecessors)):
         if predecessor in backward_slice:
             continue
-        if predecessor.statement_type == StatementType.FUNCTION:
+        if predecessor.statement_type == StatementType.FUNCTION or\
+         "formal_parameter" in predecessor.ast_node_type:
             continue
         new_variable_name = None
         if predecessor in original_block:
@@ -296,22 +299,16 @@ def __extend_block_singleton(
     singleton_extensions: SingletonExtensions = list()
     for var_name in set(chain(incoming_variables.keys(), outgoing_variables.keys())):
         new_block = block_statements.copy()
-        new_incoming_variables = incoming_variables.copy()
-        new_outgoing_variables = outgoing_variables.copy()
         if var_name in incoming_variables:
             variable_use = incoming_variables[var_name]
             backward_slice = __compute_backward_slice(variable_use, var_name, block_statements, manager)
             new_block.update(backward_slice)
-            del new_incoming_variables[var_name]
         if var_name in outgoing_variables:
             variable_def = outgoing_variables[var_name]
             forward_slice = __compute_forward_slice(variable_def, manager)
             new_block.update(forward_slice)
-            del new_outgoing_variables[var_name]
         singleton_extensions.append((
             new_block,
-            new_incoming_variables,
-            new_outgoing_variables,
             var_name))
     return singleton_extensions
 

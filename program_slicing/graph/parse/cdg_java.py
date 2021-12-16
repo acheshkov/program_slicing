@@ -790,6 +790,13 @@ def parse(source_code: str) -> ControlDependenceGraph:
     return result
 
 
+def __get_ass_subtype(ast: Node) -> str:
+    if ast.type == "update_expression":
+        return ast.type
+    if ast.children[1].type in {'+=', '-=', '/=', '*=', '%=', '&=', '|=', '^=', '>>=', '<<='}:
+        return "update_expression"
+    return None
+
 def __parse(
         source_code_bytes: bytes,
         ast: Node,
@@ -815,13 +822,17 @@ def __parse(
         start_point = __start_point
     if end_point is None:
         end_point = __end_point
+    statement_subtype = None
+    if statement_type == StatementType.ASSIGNMENT:
+        statement_subtype = __get_ass_subtype(ast)
     statement = Statement(
         statement_type,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, ast, variable_names),
         name=tree_sitter_parsers.node_name(source_code_bytes, ast),
-        ast_node_type=ast.type)
+        ast_node_type=ast.type,
+        ast_subtype = statement_subtype)
     cdg.add_node(statement)
     siblings, exit_points = statement_handler(
         statement,

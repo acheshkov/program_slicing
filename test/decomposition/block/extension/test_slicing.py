@@ -197,6 +197,24 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         incoming_variables = get_incoming_variables(block, manager)
         self.assertEqual(set(incoming_variables.keys()), {'opt', 'optA'})
 
+    def test_get_incoming_variables_4(self) -> None:
+        code = """
+        public void methodEx(final AClass a) {
+            final int opt = a.getOpt();
+            int i = 1;
+            do1(i);
+            if (opt > 0) {
+                LClass optA = a.getOpt();
+                for (int j = 0; j < opt; j++) {
+                    System.out.println(optA);
+                }
+            }
+        }"""
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(6, 0), Point(9, 10000))
+        incoming_variables = get_incoming_variables(block, manager)
+        self.assertEqual(set(incoming_variables.keys()), {'opt', 'a'})
+
     def test_outgoing_variables_1(self) -> None:
         code = """
         public void methodEx(boolean a){
@@ -243,14 +261,13 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         singleton_extensions = extend_block_singleton(block, manager)
         name_to_extension = {}
         for ext in singleton_extensions:
-            name_to_extension[ext[3]] = ext
+            name_to_extension[ext[-1]] = ext[0]
         self.assertEqual({'a'}, set(name_to_extension.keys()))
-        self.__compare_extended_slices(
-            extension=name_to_extension['a'],
-            expected_range=[(2, 2), (5, 5)],
-            expected_in=set(),
-            expected_out=set(),
-            source_code=code)
+        _range = [
+            (r[0].line_number, r[1].line_number)
+            for r in ProgramSlice(code.split("\n")).from_statements(name_to_extension['a']).ranges_compact
+        ]
+        self.assertEqual(sorted([(2, 2), (5, 5)]), _range)
 
     def test_extend_block_singleton_2(self) -> None:
         code = """
@@ -268,33 +285,27 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         singleton_extensions = extend_block_singleton(block, manager)
         name_to_extension = {}
         for ext in singleton_extensions:
-            name_to_extension[ext[3]] = ext
+            name_to_extension[ext[-1]] = ext[0]
         self.assertEqual({'opt', 'rest', 'i'}, set(name_to_extension.keys()))
-        self.__compare_extended_slices(
-            extension=name_to_extension['opt'],
-            expected_range=[(2, 2), (6, 8)],
-            expected_in={'rest', 'i'},
-            expected_out=set(),
-            source_code=code
-        )
-        self.__compare_extended_slices(
-            extension=name_to_extension['rest'],
-            expected_range=[(3, 3), (6, 8)],
-            expected_in={'opt', 'i'},
-            expected_out=set(),
-            source_code=code
-        )
-        self.__compare_extended_slices(
-            extension=name_to_extension['i'],
-            expected_range=[(4, 4), (6, 8)],
-            expected_in={'opt', 'rest'},
-            expected_out=set(),
-            source_code=code
-        )
+        _range_opt = [
+            (r[0].line_number, r[1].line_number)
+            for r in ProgramSlice(code.split("\n")).from_statements(name_to_extension['opt']).ranges_compact
+        ]
+        self.assertEqual([(2, 2), (6, 8)], _range_opt)
+        _range_rest = [
+            (r[0].line_number, r[1].line_number)
+            for r in ProgramSlice(code.split("\n")).from_statements(name_to_extension['rest']).ranges_compact
+        ]
+        self.assertEqual([(3, 3), (6, 8)], _range_rest)
+        _range_i = [
+            (r[0].line_number, r[1].line_number)
+            for r in ProgramSlice(code.split("\n")).from_statements(name_to_extension['i']).ranges_compact
+        ]
+        self.assertEqual([(4, 4), (6, 8)], _range_i)
 
     def test_extend_block_singleton_3(self) -> None:
         code = """
-        public void methodEx(){
+        public void methodEx(ACl a){
             RClass r = getR();
             if (cond()) {
                 r.update();
@@ -318,7 +329,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             source_code=code
         )
 
-    @unittest.skip("need to fix bug in parser")
+    #@unittest.skip("need to fix bug in parser")
     def test_extend_block_singleton_4(self) -> None:
         code = """
         public void methodEx(boolean a){
@@ -326,17 +337,17 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             if (cond(a)) {
                 bla();
             }
-        }"""
+        } """
         manager = ProgramGraphsManager(code, Lang.JAVA)
-        block = manager.get_statements_in_range(Point(3, 0), Point(4, 10000))
+        block = manager.get_statements_in_range(Point(3, 0), Point(5, 10000))
         singleton_extensions = extend_block_singleton(block, manager)
         name_to_extension = {}
         for ext in singleton_extensions:
             name_to_extension[ext[3]] = ext
-        self.assertEqual({''}, set(name_to_extension.keys()))
+        self.assertEqual({'a'}, set(name_to_extension.keys()))
         self.__compare_extended_slices(
-            extension=name_to_extension[''],
-            expected_range=[(2, 5)],
+            extension=name_to_extension['a'],
+            expected_range=[(3, 5)],
             expected_in={'a'},
             expected_out=set(),
             source_code=code
@@ -352,6 +363,36 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             do1(a);
             do2(a);
         }"""
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(4, 0), Point(4, 10000))
+        extension = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
+        self.assertFalse(filter_anti_dependence(extension.difference(block), block, manager))
+
+    def test_filter_anti_dependence_negative_2(self) -> None:
+        """
+        extended slice [(1, 1), (3,3)] -- we should filter such examples
+        """
+        code = """
+           public void methodEx() {
+               int a = 1;
+               do1(a);
+               do2(a);
+           }"""
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(4, 0), Point(4, 10000))
+        extension = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
+        self.assertFalse(filter_anti_dependence(extension.difference(block), block, manager))
+
+    def test_filter_anti_dependence_negative_3(self) -> None:
+        """
+        extended slice [(1, 1), (3,3)] -- we should filter such examples
+        """
+        code = """
+           public void methodEx(SomeClass o) {
+               int a = 1;
+               o.change();
+               do2(a, o);
+           }"""
         manager = ProgramGraphsManager(code, Lang.JAVA)
         block = manager.get_statements_in_range(Point(4, 0), Point(4, 10000))
         extension = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
@@ -399,7 +440,18 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         slice_candidate = manager.get_statements_in_range(Point(3, 0), Point(4, 10000))
         self.assertFalse(filter_more_than_one_outgoing(slice_candidate, manager))
 
-    def test_filter_more_than_one_outgoing_positive(self) -> None:
+    def test_filter_more_than_one_outgoing_negative_3(self) -> None:
+        code = """
+        public void methodEx() {
+            SomeClass o = new SomeClass();
+            int b = 2;
+            int i = do2(o) + b;
+        }"""
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        slice_candidate = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
+        self.assertFalse(filter_more_than_one_outgoing(slice_candidate, manager))
+
+    def test_filter_more_than_one_outgoing_positive_1(self) -> None:
         code = """
         public void methodEx() {
             int i = 1;
@@ -410,7 +462,19 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         slice_candidate = manager.get_statements_in_range(Point(3, 0), Point(4, 10000))
         self.assertTrue(filter_more_than_one_outgoing(slice_candidate, manager))
 
-    @unittest.skip('bug in ProgramManager')
+    def test_filter_more_than_one_outgoing_positive_2(self) -> None:
+        code = """
+        public void methodEx() {
+            SomeClass o = new SomeClass();
+            int b = 2;
+            o.changeSmth();
+            int i = b + 1;
+            int a = i + do2(o);
+        }"""
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        slice_candidate = manager.get_statements_in_range(Point(3, 0), Point(5, 10000))
+        self.assertTrue(filter_more_than_one_outgoing(slice_candidate, manager))
+
     def test_filter_control_dependence_negative_1(self) -> None:
         code = """
         public void methodEx() {
@@ -418,6 +482,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             for (int i=1; i < 10 ; i++) {
                 System.out.println('Something');
                 do1(a);
+            }
         }"""
         manager = ProgramGraphsManager(code, Lang.JAVA)
         block = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
@@ -425,7 +490,6 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         extension_2 = manager.get_statements_in_range(Point(6, 0), Point(6, 10000))
         self.assertFalse(filter_control_dependence(extension_1.union(extension_2), block, manager))
 
-    @unittest.skip('bug in ProgramManager')
     def test_filter_control_dependence_negative_2(self) -> None:
         code = """
         public void methodEx() {
@@ -440,7 +504,6 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         extension = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
         self.assertFalse(filter_control_dependence(extension, block, manager))
 
-    @unittest.skip('bug in ProgramManager')
     def test_filter_control_dependence_positive_1(self) -> None:
         code = """
         public void methodEx() {
@@ -452,8 +515,9 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         }"""
         manager = ProgramGraphsManager(code, Lang.JAVA)
         block = manager.get_statements_in_range(Point(4, 0), Point(5, 10000))
-        extension = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
-        self.assertTrue(filter_control_dependence(extension, block, manager))
+        extension_1 = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
+        extension_2 = manager.get_statements_in_range(Point(6, 0), Point(6, 10000))
+        self.assertTrue(filter_control_dependence(extension_1.union(extension_2), block, manager))
 
     def test_get_block_extensions_1(self) -> None:
         code_ex = """
@@ -600,6 +664,101 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [[(2, 2)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_get_block_extensions_7(self) -> None:
+        code_ex = """
+           public void methodEx(boolean a){
+              int c = 1;
+              a = false;
+              if (a) {
+                  c ++;
+              }
+           }"""
+        manager = ProgramGraphsManager(code_ex, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(4, 0), Point(6, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(2, 5)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    def test_get_block_extensions_7(self) -> None:
+        code_ex = """
+           public void methodEx(boolean a){
+              int c = 1;
+              a = false;
+              c += 1;
+              if (a) {
+                  do2(c);
+              }
+           }"""
+        manager = ProgramGraphsManager(code_ex, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(7, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(2, 7)],
+            [(2, 2), (4, 7)],
+            [(3, 3), (5, 7)],
+            [(5, 7)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    @unittest.skip("Object DDG")
+    def test_get_block_extensions_8(self) -> None:
+        code_ex = """
+        public void methodEx(boolean a){
+           RClass r = getR();
+           boolean b = false;
+           int c = 1;
+           if (a) {
+               c ++;
+           }
+           r.update1(b);
+           r.update2(c);
+        }"""
+        manager = ProgramGraphsManager(code_ex, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(7, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(5, 7)]]
+        self.assertEqual(
+            sorted(expected_extension_ranges),
+            sorted(result_extension_ranges))
+
+    @unittest.skip("Object DDG")
+    def test_get_block_extensions_9(self) -> None:
+        code_ex = """
+            public void methodEx(LClass l){
+               boolean a = l.getR();
+               l.change();
+               int c = 1;
+               if (a) {
+                   c++;
+               }
+            }"""
+        manager = ProgramGraphsManager(code_ex, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(5, 0), Point(7, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(5, 7)],
+            [(4, 7)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
