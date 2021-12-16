@@ -55,14 +55,12 @@ class Statement:
             "name={name}, " \
             "affected_by={affected_by}, " \
             "start_point={start_point}, " \
-            "ast_subtype={ast_node}, "\
             "end_point={end_point})".format(
                 statement_type=self.__statement_type,
                 ast_node_type=self.__ast_node_type,
                 name=None if self.__name is None else "'" + self.__name + "'",
                 affected_by=self.__affected_by,
                 start_point=self.__start_point,
-                ast_subtype=self.__ast_subtype,
                 end_point=self.__end_point
             )
 

@@ -154,7 +154,7 @@ def __handle_switch(
         start_point=switch_block_start_point,
         end_point=switch_block_end_point,
         affected_by=__parse_affected_by(source_code_bytes, switch_block_ast, variable_names),
-        ast_node_type=switch_block_ast.type)
+        ast_node_type=__parse_ast_node_type(switch_block_ast))
     siblings.append(block_statement)
     __route_control_flow(entry_points, block_statement, cdg)
     entry_points = [block_statement]
@@ -172,7 +172,7 @@ def __handle_switch(
                     StatementType.SCOPE,
                     start_point=switch_label_start_point,
                     end_point=switch_block_end_point,
-                    ast_node_type=switch_block_item_ast.type)
+                    ast_node_type=__parse_ast_node_type(switch_block_item_ast))
                 cdg.add_edge(statement, switch_label_statement)
                 __route_control_flow([statement], switch_label_statement, cdg)
                 __route_control_flow(entry_points, switch_label_statement, cdg)
@@ -239,7 +239,7 @@ def __handle_if(
             start_point=start_point,
             end_point=end_point,
             affected_by=set(),
-            ast_node_type=else_ast.type)
+            ast_node_type=__parse_ast_node_type(else_ast))
         cdg.add_edge(statement, else_statement)
         __route_control_flow(alternative_entry_points, else_statement, cdg)
         alternative_entry_points = [else_statement]
@@ -822,17 +822,13 @@ def __parse(
         start_point = __start_point
     if end_point is None:
         end_point = __end_point
-    statement_subtype = None
-    if statement_type == StatementType.ASSIGNMENT:
-        statement_subtype = __get_ass_subtype(ast)
     statement = Statement(
         statement_type,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, ast, variable_names),
         name=tree_sitter_parsers.node_name(source_code_bytes, ast),
-        ast_node_type=ast.type,
-        ast_subtype = statement_subtype)
+        ast_node_type=__parse_ast_node_type(ast))
     cdg.add_node(statement)
     siblings, exit_points = statement_handler(
         statement,
@@ -925,6 +921,12 @@ def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlD
 
 def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callable]:
     return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_block))
+
+
+def __parse_ast_node_type(ast: Node) -> str:
+    if ast.type == "assignment_expression":
+        return ast.children[1].type
+    return ast.type
 
 
 def __parse_position_range(ast: Node) -> Tuple[Point, Point]:
