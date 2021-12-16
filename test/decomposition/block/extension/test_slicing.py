@@ -684,12 +684,15 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
             result_extension_ranges.append(_range)
         expected_extension_ranges = [
-            [(2, 5)]]
+            [(2, 6)],
+            [(4, 6)],
+            [(3, 6)],
+            [(2, 2), (4, 6)]]
         self.assertEqual(
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
 
-    def test_get_block_extensions_7(self) -> None:
+    def test_get_block_extensions_8(self) -> None:
         code_ex = """
            public void methodEx(boolean a){
               int c = 1;
@@ -714,8 +717,33 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(expected_extension_ranges),
             sorted(result_extension_ranges))
 
+    def test_get_block_extensions_9(self) -> None:
+        code_ex = """
+        public void methodEx(final AClass a) {
+            final int opt = a.getOpt();
+            int i = 1;
+            if (opt > 0) {
+                if (i > 1) {
+                    for (int j = 0; j < opt; j++, i++) {
+                        System.out.println(opt);
+                    }
+                }
+            }
+        }"""
+        manager = ProgramGraphsManager(code_ex, Lang.JAVA)
+        block = manager.get_statements_in_range(Point(6, 0), Point(8, 10000))
+        result_extension_ranges = []
+        for ext in get_block_extensions(block, manager, code_ex.split("\n")):
+            _range = [(r[0].line_number, r[1].line_number) for r in ext.ranges_compact]
+            result_extension_ranges.append(_range)
+        expected_extension_ranges = [
+            [(6, 8)],
+            [(2, 10)]
+        ]
+        self.assertEqual(sorted(expected_extension_ranges), sorted(result_extension_ranges))
+
     @unittest.skip("Object DDG")
-    def test_get_block_extensions_8(self) -> None:
+    def test_get_block_extensions_10(self) -> None:
         code_ex = """
         public void methodEx(boolean a){
            RClass r = getR();
@@ -740,7 +768,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
             sorted(result_extension_ranges))
 
     @unittest.skip("Object DDG")
-    def test_get_block_extensions_9(self) -> None:
+    def test_get_block_extensions_11(self) -> None:
         code_ex = """
             public void methodEx(LClass l){
                boolean a = l.getR();

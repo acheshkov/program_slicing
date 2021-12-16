@@ -318,6 +318,8 @@ def __filter_anti_dependence(
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
     ddg = manager.data_dependence_graph
+    if new_statements is None:
+        return True
     for statement in new_statements:
         if statement.statement_type == StatementType.FUNCTION:
             continue
@@ -336,22 +338,26 @@ def __filter_control_dependence(
         original_statements: Set[Statement],
         manager: ProgramGraphsManager) -> bool:
     cdg = manager.control_dependence_graph
-    missing_cdg_parents = set()
+    if new_statements is None or len(new_statements) == 0:
+        return True
+    missing_cdg_parents = set(reduce(
+                            lambda x, y: x.union(set(cdg.predecessors(y))),
+                            {x for x in original_statements if x.statement_type != StatementType.FUNCTION},
+                            set()))
+    all_statements = new_statements.union(original_statements)
     for statement in new_statements:
         if statement.statement_type == StatementType.FUNCTION:
             continue
         for control_successor in cdg.successors(statement):
-            if control_successor not in new_statements.union(original_statements):
+            if control_successor not in all_statements:
                 return False
         for control_predecessor in cdg.predecessors(statement):
-            if control_predecessor not in new_statements.union(original_statements):
+            if control_predecessor not in all_statements:
                 missing_cdg_parents.add(control_predecessor)
-    missing_cdg_parents.update(reduce(
-        lambda x, y: x.union(set(cdg.predecessors(y))),
-        {x for x in original_statements if x.statement_type != StatementType.FUNCTION},
-        set()))
+
     missing_cdg_parents = missing_cdg_parents.difference(original_statements.union(new_statements))
-    return len(missing_cdg_parents) <= 1
+    missing_cdg_parents = {x for x in missing_cdg_parents if x.statement_type != StatementType.FUNCTION}
+    return len(missing_cdg_parents) < 1
 
 
 def __filter_more_than_one_outgoing(
@@ -368,7 +374,7 @@ def __filter_valid(
     if original_statements:
         new_statements = slice_candidate.difference(original_statements)
     else:
-        new_statements = slice_candidate
+        new_statements = None
         original_statements = slice_candidate
     if not __filter_anti_dependence(new_statements, original_statements, manager):
         return False
