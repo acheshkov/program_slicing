@@ -62,7 +62,7 @@ def get_block_slices_from_manager(
         general_statements = sorted((
             statement
             for statement in statements_in_scope
-            if statement in manager.general_statements),
+            if statement in manager.general_statements and statement.ast_node_type != "formal_parameters"),
             key=lambda x: (x.start_point, -x.end_point))
         general_groups = __build_general_groups(general_statements) if unite_statements_into_groups else [
             [statement] for statement in general_statements
@@ -78,8 +78,6 @@ def get_block_slices_from_manager(
             extended_statements = manager.get_statements_in_range(
                 current_groups[0][0].start_point,
                 current_groups[-1][-1].end_point)
-            if "formal_parameters" in {statement.ast_node_type for statement in extended_statements}:
-                continue
             if slice_predicate is not None:
                 if not slice_predicate.check_statements(
                         {statement for statement in extended_statements if statement in manager.general_statements},
