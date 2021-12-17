@@ -790,13 +790,6 @@ def parse(source_code: str) -> ControlDependenceGraph:
     return result
 
 
-def __get_ass_subtype(ast: Node) -> str:
-    if ast.type == "update_expression":
-        return ast.type
-    if ast.children[1].type in {'+=', '-=', '/=', '*=', '%=', '&=', '|=', '^=', '>>=', '<<='}:
-        return "update_expression"
-    return None
-
 def __parse(
         source_code_bytes: bytes,
         ast: Node,

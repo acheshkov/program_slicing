@@ -319,17 +319,14 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         singleton_extensions = extend_block_singleton(block, manager)
         name_to_extension = {}
         for ext in singleton_extensions:
-            name_to_extension[ext[3]] = ext
+            name_to_extension[ext[-1]] = ext[0]
         self.assertEqual({'r'}, set(name_to_extension.keys()))
-        self.__compare_extended_slices(
-            extension=name_to_extension['r'],
-            expected_range=[(2, 5), (7, 7)],
-            expected_in=set(),
-            expected_out=set(),
-            source_code=code
-        )
+        _range = [
+            (r[0].line_number, r[1].line_number)
+            for r in ProgramSlice(code.split("\n")).from_statements(name_to_extension['r']).ranges_compact
+        ]
+        self.assertEqual(sorted([(2, 5), (7, 7)]), sorted(_range))
 
-    #@unittest.skip("need to fix bug in parser")
     def test_extend_block_singleton_4(self) -> None:
         code = """
         public void methodEx(boolean a){
@@ -343,15 +340,13 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         singleton_extensions = extend_block_singleton(block, manager)
         name_to_extension = {}
         for ext in singleton_extensions:
-            name_to_extension[ext[3]] = ext
+            name_to_extension[ext[-1]] = ext[0]
         self.assertEqual({'a'}, set(name_to_extension.keys()))
-        self.__compare_extended_slices(
-            extension=name_to_extension['a'],
-            expected_range=[(3, 5)],
-            expected_in={'a'},
-            expected_out=set(),
-            source_code=code
-        )
+        _range = [
+            (r[0].line_number, r[1].line_number)
+            for r in ProgramSlice(code.split("\n")).from_statements(name_to_extension['a']).ranges_compact
+        ]
+        self.assertEqual(sorted([(3, 5)]), sorted(_range))
 
     def test_filter_anti_dependence_negative(self) -> None:
         """
@@ -383,6 +378,7 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         extension = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
         self.assertFalse(filter_anti_dependence(extension.difference(block), block, manager))
 
+    @unittest.skip("Object DDG")
     def test_filter_anti_dependence_negative_3(self) -> None:
         """
         extended slice [(1, 1), (3,3)] -- we should filter such examples
@@ -503,21 +499,6 @@ class ExtendedBlockSlicingTestCase(unittest.TestCase):
         block = manager.get_statements_in_range(Point(2, 0), Point(2, 10000))
         extension = manager.get_statements_in_range(Point(5, 0), Point(5, 10000))
         self.assertFalse(filter_control_dependence(extension, block, manager))
-
-    def test_filter_control_dependence_positive_1(self) -> None:
-        code = """
-        public void methodEx() {
-            int a = 1;
-            for (int i=1; i < 10 ; i++) {
-                System.out.println('Something');
-                do1(a);
-            }
-        }"""
-        manager = ProgramGraphsManager(code, Lang.JAVA)
-        block = manager.get_statements_in_range(Point(4, 0), Point(5, 10000))
-        extension_1 = manager.get_statements_in_range(Point(2, 0), Point(3, 10000))
-        extension_2 = manager.get_statements_in_range(Point(6, 0), Point(6, 10000))
-        self.assertTrue(filter_control_dependence(extension_1.union(extension_2), block, manager))
 
     def test_get_block_extensions_1(self) -> None:
         code_ex = """

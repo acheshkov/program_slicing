@@ -188,7 +188,7 @@ def __flow_dep_given_data_dep(
         if variable_name is not None:
             return statement_2.name == variable_name
         return True
-    if statement_1.ast_subtype == "update_expression":
+    if statement_1.ast_node_type in {"update_expression", "+=", "-=", "/=", "*=", "%=", "&=", "|=", "^=", ">>=", "<<="}:
         return True
     return False
 
@@ -225,8 +225,7 @@ def __compute_backward_slice_recursive(
     for predecessor in set(chain(cdg_predecessors, flow_predecessors)):
         if predecessor in backward_slice:
             continue
-        if predecessor.statement_type == StatementType.FUNCTION or\
-         "formal_parameter" in predecessor.ast_node_type:
+        if predecessor.statement_type == StatementType.FUNCTION or "formal_parameter" in predecessor.ast_node_type:
             continue
         new_variable_name = None
         if predecessor in original_block:
@@ -341,9 +340,9 @@ def __filter_control_dependence(
     if new_statements is None or len(new_statements) == 0:
         return True
     missing_cdg_parents = set(reduce(
-                            lambda x, y: x.union(set(cdg.predecessors(y))),
-                            {x for x in original_statements if x.statement_type != StatementType.FUNCTION},
-                            set()))
+        lambda x, y: x.union(set(cdg.predecessors(y))),
+        {x for x in original_statements if x.statement_type != StatementType.FUNCTION},
+        set()))
     all_statements = new_statements.union(original_statements)
     for statement in new_statements:
         if statement.statement_type == StatementType.FUNCTION:

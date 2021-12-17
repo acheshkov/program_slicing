@@ -7,8 +7,6 @@ __date__ = '2021/03/23'
 from typing import Optional, Set
 from enum import Enum
 
-from tree_sitter import Node
-
 from program_slicing.graph.point import Point
 
 
@@ -37,15 +35,13 @@ class Statement:
             end_point: Point,
             affected_by: Set[VariableName] = None,
             name: Optional[VariableName] = None,
-            ast_node_type: str = None,
-            ast_subtype: str = None) -> None:
+            ast_node_type: str = None) -> None:
         self.__statement_type: StatementType = statement_type
         self.__start_point: Point = start_point
         self.__end_point: Point = end_point
         self.__affected_by: Set[VariableName] = set() if affected_by is None else affected_by
         self.__name: Optional[VariableName] = name
         self.__ast_node_type: str = ast_node_type
-        self.__ast_subtype = ast_subtype
 
     def __repr__(self) -> str:
         return \
@@ -106,8 +102,3 @@ class Statement:
     @property
     def ast_node_type(self) -> str:
         return self.__ast_node_type
-
-    @property
-    def ast_subtype(self) -> str:
-        return self.__ast_subtype
-
