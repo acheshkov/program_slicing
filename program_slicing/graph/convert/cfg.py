@@ -75,12 +75,14 @@ def __to_ddg(
     for statement in root:
         ddg.add_node(statement)
         for affecting_variable_name in statement.affected_by:
-            if statement.statement_type == StatementType.VARIABLE and affecting_variable_name == statement.name:
+            if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} \
+                    and affecting_variable_name == statement.name:
                 continue
             if affecting_variable_name in variables_passed:
                 for variable_statement in variables_passed[affecting_variable_name]:
                     ddg.add_edge(variable_statement, statement)
-        if statement.statement_type == StatementType.VARIABLE or statement.statement_type == StatementType.ASSIGNMENT:
+        if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} \
+                or statement.statement_type == StatementType.ASSIGNMENT:
             variables_passed[statement.name] = {statement}
     for child in cfg.successors(root):
         __to_ddg(child, cfg=cfg, ddg=ddg, visited=visited, variables=variables_passed)
@@ -102,7 +104,10 @@ def __update_variables(old_variables: Dict[str, Set[Statement]], new_variables: 
 
 
 def __correct_scope_relations(ddg: DataDependenceGraph) -> None:
-    variable_statements = [statement for statement in ddg if statement.statement_type == StatementType.VARIABLE]
+    variable_statements = [
+        statement for statement in ddg
+        if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}
+    ]
     for variable_statement in variable_statements:
         if variable_statement not in ddg.scope_dependency:
             continue
