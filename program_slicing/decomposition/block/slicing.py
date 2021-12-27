@@ -128,7 +128,11 @@ def __build_general_groups(general_statements: List[Statement]) -> List[List[Sta
     general_groups = []
     for statement in general_statements:
         if statement.statement_type in {
-            StatementType.UNKNOWN, StatementType.ASSIGNMENT, StatementType.VARIABLE, StatementType.CALL
+            StatementType.UNKNOWN,
+            StatementType.ASSIGNMENT,
+            StatementType.VARIABLE,
+            StatementType.OBJECT,
+            StatementType.CALL
         }:
             last_general_group.append(statement)
         else:

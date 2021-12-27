@@ -1,7 +1,7 @@
 	protected IApiProblem createExternalDependenciesProblem(HashMap problems, IReferenceDescriptor dependency, String referenceTypeName, IMemberDescriptor referencedMember, int elementType, int flag) {	
 		String resource = referenceTypeName;
 		String primaryTypeName = referenceTypeName.replace('$', '.');		
-		int charStart = -1, charEnd = -1, lineNumber = -1; 
+		int charStart = -1, charEnd = -1, lineNumber = -1;
 		if (fJavaProject != null) {
 			try {
 				

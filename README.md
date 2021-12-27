@@ -145,7 +145,8 @@ from program_slicing.graph.statement import StatementType
 ```
 
 - **FUNCTION** - function declaration _Statement_.
-- **VARIABLE** - variable declaration _Statement_.
+- **VARIABLE** - standard type variable declaration _Statement_.
+- **OBJECT** - object type variable declaration _Statement_.
 - **ASSIGNMENT** - variable assignment _Statement_ (such as `i = 0`, `i += 1`, `i++`, etc).
 - **CALL** - function call _Statement_.
 - **SCOPE** - scope _Statement_ (such as braces `{}` or empty body in `if (...) a = 0`).
@@ -225,10 +226,10 @@ manager_by_cfg = ProgramGraphsManager.from_control_flow_graph(control_flow_graph
   but not one of them.
 - **get_affecting_statements** - return _Statements_ from the given set of _Statements_ that affect 
   some _Statement_ not form the given set.
-- **get_changed_variables_statements** - return `VARIABLE` _Statements_ that represent variables changed 
-  in the given set of _Statements_.
-- **get_involved_variables_statements** - return `VARIABLE` _Statements_ that represent variables involved
-  (including usage) in the given set of _Statements_.
+- **get_changed_variables_statements** - return `VARIABLE` and `OBJECT` _Statements_ that represent 
+  variables changed in the given set of _Statements_.
+- **get_involved_variables_statements** - return `VARIABLE` and `OBJECT` _Statements_ that represent 
+  variables involved (including usage) in the given set of _Statements_.
 - **contain_redundant_statements** - check if the given set of _Statements_ contain part of some construction 
   not fully included in the given set.
 

@@ -181,6 +181,7 @@ def __flow_dep_given_data_dep(
     if statement_2.statement_type not in {
         StatementType.ASSIGNMENT,
         StatementType.VARIABLE,
+        StatementType.OBJECT,
         StatementType.FUNCTION
     }:
         return False
@@ -286,7 +287,7 @@ def __compute_forward_slice(
         variable_def,
         forward_slice,
         manager,
-        recursion=(variable_def.statement_type == StatementType.VARIABLE))
+        recursion=(variable_def.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}))
     return forward_slice
 
 

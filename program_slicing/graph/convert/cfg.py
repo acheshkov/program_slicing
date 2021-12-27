@@ -4,7 +4,7 @@ __credits__ = ['kuyaki']
 __maintainer__ = 'kuyaki'
 __date__ = '2021/04/01'
 
-from typing import Dict, Set
+from typing import Dict, Set, Tuple
 
 import networkx
 
@@ -36,8 +36,8 @@ def to_ddg(cfg: ControlFlowGraph) -> DataDependenceGraph:
     :return: Data Dependence Graph which nodes where contained in the Control Flow Graph on which it was based on.
     """
     ddg = DataDependenceGraph()
-    visited: Dict[BasicBlock, Dict[str, Set[Statement]]] = {}
-    variables: Dict[str, Set[Statement]] = {}
+    visited: Dict[BasicBlock, Dict[str, Set[Tuple[Statement, StatementType]]]] = {}
+    variables: Dict[str, Set[Tuple[Statement, StatementType]]] = {}
     for root in cfg.entry_points:
         __to_ddg(root, cfg=cfg, ddg=ddg, visited=visited, variables=variables)
         ddg.add_entry_point(root.root)
@@ -61,34 +61,45 @@ def __to_ddg(
         root: BasicBlock,
         cfg: ControlFlowGraph,
         ddg: DataDependenceGraph,
-        visited: Dict[BasicBlock, Dict[str, Set[Statement]]],
-        variables: Dict[str, Set[Statement]]) -> None:
+        visited: Dict[BasicBlock, Dict[str, Set[Tuple[Statement, StatementType]]]],
+        variables: Dict[str, Set[Tuple[Statement, StatementType]]]) -> None:
     if root in visited:
         if not __update_variables(visited[root], variables):
             return
     else:
         visited[root] = {variable: variable_set.copy() for variable, variable_set in variables.items()}
-    variables_entered: Dict[str, Set[Statement]] = visited[root]
-    variables_passed: Dict[str, Set[Statement]] = {
+    variables_entered: Dict[str, Set[Tuple[Statement, StatementType]]] = visited[root]
+    variables_passed: Dict[str, Set[Tuple[Statement, StatementType]]] = {
         variable: variable_set for variable, variable_set in variables_entered.items()
     }
     for statement in root:
+        should_be_thrown = set()
         ddg.add_node(statement)
         for affecting_variable_name in statement.affected_by:
-            if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} \
-                    and affecting_variable_name == statement.name:
+            if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} and \
+                    affecting_variable_name == statement.name:
                 continue
             if affecting_variable_name in variables_passed:
-                for variable_statement in variables_passed[affecting_variable_name]:
+                for variable_statement, variable_type in variables_passed[affecting_variable_name]:
                     ddg.add_edge(variable_statement, statement)
-        if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} \
-                or statement.statement_type == StatementType.ASSIGNMENT:
-            variables_passed[statement.name] = {statement}
+                    if variable_type == StatementType.OBJECT:
+                        should_be_thrown.add(affecting_variable_name)
+        if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}:
+            variables_passed[statement.name] = {(statement, statement.statement_type)}
+        elif statement.statement_type == StatementType.ASSIGNMENT:
+            variables_passed[statement.name] = {
+                (statement, StatementType.OBJECT if statement.name in should_be_thrown else StatementType.VARIABLE)
+            }
+        elif statement.statement_type == StatementType.CALL:
+            for variable_name in should_be_thrown:
+                variables_passed[variable_name] = {(statement, StatementType.OBJECT)}
     for child in cfg.successors(root):
         __to_ddg(child, cfg=cfg, ddg=ddg, visited=visited, variables=variables_passed)
 
 
-def __update_variables(old_variables: Dict[str, Set[Statement]], new_variables: Dict[str, Set[Statement]]) -> bool:
+def __update_variables(
+        old_variables: Dict[str, Set[Tuple[Statement, StatementType]]],
+        new_variables: Dict[str, Set[Tuple[Statement, StatementType]]]) -> bool:
     updated = False
     for variable, variable_set in new_variables.items():
         if variable not in old_variables:
@@ -119,8 +130,22 @@ def __correct_scope_relations(ddg: DataDependenceGraph) -> None:
         for statement in remove_statements:
             remove_edges = []
             for predecessor in ddg.predecessors(statement):
-                if predecessor.name == variable_statement.name and \
-                        variable_scope.start_point <= predecessor.start_point and \
+                if variable_scope.start_point <= predecessor.start_point and \
                         variable_scope.end_point >= predecessor.end_point:
-                    remove_edges.append((predecessor, statement))
+                    if predecessor.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}:
+                        if predecessor.name == variable_statement.name or \
+                                variable_statement.statement_type == StatementType.OBJECT and \
+                                variable_statement.name in predecessor.affected_by:
+                            remove_edges.append((predecessor, statement))
+                    elif predecessor.statement_type == StatementType.ASSIGNMENT:
+                        if variable_statement.statement_type == StatementType.OBJECT:
+                            if variable_statement.name in predecessor.affected_by:
+                                remove_edges.append((predecessor, statement))
+                        else:
+                            if predecessor.name == variable_statement.name:
+                                remove_edges.append((predecessor, statement))
+                    elif predecessor.statement_type == StatementType.CALL:
+                        if variable_statement.statement_type == StatementType.OBJECT and \
+                                variable_statement.name in predecessor.affected_by:
+                            remove_edges.append((predecessor, statement))
             ddg.remove_edges_from(remove_edges)
