@@ -46,8 +46,7 @@ def get_block_slices_from_manager(
         manager: ProgramGraphsManager,
         slice_predicate: SlicePredicate = None,
         include_noneffective: bool = True,
-        unite_statements_into_groups: bool = False,
-        df: pd.DataFrame) -> Iterator[ProgramSlice]:
+        unite_statements_into_groups: bool = False) -> Iterator[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
     :param source_lines: lines of source code that should be decomposed.
