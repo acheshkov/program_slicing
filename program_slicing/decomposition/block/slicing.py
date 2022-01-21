@@ -12,7 +12,9 @@ from program_slicing.decomposition.slice_predicate import SlicePredicate
 from program_slicing.graph.parse import Lang
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.statement import Statement, StatementType
-
+from time import time
+import uuid
+import pandas as pd
 
 def get_block_slices(
         source_code: str,
@@ -44,7 +46,8 @@ def get_block_slices_from_manager(
         manager: ProgramGraphsManager,
         slice_predicate: SlicePredicate = None,
         include_noneffective: bool = True,
-        unite_statements_into_groups: bool = False) -> Iterator[ProgramSlice]:
+        unite_statements_into_groups: bool = False,
+        df: pd.DataFrame) -> Iterator[ProgramSlice]:
     """
     For each a specified source code generate list of Program Slices based on continues blocks.
     :param source_lines: lines of source code that should be decomposed.
@@ -54,7 +57,14 @@ def get_block_slices_from_manager(
     :param unite_statements_into_groups: will unite function calls, assignment and declarations into groups if True.
     :return: generator of the ProgramSlices.
     """
+    uuid_pg = str(uuid.uuid1())
+    start = time()
+    combinations_time = []
+    groups_creations = []
+    pg_creations = []
+    predicate_time = []
     for scope in manager.scope_statements:
+        start_comb = time()
         function_statement = manager.get_function_statement(scope)
         if function_statement is None:
             continue
@@ -71,7 +81,9 @@ def get_block_slices_from_manager(
             c for c in combinations_with_replacement([idx for idx in range(len(general_groups))], 2)
             if __pre_check(general_groups, c, slice_predicate, source_lines)
         )
+        combinations_time.append(time() - start_comb)
         for ids in id_combinations:
+            start_group = time()
             current_groups = general_groups[ids[0]: ids[1] + 1]
             if not current_groups:
                 continue
@@ -86,14 +98,36 @@ def get_block_slices_from_manager(
                         statements=extended_statements,
                         context=manager):
                     continue
+            groups_creations.append(time() - start_group)
+            start_pg = time()
             program_slice = ProgramSlice(
                 source_lines,
                 context=manager if include_noneffective else None
             ).from_statements(extended_statements)
+            pg_creations.append(time() - start_pg)
+            start_sp = time()
             if slice_predicate is None or slice_predicate(program_slice, context=manager):
                 program_slice.function = function_statement
+                predicate_time.append(time() - start_sp)
                 yield program_slice
+    end = time()
+    # print(f"Total time for combinations_time {sum(combinations_time)} sec")
+    # print(f"Total time for groups creations {sum(groups_creations)} sec")
+    # print(f"Total time for program_slice generation {sum(pg_creations)} sec")
+    # print(f"Total time for checking predicate_time {sum(predicate_time)} sec")
+    # print(f"PG {uuid_pg}; Total time for get_block_slices_from_manager {end - start} sec")
 
+    #df = pd.DataFrame(columns=['program_slice_id', 'operation', 'secs'])
+    for x in combinations_time:
+        print({'program_slice_id': uuid_pg, 'operation': 'combinations_time', 'secs': x})
+    for x in groups_creations:
+        print({'program_slice_id': uuid_pg, 'operation': 'groups_creations', 'secs': x})
+    for x in pg_creations:
+        print({'program_slice_id': uuid_pg, 'operation': 'pg_creations', 'secs': x})
+    for x in predicate_time:
+        print({'program_slice_id': uuid_pg, 'operation': 'predicate_time', 'secs': x})
+        
+    print({'program_slice_id': uuid_pg, 'operation': 'total)time', 'secs': end - start})
 
 def __pre_check(
         groups: List[List[Statement]],
