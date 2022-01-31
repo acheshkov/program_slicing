@@ -177,13 +177,10 @@ def aggregate_score_hh(
             manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
             if statement in manager.general_statements
         ]
-        nesting_depth_hh = nesting_depth_score_hh(extraction, statement_to_depth, method_statements)
         nesting_area_hh = nesting_area_score_hh(extraction, statement_to_depth, method_statements)
     if length_hh is None:
         length_hh = length_score_hh(source_code.split("\n"), extraction)
-    if params_hh is None:
-        params_hh = parameters_score_hh(extraction)
-    return nesting_depth_hh + nesting_area_hh + length_hh + params_hh
+    return nesting_area_hh + length_hh
 
 
 def score_silva_vars(extraction: ProgramSlice) -> float:
