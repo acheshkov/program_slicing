@@ -44,6 +44,7 @@ class ProgramSlice:
         self.__context: ProgramGraphsManager = context
         self.__code = None
         self.__lines = None
+        self.__effective_lines = None
         self.__ranges = None
         self.__ranges_compact = None
         self.__statements = None
@@ -101,6 +102,31 @@ class ProgramSlice:
                 for start_point, end_point in self.ranges
             ]
         return self.__lines
+
+    @property
+    def effective_lines(self) -> List[str]:
+        """
+        Get source code lines for the current slice, skipping empty and commented lines.
+        :return: list of strings with corresponding source code lines.
+        """
+        if self.__effective_lines is None:
+            self.__effective_lines = []
+            for line in self.lines:
+                add_line = False
+                comment = False
+                for c in line:
+                    if c == "/":
+                        if comment:
+                            break
+                        comment = True
+                    else:
+                        comment = False
+                        if c not in " \t":
+                            add_line = True
+                            break
+                if add_line:
+                    self.__effective_lines.append(line)
+        return self.__effective_lines
 
     @property
     def ranges(self) -> List[Tuple[Point, Point]]:
@@ -250,6 +276,7 @@ class ProgramSlice:
         self.__code = None
         self.__ranges = None
         self.__lines = None
+        self.__effective_lines = None
         self.__ranges_compact = None
         self.__update_minimal_column(start_point, end_point)
         if self.__start_point is None or self.__start_point > start_point:

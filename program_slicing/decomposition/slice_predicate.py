@@ -24,6 +24,8 @@ class SlicePredicate:
             self,
             min_amount_of_lines: int = None,
             max_amount_of_lines: int = None,
+            min_amount_of_effective_lines: int = None,
+            max_amount_of_effective_lines: int = None,
             min_amount_of_statements: int = None,
             max_amount_of_statements: int = None,
             min_amount_of_exit_statements: int = None,
@@ -42,6 +44,8 @@ class SlicePredicate:
         self.__max_amount_of_statements = max_amount_of_statements
         self.__min_amount_of_lines = min_amount_of_lines
         self.__max_amount_of_lines = max_amount_of_lines
+        self.__min_amount_of_effective_lines = min_amount_of_effective_lines
+        self.__max_amount_of_effective_lines = max_amount_of_effective_lines
         self.__min_amount_of_exit_statements = min_amount_of_exit_statements
         self.__max_amount_of_exit_statements = max_amount_of_exit_statements
         self.__min_percentage_of_statements = min_percentage_of_statements
@@ -68,6 +72,8 @@ class SlicePredicate:
         self.__checkers = [
             self.__check_min_amount_of_lines,
             self.__check_max_amount_of_lines,
+            self.__check_min_amount_of_effective_lines,
+            self.__check_max_amount_of_effective_lines,
             self.__check_min_percentage_of_lines,
             self.__check_max_percentage_of_lines,
             self.__check_lines_are_full,
@@ -113,6 +119,14 @@ class SlicePredicate:
         return self.__max_amount_of_lines
 
     @property
+    def min_amount_of_effective_lines(self) -> int:
+        return self.__min_amount_of_effective_lines
+
+    @property
+    def max_amount_of_effective_lines(self) -> int:
+        return self.__max_amount_of_effective_lines
+
+    @property
     def min_amount_of_statements(self) -> int:
         return self.__min_amount_of_statements
 
@@ -126,7 +140,7 @@ class SlicePredicate:
 
     @property
     def max_amount_of_exit_statements(self) -> int:
-        return self.__min_amount_of_exit_statements
+        return self.__max_amount_of_exit_statements
 
     @property
     def min_percentage_of_statements(self) -> float:
@@ -211,9 +225,11 @@ class SlicePredicate:
             if context is None:
                 raise ValueError("context has to be specified to check if slice cause code duplication")
         affecting_statements = context.get_affecting_statements(self.__statements)
-        if len(context.get_involved_variables_statements(affecting_statements)) > 1:
+        if len(context.get_changed_variables_statements(affecting_statements)) > 1:
             return self.__cause_code_duplication
         if self.__contain_redundant_statements(context, self.__statements):
+            return self.__cause_code_duplication
+        if self.__affects_inner_statements(context, affecting_statements):
             return self.__cause_code_duplication
         controlled_statements = set()
         for statement in sorted(self.__statements, key=lambda x: (x.start_point, -x.end_point)):
@@ -295,6 +311,20 @@ class SlicePredicate:
         if self.__max_amount_of_lines is None:
             return True
         if len(self.__program_slice.lines) > self.__max_amount_of_lines:
+            return False
+        return True
+
+    def __check_min_amount_of_effective_lines(self, **kwargs) -> bool:
+        if self.__min_amount_of_effective_lines is None:
+            return True
+        if len(self.__program_slice.effective_lines) < self.__min_amount_of_effective_lines:
+            return False
+        return True
+
+    def __check_max_amount_of_effective_lines(self, **kwargs) -> bool:
+        if self.__max_amount_of_effective_lines is None:
+            return True
+        if len(self.__program_slice.effective_lines) > self.__max_amount_of_effective_lines:
             return False
         return True
 
@@ -409,10 +439,11 @@ class SlicePredicate:
         slice_function = context.get_function_statement_by_range(start_point, end_point)
         if slice_function is None:
             return 1
-        if len(context.get_statements_in_scope(slice_function)) > 1:
+        if any(
+                statement.start_point == slice_function.start_point
+                for statement in context.get_statements_in_scope(slice_function)):
             return slice_function.end_point.line_number - slice_function.start_point.line_number + 1
         return max(1, (slice_function.end_point.line_number - slice_function.start_point.line_number - 1))
-        # return 1 if slice_function is None else max(1, len(context.get_statement_line_numbers(slice_function)))
 
     def __get_number_of_statements(self, context: ProgramGraphsManager) -> int:
         bounds = self.__get_bounds()
@@ -465,6 +496,18 @@ class SlicePredicate:
                 return True
         return False
 
+    def __affects_inner_statements(self, context: ProgramGraphsManager, affecting_statements: Set[Statement]) -> bool:
+        if len(affecting_statements) == 0:
+            return False
+        start_point = min(statement.start_point for statement in affecting_statements)
+        end_point = max(statement.end_point for statement in affecting_statements)
+        for affecting_statement in affecting_statements:
+            if any(
+                    s not in self.__statements and s.end_point < end_point and s.start_point > start_point
+                    for s in context.data_dependence_graph.successors(affecting_statement)):
+                return True
+        return False
+
     @staticmethod
     def __is_redundant_finally(context: ProgramGraphsManager, statement: Statement, statements: Set[Statement]) -> bool:
         finally_block = context.get_basic_block(statement)
@@ -496,6 +539,8 @@ def check_slice(
         program_slice: ProgramSlice,
         min_amount_of_lines: int = None,
         max_amount_of_lines: int = None,
+        min_amount_of_effective_lines: int = None,
+        max_amount_of_effective_lines: int = None,
         min_amount_of_statements: int = None,
         max_amount_of_statements: int = None,
         min_amount_of_exit_statements: int = None,
@@ -516,6 +561,8 @@ def check_slice(
     :param program_slice: slice that should to be checked.
     :param min_amount_of_lines: minimal acceptable amount of lines.
     :param max_amount_of_lines: maximal acceptable amount of lines.
+    :param min_amount_of_effective_lines: minimal acceptable amount of effective lines.
+    :param max_amount_of_effective_lines: maximal acceptable amount of effective lines.
     :param min_amount_of_statements: minimal acceptable amount of Statements.
     Will raise Exception if lang_to_check_parsing is not specified.
     :param max_amount_of_statements: maximal acceptable amount of Statements.
@@ -544,6 +591,8 @@ def check_slice(
     return SlicePredicate(
         min_amount_of_lines=min_amount_of_lines,
         max_amount_of_lines=max_amount_of_lines,
+        min_amount_of_effective_lines=min_amount_of_effective_lines,
+        max_amount_of_effective_lines=max_amount_of_effective_lines,
         min_amount_of_statements=min_amount_of_statements,
         max_amount_of_statements=max_amount_of_statements,
         min_amount_of_exit_statements=min_amount_of_exit_statements,

@@ -25,6 +25,34 @@ def __handle_statement(
         exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
     siblings = [statement]
+    exit_points = [statement]
+    return siblings, exit_points
+
+
+def __handle_expression(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    siblings = [statement]
+    exit_points = [statement]
+    return siblings, exit_points
+
+
+def __handle_block(
+        statement: Statement,
+        source_code_bytes,
+        ast: Node,
+        cdg: ControlDependenceGraph,
+        break_statements: List[Statement],
+        continue_statements: List[Statement],
+        exit_statements: List[Statement],
+        variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
+    siblings = [statement]
     entry_points = [statement]
     name = ast.child_by_field_name("name")
     for child in ast.children:
@@ -51,8 +79,8 @@ def __handle_variable(
         continue_statements: List[Statement],
         exit_statements: List[Statement],
         variable_names: Set[str]) -> Tuple[List[Statement], List[Statement]]:
-    variable_names.add(tree_sitter_parsers.node_name(source_code_bytes, ast))
-    return __handle_statement(
+    variable_names.add(statement.name)
+    return __handle_expression(
         statement,
         source_code_bytes,
         ast,
@@ -76,6 +104,16 @@ def __handle_method_declaration(
     entry_points = [statement]
     local_exit_statements = []
     children = __parse(
+        source_code_bytes,
+        ast.child_by_field_name("parameters"),
+        cdg,
+        entry_points,
+        break_statements=break_statements,
+        continue_statements=continue_statements,
+        exit_statements=local_exit_statements,
+        variable_names=variable_names
+    )
+    children += __parse(
         source_code_bytes,
         ast.child_by_field_name("body"),
         cdg,
@@ -116,7 +154,7 @@ def __handle_switch(
         start_point=switch_block_start_point,
         end_point=switch_block_end_point,
         affected_by=__parse_affected_by(source_code_bytes, switch_block_ast, variable_names),
-        ast_node_type=switch_block_ast.type)
+        ast_node_type=__parse_ast_node_type(switch_block_ast))
     siblings.append(block_statement)
     __route_control_flow(entry_points, block_statement, cdg)
     entry_points = [block_statement]
@@ -134,7 +172,7 @@ def __handle_switch(
                     StatementType.SCOPE,
                     start_point=switch_label_start_point,
                     end_point=switch_block_end_point,
-                    ast_node_type=switch_block_item_ast.type)
+                    ast_node_type=__parse_ast_node_type(switch_block_item_ast))
                 cdg.add_edge(statement, switch_label_statement)
                 __route_control_flow([statement], switch_label_statement, cdg)
                 __route_control_flow(entry_points, switch_label_statement, cdg)
@@ -201,7 +239,7 @@ def __handle_if(
             start_point=start_point,
             end_point=end_point,
             affected_by=set(),
-            ast_node_type=else_ast.type)
+            ast_node_type=__parse_ast_node_type(else_ast))
         cdg.add_edge(statement, else_statement)
         __route_control_flow(alternative_entry_points, else_statement, cdg)
         alternative_entry_points = [else_statement]
@@ -422,13 +460,15 @@ def __handle_for_each(
     else:
         start_point, _ = __parse_position_range(modifiers_ast)
     _, end_point = __parse_position_range(name_ast)
+    variable_name = tree_sitter_parsers.node_name(source_code_bytes, name_ast)
     variable = Statement(
         StatementType.VARIABLE,
         start_point=start_point,
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, value_ast, variable_names),
-        name=tree_sitter_parsers.node_name(source_code_bytes, name_ast),
+        name=variable_name,
         ast_node_type="enhanced_for_variable_declarator")
+    variable_names.add(variable_name)
     cdg.add_node(variable)
     siblings = [variable]
     entry_points = [variable]
@@ -679,6 +719,8 @@ def __handle_throw(
 statement_type_and_handler_map = {
     "variable_declarator":
         (StatementType.VARIABLE, __handle_variable),
+    "formal_parameter":
+        (StatementType.VARIABLE, __handle_variable),
     "method_declaration":
         (StatementType.FUNCTION, __handle_method_declaration),
     "constructor_declaration":
@@ -710,13 +752,13 @@ statement_type_and_handler_map = {
     "update_expression":
         (StatementType.ASSIGNMENT, __handle_update),
     "method_invocation":
-        (StatementType.CALL, __handle_statement),
+        (StatementType.CALL, __handle_expression),
     "block":
-        (StatementType.SCOPE, __handle_statement),
+        (StatementType.SCOPE, __handle_block),
     "constructor_body":
-        (StatementType.SCOPE, __handle_statement),
+        (StatementType.SCOPE, __handle_block),
     "class_body":
-        (StatementType.SCOPE, __handle_statement),
+        (StatementType.SCOPE, __handle_block),
     "continue_statement":
         (StatementType.GOTO, __handle_continue),
     "break_statement":
@@ -779,7 +821,7 @@ def __parse(
         end_point=end_point,
         affected_by=__parse_affected_by(source_code_bytes, ast, variable_names),
         name=tree_sitter_parsers.node_name(source_code_bytes, ast),
-        ast_node_type=ast.type)
+        ast_node_type=__parse_ast_node_type(ast))
     cdg.add_node(statement)
     siblings, exit_points = statement_handler(
         statement,
@@ -811,7 +853,7 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             declaration = node.prev_named_sibling
             entry_point = Statement(
                 StatementType.FUNCTION,
-                start_point=Point.from_tuple(node.start_point),
+                start_point=Point.from_tuple(declaration.start_point),
                 end_point=Point.from_tuple(scope.end_point),
                 affected_by=set(),
                 name=tree_sitter_parsers.node_name(source_code_bytes, declaration.children[-1]),
@@ -820,7 +862,11 @@ def __parse_undeclared_class(source_code_bytes: bytes, ast: Node, cdg: ControlDe
             cdg.add_entry_point(entry_point)
             entry_points = [entry_point]
             exit_statements = []
-            for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], exit_statements, set()):
+            names = set()
+            for parameter in node.children:
+                for child in __parse(source_code_bytes, parameter, cdg, entry_points, [], [], exit_statements, names):
+                    cdg.add_edge(entry_point, child)
+            for child in __parse(source_code_bytes, scope, cdg, entry_points, [], [], exit_statements, names):
                 cdg.add_edge(entry_point, child)
             exit_point = __add_exit_point(cdg, entry_point, entry_points + exit_statements)
             cdg.add_edge(entry_point, exit_point)
@@ -867,7 +913,13 @@ def __parse_undeclared_method(source_code_bytes: bytes, ast: Node, cdg: ControlD
 
 
 def __parse_statement_type_and_handler(ast: Node) -> Tuple[StatementType, Callable]:
-    return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_statement))
+    return statement_type_and_handler_map.get(ast.type, (StatementType.UNKNOWN, __handle_block))
+
+
+def __parse_ast_node_type(ast: Node) -> str:
+    if ast.type == "assignment_expression":
+        return ast.children[1].type
+    return ast.type
 
 
 def __parse_position_range(ast: Node) -> Tuple[Point, Point]:

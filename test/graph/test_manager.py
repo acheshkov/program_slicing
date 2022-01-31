@@ -8,6 +8,7 @@ from unittest import TestCase
 
 from program_slicing.graph.manager import ProgramGraphsManager
 from program_slicing.graph.parse import Lang
+from program_slicing.graph.point import Point
 
 
 class ManagerTestCase(TestCase):
@@ -310,14 +311,14 @@ class ManagerTestCase(TestCase):
         };
         '''
         manager = ProgramGraphsManager(block_without_try, Lang.JAVA)
-        self.assertEqual(6, len(list(manager.scope_statements)))
+        self.assertEqual(1, len(list(manager.scope_statements)))
 
     def test_identify_unique_blocks_with_lambda(self) -> None:
         block_with_lambda = '''
             MyPrinter myPrinter = (s) -> { System.out.println(s); };
         '''
         manager = ProgramGraphsManager(block_with_lambda, Lang.JAVA)
-        self.assertEqual(3, len(list(manager.scope_statements)))
+        self.assertEqual(1, len(list(manager.scope_statements)))
 
     def test_identify_unique_block_with_break(self) -> None:
         while_block = '''
@@ -431,3 +432,25 @@ class ManagerTestCase(TestCase):
         manager = ProgramGraphsManager(code, Lang.JAVA)
         [root_statement] = manager.program_dependence_graph.entry_points
         self.assertEqual({1, 4, 5}, manager.get_statement_line_numbers(root_statement))
+
+    def test_get_involved_variables(self) -> None:
+        code = """
+        public void methodEx() {
+            int a = 1;
+            while (cond(a)) {
+                int i = 1;
+                if (cond2(i)) {
+                    do1(i);
+                }
+            }
+            for (int j = 1; j < 10 ; j++) {
+                do2(a);
+                do3();
+            }
+        }
+        """
+        manager = ProgramGraphsManager(code, Lang.JAVA)
+        statements = manager.get_statements_in_range(Point(1, 0), Point(8, 10000))
+        self.assertEqual(2, len(manager.get_involved_variables_statements(statements)))
+        statements = manager.get_statements_in_range(Point(9, 0), Point(12, 10000))
+        self.assertEqual(2, len(manager.get_involved_variables_statements(statements)))
