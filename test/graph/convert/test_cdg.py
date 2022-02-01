@@ -184,10 +184,10 @@ class CDGTestCase(TestCase):
     def __get_pdg_1():
         pdg = CDGTestCase.__get_cdg_1()
         for variable_statement in pdg:
-            if variable_statement.statement_type != StatementType.VARIABLE:
+            if variable_statement.statement_type not in {StatementType.VARIABLE, StatementType.OBJECT}:
                 continue
             for statement in pdg:
-                if statement.statement_type != StatementType.VARIABLE and \
+                if statement.statement_type not in {StatementType.VARIABLE, StatementType.OBJECT} and \
                         variable_statement.name in statement.affected_by and \
                         (variable_statement.start_point.line_number >= 9 and statement.start_point.line_number >= 9 or
                          variable_statement.start_point.line_number < 9 and statement.start_point.line_number < 9):
@@ -225,20 +225,32 @@ class CDGTestCase(TestCase):
         ddg.add_edges_from([
             ("flipNode", "context...;"),
             ("flipNode", "context"),
-            ("flipNode", "if (flipNode.isExclusive())"),
-            ("flipNode", "(flipNode.isExclusive())"),
-            ("flipNode", "flipNode.isExclusive()")
+            ("context", "(flipNode.isExclusive())"),
+            ("context", "flipNode.isExclusive()"),
+            ("flipNode.isExclusive()", "if (flipNode.isExclusive())")
         ])
-        ddg.add_nodes_from(range(7))
+        ddg.add_nodes_from(range(6))
         return ddg
 
     @staticmethod
     def __get_pdg_2():
         pdg = CDGTestCase.__get_cdg_2()
-        variable_statement = [statement for statement in pdg if statement.statement_type == StatementType.VARIABLE][0]
-        for statement in pdg:
-            if statement.statement_type != StatementType.VARIABLE and variable_statement.name in statement.affected_by:
-                pdg.add_edge(variable_statement, statement)
+        variable_statement = [statement for statement in pdg if statement.statement_type == StatementType.OBJECT][0]
+        context_st, context_expr = [statement for statement in pdg if statement.start_point.line_number == 2]
+        condition, condition_call = [
+            statement
+            for statement in pdg
+            if statement.start_point.line_number == 3 and statement.statement_type in {
+                StatementType.CALL,
+                StatementType.UNKNOWN
+            }
+        ]
+        branch = [statement for statement in pdg if statement.statement_type == StatementType.BRANCH][0]
+        pdg.add_edge(variable_statement, context_st)
+        pdg.add_edge(variable_statement, context_expr)
+        pdg.add_edge(context_expr, condition)
+        pdg.add_edge(context_expr, condition_call)
+        pdg.add_edge(condition_call, branch)
         return pdg
 
     @staticmethod
@@ -329,11 +341,14 @@ class CDGTestCase(TestCase):
     def __get_pdg_3():
         pdg = CDGTestCase.__get_cdg_3()
         for variable_statement in pdg:
-            if variable_statement.statement_type != StatementType.VARIABLE and \
-                    variable_statement.statement_type != StatementType.ASSIGNMENT:
+            if variable_statement.statement_type not in {
+                StatementType.VARIABLE,
+                StatementType.OBJECT,
+                StatementType.ASSIGNMENT
+            }:
                 continue
             for statement in pdg:
-                if statement.statement_type != StatementType.VARIABLE and \
+                if statement.statement_type not in {StatementType.VARIABLE, StatementType.OBJECT} and \
                         statement.ast_node_type != "local_variable_declaration" and \
                         variable_statement.name in statement.affected_by and \
                         (9 <= variable_statement.start_point.line_number <= 11 and

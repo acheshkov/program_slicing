@@ -89,7 +89,7 @@ def get_complete_computation_slices(
 def __obtain_variable_statements(cdg: ControlDependenceGraph, root: Statement) -> Set[Statement]:
     return {
         statement for statement in networkx.algorithms.traversal.dfs_tree(cdg, root)
-        if statement.statement_type == StatementType.VARIABLE
+        if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}
     }
 
 
@@ -231,9 +231,14 @@ def __obtain_content(root: Statement, basic_block: BasicBlock) -> Iterator[State
 
 def __is_slicing_criterion(assignment_statement: Statement, variable_statement: Statement) -> bool:
     return \
-        (assignment_statement.statement_type == StatementType.VARIABLE or
-         assignment_statement.statement_type == StatementType.ASSIGNMENT) and \
-        variable_statement.statement_type == StatementType.VARIABLE and \
+        assignment_statement.statement_type in {
+            StatementType.VARIABLE,
+            StatementType.OBJECT,
+            StatementType.ASSIGNMENT
+        } and \
+        variable_statement.statement_type in {
+            StatementType.VARIABLE,
+            StatementType.OBJECT} and \
         variable_statement.name == assignment_statement.name
 
 

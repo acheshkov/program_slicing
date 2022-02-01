@@ -13,6 +13,7 @@ from program_slicing.graph.point import Point
 class StatementType(Enum):
     FUNCTION = "FUNCTION_DECLARATION"
     VARIABLE = "VARIABLE_DECLARATION"
+    OBJECT = "OBJECT_DECLARATION"
     ASSIGNMENT = "ASSIGNMENT"
     CALL = "FUNCTION_CALL"
     SCOPE = "SCOPE"

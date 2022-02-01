@@ -411,7 +411,7 @@ class SlicePredicate:
             return not self.__has_returnable_variable
         start_point, end_point = bounds
         for statement in self.__statements:
-            if statement.statement_type == StatementType.VARIABLE:
+            if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}:
                 variable = self.__program_slice.variable if self.__program_slice else kwargs.get("variable", None)
                 if variable and variable.name != statement.name:
                     continue

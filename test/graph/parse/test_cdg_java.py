@@ -190,7 +190,7 @@ class CDGJavaTestCase(TestCase):
         self.__check_cdg_children(try_children, {
             0: StatementType.SCOPE,
             6: StatementType.ASSIGNMENT,
-            7: StatementType.VARIABLE,
+            7: StatementType.OBJECT,
             8: StatementType.BRANCH
         })
         catch_children = [child for child in cdg.successors(try_children[8])]
@@ -235,7 +235,7 @@ class CDGJavaTestCase(TestCase):
         self.__check_cdg_children(try_children, {
             0: StatementType.SCOPE,
             6: StatementType.ASSIGNMENT,
-            7: StatementType.VARIABLE,
+            7: StatementType.OBJECT,
             8: StatementType.BRANCH
         })
         catch_1_children = [child for child in cdg.successors(try_children[8])]
@@ -243,7 +243,7 @@ class CDGJavaTestCase(TestCase):
         self.__check_cdg_children(catch_1_children, {
             0: StatementType.SCOPE,
             2: StatementType.CALL,
-            3: StatementType.VARIABLE,
+            3: StatementType.OBJECT,
             4: StatementType.BRANCH
         })
         catch_2_children = [child for child in cdg.successors(catch_1_children[4])]
@@ -354,7 +354,7 @@ class CDGJavaTestCase(TestCase):
         source_code = """
         class A {
             public static int main() {
-                int n = 10;
+                MyInteger n = 10;
                 for(int i = 0; i < n; i += 1) {
                     if (i < 4) {
                         System.out.println("lol");
@@ -382,7 +382,7 @@ class CDGJavaTestCase(TestCase):
         self.assertEqual(15, len(function_children))
         self.__check_cdg_children(function_children, {
             1: StatementType.SCOPE,
-            4: StatementType.VARIABLE,
+            4: StatementType.OBJECT,
             7: StatementType.VARIABLE,
             11: StatementType.LOOP,
             13: StatementType.GOTO,

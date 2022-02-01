@@ -373,20 +373,29 @@ class ProgramGraphsManager:
         """
         Get Statements from the given set that affect by Data Dependence some Statement not form the given set.
         :param statements: set of Statements for which affecting Statements should to be obtained.
-        :return: set of affecting Statements (may have VARIABLE or ASSIGNMENT type).
+        :return: set of affecting Statements (may have VARIABLE, OBJECT or ASSIGNMENT type).
         """
         assignment_statements = [
             statement for statement in statements
-            if
-            statement.statement_type == StatementType.ASSIGNMENT or
-            statement.statement_type == StatementType.VARIABLE
+            if statement.statement_type in {
+                StatementType.ASSIGNMENT,
+                StatementType.VARIABLE,
+                StatementType.OBJECT
+            }
         ]
         arg_statements_by_arg_name = self.__get_arg_statements_by_arg_name(statements)
+        ddg = self.data_dependence_graph
         affecting_statements = set()
         for assignment_statement in assignment_statements:
-            if assignment_statement not in self.data_dependence_graph:
+            if assignment_statement not in ddg:
                 continue
-            for affected_statement in self.data_dependence_graph.successors(assignment_statement):
+            for affected_statement in networkx.descendants(ddg, assignment_statement):
+                if affected_statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}:
+                    if affected_statement.name != assignment_statement.name and \
+                            assignment_statement.name not in affected_statement.affected_by:
+                        continue
+                elif assignment_statement.name not in affected_statement.affected_by:
+                    continue
                 if affected_statement not in statements or \
                         affected_statement.end_point <= assignment_statement.end_point and \
                         affected_statement in arg_statements_by_arg_name.get(assignment_statement.name, set()):
@@ -396,41 +405,43 @@ class ProgramGraphsManager:
 
     def get_changed_variables_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
         """
-        Get VARIABLE Statements that represent variables changed in the given set of Statements.
+        Get VARIABLE and OBJECT Statements that represent variables changed in the given set of Statements.
         :param statements: set of Statements for which changed variables should to be obtained.
-        :return: set of changed variables (Statements with VARIABLE type).
+        :return: set of changed variables (Statements with VARIABLE or OBJECT type).
         """
         changed_variables = set()
         ddg = self.data_dependence_graph
         for statement in statements:
             if statement not in ddg:
                 continue
-            if statement.statement_type == StatementType.VARIABLE:
+            if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}:
                 changed_variables.add(statement)
-            if statement.statement_type == StatementType.ASSIGNMENT:
-                if statement not in self.data_dependence_graph:
+            elif statement.statement_type == StatementType.ASSIGNMENT:
+                if statement not in ddg:
                     continue
                 for ancestor in networkx.ancestors(ddg, statement):
-                    if ancestor.statement_type == StatementType.VARIABLE and ancestor.name == statement.name:
+                    if ancestor.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} \
+                            and ancestor.name == statement.name:
                         changed_variables.add(ancestor)
+                        break
         return changed_variables
 
     def get_involved_variables_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
         """
-        Get VARIABLE Statements that represent variables involved (including usage) in the given set of Statements.
+        Get VARIABLE and OBJECT Statements that represent variables involved (including usage) in the given Statements.
         :param statements: set of Statements for which involved variables should to be obtained.
-        :return: set of involved variables (Statements with VARIABLE type).
+        :return: set of involved variables (Statements with VARIABLE or OBJECT type).
         """
         involved_variables = set()
         ddg = self.data_dependence_graph
         for statement in statements:
             if statement not in ddg:
                 continue
-            if statement.statement_type == StatementType.VARIABLE:
+            if statement.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}:
                 involved_variables.add(statement)
-                continue
             for ancestor in networkx.ancestors(ddg, statement):
-                if ancestor.statement_type == StatementType.VARIABLE and ancestor.name in statement.affected_by:
+                if ancestor.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} \
+                        and ancestor.name in statement.affected_by:
                     involved_variables.add(ancestor)
         return involved_variables
 
@@ -491,12 +502,18 @@ class ProgramGraphsManager:
     def __get_arg_statements_by_arg_name(self, statements: Set[Statement]) -> Dict[str, Set[Statement]]:
         arg_statements_by_arg_name = defaultdict(set)
         for statement in statements:
-            if statement in self.data_dependence_graph and \
-                    statement.statement_type != StatementType.ASSIGNMENT and \
-                    statement.statement_type != StatementType.VARIABLE:
+            if statement in self.data_dependence_graph and statement.statement_type not in {
+                StatementType.VARIABLE,
+                StatementType.OBJECT,
+                StatementType.ASSIGNMENT
+            }:
                 for predecessor in self.data_dependence_graph.predecessors(statement):
                     if predecessor not in statements:
-                        arg_statements_by_arg_name[predecessor.name].add(statement)
+                        if predecessor.statement_type in {StatementType.VARIABLE, StatementType.OBJECT}:
+                            arg_statements_by_arg_name[predecessor.name].add(statement)
+                        else:
+                            for predecessor_name in statement.affected_by.intersection(predecessor.affected_by):
+                                arg_statements_by_arg_name[predecessor_name].add(statement)
         return arg_statements_by_arg_name
 
     def __bisect_range_left(self, start_point: Point, end_point: Point) -> int:
