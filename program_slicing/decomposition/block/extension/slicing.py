@@ -148,6 +148,7 @@ def __get_incoming_variables(
             # can be multimap, but it's ok for our purposes
             if data_dom not in block_statements and data_dom.name not in incoming_variables:
                 if __flow_dep_given_data_dep(statement, data_dom):
+                    # FIXME: what if one variable has been passed to several different statements?
                     incoming_variables[data_dom.name] = statement
     return incoming_variables
 

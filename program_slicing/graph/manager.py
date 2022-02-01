@@ -423,6 +423,7 @@ class ProgramGraphsManager:
                     if ancestor.statement_type in {StatementType.VARIABLE, StatementType.OBJECT} \
                             and ancestor.name == statement.name:
                         changed_variables.add(ancestor)
+                        break
         return changed_variables
 
     def get_involved_variables_statements(self, statements: Iterable[Statement]) -> Set[Statement]:
