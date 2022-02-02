@@ -177,6 +177,37 @@ def aggregate_score_hh(
             manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
             if statement in manager.general_statements
         ]
+        nesting_depth_hh = nesting_depth_score_hh(extraction, statement_to_depth, method_statements)
+        nesting_area_hh = nesting_area_score_hh(extraction, statement_to_depth, method_statements)
+    if length_hh is None:
+        length_hh = length_score_hh(source_code.split("\n"), extraction)
+    if params_hh is None:
+        params_hh = parameters_score_hh(extraction)
+    return nesting_depth_hh + nesting_area_hh + length_hh + params_hh
+
+
+def aggregate_score_hh_optimized(
+        source_code: str,
+        extraction: ProgramSlice,
+        nesting_area_hh: int = None,
+        nesting_depth_hh: float = None,
+        length_hh: float = None,
+        params_hh: int = None):
+    if nesting_area_hh is None or nesting_depth_hh is None:
+        manager = extraction.context
+        statement_to_depth = dict()
+        extraction_general_statements = sorted(
+            extraction.general_statements,
+            key=lambda x: (x.start_point, -x.end_point))
+        if not extraction_general_statements:
+            raise ValueError("Couldn't find general statements in extraction slice")
+        method_statement = manager.get_function_statement(extraction_general_statements[0])
+        method_statements = [
+            statement
+            for statement in
+            manager.get_statements_in_range(method_statement.start_point, method_statement.end_point)
+            if statement in manager.general_statements
+        ]
         nesting_area_hh = nesting_area_score_hh(extraction, statement_to_depth, method_statements)
     if length_hh is None:
         length_hh = length_score_hh(source_code.split("\n"), extraction)
